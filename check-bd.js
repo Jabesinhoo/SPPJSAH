@@ -5,7 +5,6 @@ async function checkModels() {
   try {
     console.log('🔍 Verificando modelos cargados...');
     
-    // Verificar que todos los modelos existen
     const models = [
       { name: 'User', model: User },
       { name: 'Product', model: Product },
@@ -22,12 +21,10 @@ async function checkModels() {
       }
     });
 
-    // Sincronizar base de datos
     console.log('\n🔄 Sincronizando base de datos...');
     await sequelize.sync({ force: true });
     console.log('✅ Base de datos sincronizada');
 
-    // Verificar tablas creadas
     const [tables] = await sequelize.query(`
       SELECT table_name 
       FROM information_schema.tables 

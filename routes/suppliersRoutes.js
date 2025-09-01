@@ -1,36 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const supplierController = require('../controllers/supplierController');
-const { uploadMiddleware } = require('../middleware/upload'); // ✅ usar el middleware mejorado
+const upload = require('../middleware/upload');
 const { supplierValidation } = require('../middleware/validation');
-const { isAuthenticated } = require('../middleware/authMiddleware');
+const { isAuthenticated } = require('../middleware/authMiddleware'); // ← CORREGIDO
 
 // Todas las rutas requieren autenticación
 router.use(isAuthenticated);
 
 // === RUTAS DE VISTAS (HTML) ===
+// GET /suppliers - Página principal de proveedores
 router.get('/', supplierController.getAllSuppliers);
 
 // === RUTAS API (JSON) ===
-// Crear proveedor con imagen segura
-router.post(
-  '/',
-  (req, res, next) => { req.uploadType = 'suppliers'; next(); }, // 📌 carpeta destino
-  uploadMiddleware('imagen', 1), 
-  supplierValidation, 
-  supplierController.createSupplier
-);
+// POST /suppliers - Crear proveedor (desde formulario)
+router.post('/', upload.single('imagen'), supplierValidation, supplierController.createSupplier);
 
-// Editar proveedor con imagen segura
-router.post(
-  '/:id/edit',
-  (req, res, next) => { req.uploadType = 'suppliers'; next(); },
-  uploadMiddleware('imagen', 1),
-  supplierValidation,
-  supplierController.updateSupplier
-);
+// POST /suppliers/:id/edit - Editar proveedor (desde formulario)
+router.post('/:id/edit', upload.single('imagen'), supplierValidation, supplierController.updateSupplier);
 
-// Eliminar proveedor (y su imagen asociada si existe)
+// POST /suppliers/:id/delete - Eliminar proveedor (desde formulario)
 router.post('/:id/delete', supplierController.deleteSupplier);
 
 module.exports = router;

@@ -5,6 +5,7 @@ const path = require('path');
 const session = require('express-session');
 const expressLayouts = require('express-ejs-layouts');
 const flash = require('connect-flash');
+const errorHandler = require('./middleware/errorHandler');
 
 const { sequelize, User, Role } = require('./models');
 
@@ -15,90 +16,49 @@ const roleRoutes = require('./routes/roleRoutes');
 const userRoutes = require('./routes/userRoutes');
 const supplierRoutes = require('./routes/suppliersRoutes');
 const spreadsheetRoutes = require('./routes/spreadsheetRoutes');
-const settingsRoutes = require('./routes/settingsRoutes');
-const settingsPageRoutes = require('./routes/settingsPage');
+
+const settingsRoutes = require('./routes/settingsRoutes');     
+const settingsPageRoutes = require('./routes/settingsPage');   
 
 const { authorize } = require('./middleware/authMiddleware');
-
+const allowedOrigins = [
+  'http://localhost:3000',            // 🔹 solo en desarrollo local
+  'https://tecnonacho.com',           // 🔹 dominio principal
+  'https://sppjsah.tecnonacho.com'        // 🔹 tu subdominio de producción
+];
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ===========================
-   CONFIGURACIÓN DE ALMACENAMIENTO DE SESIONES
-   =========================== */
-let sessionStore;
 
-if (process.env.SESSION_STORE === 'redis') {
-  // 🔹 Redis con connect-redis v7+
-  const { createClient } = require('redis');
-  const RedisStore = require('connect-redis').default;
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permite peticiones sin origin (ej: curl, Postman)
+    if (!origin) return callback(null, true);
 
-  const redisClient = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
-  });
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('❌ No autorizado por CORS: ' + origin), false);
+    }
+  },
+  credentials: true, // Necesario para sesiones/cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-  redisClient.connect().catch(console.error);
-
-  sessionStore = new RedisStore({
-    client: redisClient,
-    prefix: 'session:'
-  });
-
-  console.log('✅ Usando Redis para almacenamiento de sesiones');
-
-} else if (process.env.SESSION_STORE === 'postgres') {
-  // 🔹 PostgreSQL con connect-pg-simple
-  const PostgreSQLStore = require('connect-pg-simple')(session);
-
-  sessionStore = new PostgreSQLStore({
-    conString: process.env.DATABASE_URL,
-    tableName: 'user_sessions',
-    createTableIfMissing: true
-  });
-
-  console.log('✅ Usando PostgreSQL para almacenamiento de sesiones');
-
-} else {
-  // 🔹 Solo para desarrollo
-  console.log('⚠️ Usando MemoryStore para sesiones (NO usar en producción)');
-  sessionStore = undefined;
-}
-
-/* ===========================
-   MIDDLEWARES BÁSICOS
-   =========================== */
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* ===========================
-   SESIÓN + FLASH
-   =========================== */
-const sessionConfig = {
+
+app.use(session({
   secret: process.env.SESSION_SECRET || 'tecnonacho_secret_key',
   resave: false,
   saveUninitialized: false,
-  store: sessionStore, // Usa el store configurado
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 24 horas
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true
-  }
-};
-
-// En producción, asegurar que las cookies sean seguras
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-  sessionConfig.cookie.secure = true;
-}
-
-app.use(session(sessionConfig));
+}));
 app.use(flash());
 
-/* ===========================
-   LOCALES PARA EJS
-   =========================== */
+
 app.use((req, res, next) => {
   res.locals.userRole = req.session.userRole;
 
@@ -114,27 +74,7 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ===========================
-   LOCALES PARA EJS
-   =========================== */
-app.use((req, res, next) => {
-  res.locals.userRole = req.session.userRole;
 
-  const success      = req.flash('success');
-  const error        = req.flash('error');
-  const success_msg  = req.flash('success_msg');
-  const error_msg    = req.flash('error_msg');
-
-  res.locals.success     = success[0]     || success_msg[0] || '';
-  res.locals.error       = error[0]       || error_msg[0]   || '';
-  res.locals.success_msg = res.locals.success;
-  res.locals.error_msg   = res.locals.error;
-  next();
-});
-
-/* ===========================
-   EJS + LAYOUTS
-   =========================== */
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'public', 'views'));
 app.use(expressLayouts);
@@ -149,12 +89,9 @@ app.get('/spreadsheets', (req, res) => {
   });
 });
 
-// Después de las otras rutas de API
 app.use('/api', spreadsheetRoutes);
-/* ===========================
-   PÁGINAS (EJS)
-   =========================== */
-app.use('/', settingsPageRoutes); // monta /settings tras session/flash
+
+app.use('/', settingsPageRoutes); 
 
 app.get('/registro_inicio', (req, res) => {
   res.render('registro_inicio', { title: 'Registro / Inicio de Sesión', layout: false });
@@ -204,18 +141,13 @@ app.get('/logout', (req, res) => {
   });
 });
 
-/* ===========================
-   APIs (prefijo /api)
-   =========================== */
+
 app.use('/api', authRoutes);
 app.use('/api', productRoutes);
 app.use('/api', roleRoutes);
 app.use('/api', userRoutes);
-app.use('/api/settings', settingsRoutes); // si tienes endpoints de ajustes
+app.use('/api/settings', settingsRoutes);
 
-/* ===========================
-   SEED ROLES
-   =========================== */
 const seedRoles = async () => {
   try {
     const userRole = await Role.findOne({ where: { name: 'user' } });
@@ -234,39 +166,11 @@ const seedRoles = async () => {
   }
 };
 
-/* ===========================
-   ERROR HANDLER GLOBAL
-   =========================== */
-/* ===========================
-   ERROR HANDLER GLOBAL
-   =========================== */
-app.use((err, req, res, next) => {
-  console.error('💥 [GLOBAL ERROR]');
-  console.error('📍 Path: ', req.path);
-  console.error('📦 Method: ', req.method);
-  console.error('👤 UserID: ', req.session?.userId || 'no-session');
-  console.error('📝 Error message: ', err.message);
-  console.error('🧩 Stack: ', err.stack);
 
-  const accept = req.get('Accept') || '';
-  const wantsJson = req.xhr || accept.includes('application/json') || req.query.ajax === '1';
-
-  if (wantsJson) {
-    return res.status(500).json({ error: err.message || 'Error inesperado' });
-  }
-
-  if (typeof req.flash === 'function') {
-    req.flash('error', err.message || 'Error inesperado');
-  }
-
-  const back = req.get('referer');
-  return res.redirect(back || '/registro_inicio');
-});
+app.use(errorHandler);
 
 
-/* ===========================
-   START
-   =========================== */
+
 app.listen(PORT, '0.0.0.0', async () => {
   try {
     await sequelize.sync({ force: false });

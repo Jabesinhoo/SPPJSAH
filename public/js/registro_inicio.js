@@ -67,56 +67,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     authForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    const username = document.getElementById('username').value;
-    const password = passwordInput.value;
+        const username = document.getElementById('username').value;
+        const password = passwordInput.value;
+        const email = document.getElementById('email')?.value || null;  // 👈 asegúrate de tener <input id="email">
 
-    // ✅ Declara endpoint UNA SOLA VEZ
-    const endpoint = isRegistering ? '/api/register' : '/api/login';
+        // ✅ endpoint
+        const endpoint = isRegistering ? '/api/register' : '/api/login';
 
-    // 🔍 Debug: log después de declarar
-    console.log('➡️ Enviando al servidor:', { username, password, endpoint });
+        console.log('➡️ Enviando al servidor:', { username, email, password, endpoint });
 
-    if (isRegistering && password !== confirmPasswordInput.value) {
-        messageElement.textContent = 'Las contraseñas no coinciden.';
-        messageElement.classList.add('text-red-500');
-        messageElement.classList.remove('text-green-500');
-        return;
-    }
+        if (isRegistering && password !== confirmPasswordInput.value) {
+            messageElement.textContent = 'Las contraseñas no coinciden.';
+            messageElement.classList.add('text-red-500');
+            messageElement.classList.remove('text-green-500');
+            return;
+        }
 
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json'
-},
-            body: JSON.stringify({ username, password }),
-        });
+        try {
+            // 👇 Cambia body según el modo
+            const body = isRegistering
+                ? {
+                    username,
+                    password,
+                    ...(email ? { email } : {})   // 👈 agrega email solo si no está vacío
+                }
+                : { username, password };
+            // login necesita email + password
 
-        const data = await response.json();
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(body),
+            });
 
-        // 🔍 Debug respuesta
-        console.log('⬅️ Respuesta del servidor:', data);
+            const data = await response.json();
 
-        if (response.ok) {
-            messageElement.textContent = data.message || (isRegistering ? 'Registrado.' : 'Sesión iniciada.');
-            messageElement.classList.remove('text-red-500');
-            messageElement.classList.add('text-green-500');
-            window.location.assign(data.redirect || '/');
-        } else {
-            messageElement.textContent = data.error;
+            console.log('⬅️ Respuesta del servidor:', data);
+
+            if (response.ok) {
+                messageElement.textContent = data.message || (isRegistering ? 'Registrado.' : 'Sesión iniciada.');
+                messageElement.classList.remove('text-red-500');
+                messageElement.classList.add('text-green-500');
+                window.location.assign(data.redirect || '/');
+            } else {
+                messageElement.textContent = data.error || 'Error en la solicitud.';
+                messageElement.classList.add('text-red-500');
+                messageElement.classList.remove('text-green-500');
+            }
+        } catch (error) {
+            console.error('❌ Error en fetch:', error);
+            messageElement.textContent = 'Error al conectar con el servidor.';
             messageElement.classList.add('text-red-500');
             messageElement.classList.remove('text-green-500');
         }
-    } catch (error) {
-        console.error('❌ Error en fetch:', error);
-        messageElement.textContent = 'Error al conectar con el servidor.';
-        messageElement.classList.add('text-red-500');
-        messageElement.classList.remove('text-green-500');
-    }
-});
+    });
+
 
 
     showPasswordCheckbox.addEventListener('change', () => {

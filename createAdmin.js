@@ -1,9 +1,8 @@
-// createAdmin.js
 const { sequelize, User, Role, Supplier } = require('./models');
 
 async function createAdminUser() {
     const username = 'xxx';
-    const password = 'xxx'; // No la encriptes aquí
+    const password = 'xxx'; 
 
     try {
         await sequelize.sync();
@@ -23,7 +22,6 @@ async function createAdminUser() {
                 username: username
             },
             defaults: {
-                // Pasa la contraseña en texto plano, el hook se encargará de encriptarla
                 password: password, 
                 roleUuid: adminRole.uuid,
             },

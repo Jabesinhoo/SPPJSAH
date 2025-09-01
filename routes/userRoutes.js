@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { User, Role } = require('../models');
 const authMiddleware = require('../middleware/authMiddleware');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
+const { body, validationResult } = require('express-validator');
 
 // Obtener todos los usuarios (para sistema de etiquetado)
 router.get('/users', authMiddleware.isAuthenticated, async (req, res) => {
@@ -44,29 +45,40 @@ router.get('/users/management', authMiddleware.authorize('admin'), async (req, r
     }
 });
 // En userRoutes.js - Agrega esta ruta
-router.put('/users/:id/password', authMiddleware.authorize('admin'), async (req, res) => {
-    try {
-        const userUuid = req.params.id;
-        const { newPassword } = req.body;
-
-        console.log('Changing password for user:', userUuid);
-
-        const user = await User.findByPk(userUuid);
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado.' });
-        }
-
-        // Hashear nueva contraseña
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-        await user.save();
-
-        res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });
-    } catch (error) {
-        console.error('Error changing password:', error);
-        res.status(500).json({ error: 'Error al cambiar la contraseña.' });
+router.put(
+  '/users/:id/password',
+  authMiddleware.authorize('admin'),
+  [
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('La contraseña debe tener al menos 8 caracteres')
+      .matches(/[0-9]/).withMessage('Debe incluir un número')
+      .matches(/[A-Z]/).withMessage('Debe incluir una mayúscula')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-});
+
+    try {
+      const userUuid = req.params.id;
+      const { newPassword } = req.body;
+
+      const user = await User.findByPk(userUuid);
+      if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      await user.save();
+
+      res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ error: 'Error al cambiar la contraseña.' });
+    }
+  }
+);
 
 // Obtener información del usuario actual
 router.get('/users/me', authMiddleware.requireAuth, async (req, res) => {
