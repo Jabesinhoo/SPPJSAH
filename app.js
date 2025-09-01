@@ -171,14 +171,15 @@ app.use(errorHandler);
 
 
 
-app.listen(PORT, '0.0.0.0', async () => {
-  try {
-    await sequelize.sync({ force: false });
-    console.log('✅ Tablas recreadas!');
-    console.log('✅ Base de datos y modelos sincronizados!');
-    await seedRoles();
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  } catch (err) {
-    console.error('❌ Error al sincronizar con la base de datos:', err);
-  }
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', async () => {
+    try {
+      await sequelize.sync({ force: false });
+      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    } catch (err) {
+      console.error('❌ Error al sincronizar con la base de datos:', err);
+    }
+  });
+}
+
+module.exports = app;
