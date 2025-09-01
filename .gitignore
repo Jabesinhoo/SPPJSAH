@@ -1,0 +1,70 @@
+# ==========================
+# Node.js
+# ==========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+
+# ==========================
+# Entornos y configuración
+# ==========================
+.env
+.env.local
+.env.*.local
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+*.out
+*.err
+
+# pm2
+pids
+*.pid
+*.seed
+
+# ==========================
+# Sistemas operativos
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Compilados y cachés
+# ==========================
+dist/
+build/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# ==========================
+# IDEs y editores
+# ==========================
+.vscode/
+.idea/
+*.swp
+
+# ==========================
+# Subidas de usuarios
+# ==========================
+public/uploads/
+uploads/
+
+# ==========================
+# Base de datos / backups
+# ==========================
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+dump.rdb
+*.bak
+*.tar.gz
