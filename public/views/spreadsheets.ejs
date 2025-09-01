@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hojas de Cálculo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .spreadsheet-container {
+            overflow-x: auto;
+            max-width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        
+        .dark .spreadsheet-container {
+            border-color: #4b5563;
+            background-color: #1f2937;
+        }
+        
+        .spreadsheet-table {
+            min-width: 800px;
+            margin: 0;
+        }
+        
+        .spreadsheet-table th,
+        .spreadsheet-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            min-width: 100px;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .dark .spreadsheet-table th,
+        .dark .spreadsheet-table td {
+            border-color: #4b5563;
+        }
+        
+        .spreadsheet-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .dark .spreadsheet-table th {
+            background-color: #374151;
+            color: #e5e7eb;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .editable-cell:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .dark .editable-cell:hover {
+            background-color: #374151;
+        }
+        
+        .cell-input {
+            border: none;
+            outline: none;
+            width: 100%;
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        
+        .column-header {
+            position: relative;
+        }
+        
+        .column-actions {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .column-header:hover .column-actions {
+            opacity: 1;
+        }
+        
+        .row-actions {
+            width: 50px;
+            text-align: center;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        /* Ajustes para modo oscuro en modales y cards */
+        .dark .modal-content {
+            background-color: #1f2937;
+            color: #e5e7eb;
+        }
+        
+        .dark .card {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+        
+        .dark .card-header {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        
+        .dark .form-control,
+        .dark .form-select {
+            background-color: #374151;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+        
+        .dark .form-control:focus,
+        .dark .form-select:focus {
+            background-color: #374151;
+            color: #e5e7eb;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+        }
+        
+        .dark .text-muted {
+            color: #9ca3af !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-slate-950 text-gray-900 dark:text-gray-100 transition-colors duration-500">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="h3 mb-3">
+                    <i class="fas fa-table me-2"></i>
+                    Hojas de Cálculo
+                </h1>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        <div class="alert-container" id="alertContainer"></div>
+
+        <!-- Lista de Spreadsheets -->
+        <div class="row mb-4" id="spreadsheetsList">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Mis Hojas de Cálculo</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSpreadsheetModal">
+                            <i class="fas fa-plus me-2"></i>Nueva Hoja
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="spreadsheetsContainer">
+                            <div class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="text-muted mt-2">Cargando hojas de cálculo...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor de Spreadsheet -->
+        <div class="row" id="spreadsheetEditor" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0" id="currentSpreadsheetName">Nombre de la Hoja</h5>
+                            <small class="text-muted" id="currentSpreadsheetDesc">Descripción</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-secondary me-2" onclick="addColumn()">
+                                <i class="fas fa-plus me-1"></i>Columna
+                            </button>
+                            <button class="btn btn-outline-secondary me-2" onclick="addRow()">
+                                <i class="fas fa-plus me-1"></i>Fila
+                            </button>
+                            <button class="btn btn-secondary" onclick="backToList()">
+                                <i class="fas fa-arrow-left me-1"></i>Volver
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="spreadsheet-container">
+                            <table class="table table-bordered spreadsheet-table mb-0" id="spreadsheetTable">
+                                <thead id="tableHeader"></thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear Spreadsheet -->
+    <div class="modal fade" id="createSpreadsheetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Hoja de Cálculo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createSpreadsheetForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="spreadsheetName" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="spreadsheetName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="spreadsheetDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="spreadsheetDescription" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear Hoja</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Columna -->
+    <div class="modal fade" id="addColumnModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Columna</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="addColumnForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="columnName" class="form-label">Nombre de la Columna *</label>
+                            <input type="text" class="form-control" id="columnName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="columnType" class="form-label">Tipo de Columna *</label>
+                            <select class="form-select" id="columnType" onchange="toggleSelectOptions()">
+                                <option value="text">Texto</option>
+                                <option value="number">Número Entero</option>
+                                <option value="decimal">Número Decimal</option>
+                                <option value="boolean">Sí/No (Boolean)</option>
+                                <option value="date">Fecha</option>
+                                <option value="select">Lista Desplegable</option>
+                                <option value="email">Email</option>
+                                <option value="url">URL</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="selectOptionsContainer" style="display: none;">
+                            <label for="selectOptions" class="form-label">Opciones (una por línea)</label>
+                            <textarea class="form-control" id="selectOptions" rows="4" placeholder="Opción 1&#10;Opción 2&#10;Opción 3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="defaultValue" class="form-label">Valor por Defecto</label>
+                            <input type="text" class="form-control" id="defaultValue">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isRequired">
+                            <label class="form-check-label" for="isRequired">Campo Requerido</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Agregar Columna</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/spreadsheet.js"></script>
+</body>
+</html>

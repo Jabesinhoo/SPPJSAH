@@ -33,7 +33,6 @@ exports.createRole = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 // Assign role to user
 exports.assignRole = async (req, res) => {
     try {

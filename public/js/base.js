@@ -1,11 +1,12 @@
-// Lógica de "anti-flicker" para el modo oscuro, se ejecuta inmediatamente
+// Lógica "anti-flicker": se ejecuta de inmediato para evitar el parpadeo.
+// Esto revisa el almacenamiento local o la preferencia del sistema y aplica la clase 'dark'
+// al elemento <html> antes de que la página se cargue por completo.
 (function() {
-    if (
-        localStorage.theme === 'dark' ||
-        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    ) {
+    // Si el tema está guardado como 'dark' O no hay tema guardado Y el sistema prefiere 'dark'
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
     } else {
+        // En cualquier otro caso, remueve la clase 'dark' para asegurar el modo claro.
         document.documentElement.classList.remove('dark');
     }
 })();
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sunIcon = document.getElementById('sun-icon');
     const moonIcon = document.getElementById('moon-icon');
     const currentYearSpan = document.getElementById('current-year');
+    const logoutButton = document.getElementById('logout-button');
 
     // Lógica para el footer, muestra el año actual
     if (currentYearSpan) {
@@ -42,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cierra el sidebar si se redimensiona la ventana a un tamaño de escritorio
     window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768 && sidebar) { // 768px es el breakpoint 'md' de Tailwind
+        if (window.innerWidth >= 768 && sidebar) {
             sidebar.classList.remove('-translate-x-full');
         }
     });
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isDarkMode = () => document.documentElement.classList.contains('dark');
 
     const updateIcons = () => {
+        // Asegúrate de que los íconos existan antes de manipularlos
         if (sunIcon && moonIcon) {
             if (isDarkMode()) {
                 sunIcon.classList.remove('hidden');
@@ -62,26 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const loadTheme = () => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else if (savedTheme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
-            // Si no hay tema guardado, usa el tema del sistema
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
-        updateIcons();
-    };
+    // Aplica el tema guardado al cargar la página y actualiza los íconos
+    updateIcons();
 
-    // Aplica el tema guardado y los listeners
-    loadTheme();
-
+    // Listener para el botón de cambio de tema
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
             if (isDarkMode()) {
@@ -96,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lógica para el botón de "Cerrar Sesión"
-    const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
             window.location.href = '/logout';

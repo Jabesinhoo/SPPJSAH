@@ -17,9 +17,11 @@ const sequelize = new Sequelize(
 // Cargar modelos
 const User = require('./user')(sequelize, DataTypes);
 const Product = require('./product')(sequelize, DataTypes);
-const Role = require('./role')(sequelize, DataTypes); // ✅ Nueva línea
+const Role = require('./role')(sequelize, DataTypes);
+const Supplier = require('./supplier')(sequelize, DataTypes); // ✅ Así debe cargarse
+const SpreadsheetModels = require('./spreadsheet')(sequelize, DataTypes);
+const { Spreadsheet, SpreadsheetColumn, SpreadsheetRow, SpreadsheetCell } = SpreadsheetModels;
 
-// Definir asociaciones
 Object.values(sequelize.models)
     .filter(model => typeof model.associate === 'function')
     .forEach(model => model.associate(sequelize.models));
@@ -29,5 +31,10 @@ module.exports = {
     Sequelize,
     User,
     Product,
-    Role, // ✅ Nueva línea
+    Role,
+    Supplier,
+    Spreadsheet,
+    SpreadsheetColumn, 
+    SpreadsheetRow,
+    SpreadsheetCell
 };

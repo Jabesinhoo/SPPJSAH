@@ -1,0 +1,148 @@
+
+<div class="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 md:p-8">
+
+    <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-gray-100 mb-8 text-center">
+        Ajustes de Usuario
+    </h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <aside class="md:col-span-1">
+            <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 md:p-6 shadow-md">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Opciones</h2>
+                <nav class="space-y-3">
+                    <button id="tab-profile"
+                        class="tab-button w-full text-left px-4 py-2 rounded-lg bg-indigo-600 dark:bg-indigo-800 text-white font-medium hover:bg-indigo-700 dark:hover:bg-indigo-700 transition-colors duration-200">
+                        <span class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span>Perfil</span>
+                        </span>
+                    </button>
+                    <button id="tab-password"
+                        class="tab-button w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        <span class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M18 8a6 6 0 01-7.743 5.743A10.027 10.027 0 0110 18a10.027 10.027 0 01-.257-4.257A6 6 0 0118 8zM5.38 5.619a8.001 8.001 0 00-2.31 4.57c.228 1.545.922 2.973 1.93 4.144A8.001 8.001 0 005.38 5.619z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span>Contraseña</span>
+                        </span>
+                    </button>
+                    <button id="tab-username"
+                        class="tab-button w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        <span class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path
+                                    d="M13 6a3 3 0 11-6 0 3 3 0 016 0zm-1.127 6.443A7.001 7.001 0 0110 16a7.001 7.001 0 01-1.873-3.557M18 10a8 8 0 11-16 0 8 8 0 0116 0z" />
+                            </svg>
+                            <span>Nombre de usuario</span>
+                        </span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="md:col-span-2 space-y-8">
+            <section id="profile-section"
+                class="tab-content bg-gray-100 dark:bg-gray-700 rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Foto de Perfil</h2>
+                <div class="flex items-center flex-col sm:flex-row mb-6 text-center sm:text-left">
+                    <img id="profile-picture" src="<%= user.profilePicture || '/img/user.png' %>" alt="Foto de perfil"
+                        class="h-24 w-24 rounded-full object-cover shadow-lg border-2 border-indigo-500 mb-4 sm:mb-0 sm:mr-6">
+                    <div class="flex flex-col items-center sm:items-start">
+                        <p class="text-gray-700 dark:text-gray-300 mb-2">Cambia tu foto de perfil</p>
+                        <div class="flex space-x-3">
+                            <label for="profile-picture-upload"
+                                class="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors duration-200">
+                                Subir imagen
+                            </label>
+                            <input type="file" id="profile-picture-upload" accept="image/*" class="hidden">
+                            <button id="remove-profile-picture"
+                                class="bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors duration-200">
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="profile-message" class="hidden mt-4 p-3 rounded-md text-sm"></div>
+            </section>
+
+            <section id="password-section"
+                class="tab-content hidden bg-gray-100 dark:bg-gray-700 rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Cambiar Contraseña</h2>
+                <form id="password-form" class="space-y-4">
+                    <div>
+                        <label for="current-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Contraseña actual
+                        </label>
+                        <input type="password" id="current-password" name="currentPassword"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+                            required>
+                    </div>
+                    <div>
+                        <label for="new-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Nueva contraseña
+                        </label>
+                        <input type="password" id="new-password" name="newPassword"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+                            required minlength="6">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo 6 caracteres</p>
+                    </div>
+                    <div>
+                        <label for="confirm-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Confirmar nueva contraseña
+                        </label>
+                        <input type="password" id="confirm-password" name="confirmPassword"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+                            required>
+                    </div>
+                    <button type="submit"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-md font-medium hover:bg-indigo-700 transition-colors duration-200">
+                        Cambiar contraseña
+                    </button>
+                </form>
+                <div id="password-message" class="hidden mt-4 p-3 rounded-md text-sm"></div>
+            </section>
+
+            <section id="username-section"
+                class="tab-content hidden bg-gray-100 dark:bg-gray-700 rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Cambiar Nombre de Usuario</h2>
+                <form id="username-form" class="space-y-4">
+                    <div>
+                        <label for="current-username"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Nombre de usuario actual
+                        </label>
+                        <input type="text" id="current-username"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                            value="<%= user.username %>" disabled>
+                    </div>
+                    <div>
+                        <label for="new-username"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Nuevo nombre de usuario
+                        </label>
+                        <input type="text" id="new-username" name="newUsername"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+                            required minlength="3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo 3 caracteres</p>
+                    </div>
+                    <button type="submit"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-md font-medium hover:bg-indigo-700 transition-colors duration-200">
+                        Cambiar nombre de usuario
+                    </button>
+                </form>
+                <div id="username-message" class="hidden mt-4 p-3 rounded-md text-sm"></div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script src="/js/settings.js"></script>

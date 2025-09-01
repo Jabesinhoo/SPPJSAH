@@ -1,9 +1,9 @@
 // createAdmin.js
-const { sequelize, User, Role } = require('./models');
+const { sequelize, User, Role, Supplier } = require('./models');
 
 async function createAdminUser() {
-    const username = 'admin1';
-    const password = 'password123'; // No la encriptes aquí
+    const username = 'xxx';
+    const password = 'xxx'; // No la encriptes aquí
 
     try {
         await sequelize.sync();

@@ -6,8 +6,6 @@ exports.register = async (req, res) => {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña son obligatorios' });
 
-        // ✅ NO hashees aquí - el hook beforeCreate lo hará automáticamente
-        // Find the default user role by name
         const defaultRole = await Role.findOne({ where: { name: 'user' } });
 
         if (!defaultRole) {
@@ -16,15 +14,13 @@ exports.register = async (req, res) => {
 
         const newUser = await User.create({
             username,
-            password: password, // ← Pasa la contraseña en texto plano
-            roleUuid: defaultRole.uuid // Assign the UUID of the default role
+            password: password, 
+            roleUuid: defaultRole.uuid 
         });
 
-        // Use the user's UUID for the session
         req.session.userId = newUser.uuid; 
         req.session.username = newUser.username;
-        req.session.userRole = defaultRole.name; // Store the role name for easy access
-
+        req.session.userRole = defaultRole.name; 
         const { password: _omit, ...safe } = newUser.toJSON();
         return res.status(201).json({
             message: 'Usuario registrado con éxito.',
@@ -73,7 +69,6 @@ exports.login = async (req, res) => {
 
     console.log('✅ Password verified for user:', username);
 
-    // ✅ CORRECCIÓN: Guarda TODA la información necesaria en la sesión
     req.session.userId = user.uuid;
     req.session.username = user.username;
     req.session.userRole = user.role?.name;

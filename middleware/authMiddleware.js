@@ -1,28 +1,57 @@
 // middleware/authMiddleware.js
 
 /**
- * Middleware para verificar si el usuario está autenticado.
- * Redirige al inicio de sesión si no hay un userId en la sesión.
+ * Detecta si la petición espera JSON (AJAX / fetch)
  */
-exports.isAuthenticated = (req, res, next) => {
-    if (req.session.userId) {
-        next();
-    } else {
-        res.redirect('/registro_inicio');
-    }
-};
+function wantsJson(req) {
+  const accept = req.get('Accept') || '';
+  return req.xhr || accept.includes('application/json') || req.query.ajax === '1';
+}
 
 /**
- * Middleware de autorización que verifica si el usuario tiene un rol específico.
- * Se usa como una función de fábrica (currying).
- * @param {string} roleRequired - El rol necesario para acceder a la ruta.
+ * Middleware para verificar si el usuario está autenticado.
+ * Permite acceso libre a login y register.
  */
-exports.authorize = (roleRequired) => {
-    return (req, res, next) => {
-        if (req.session.userRole === roleRequired) {
-            next();
-        } else {
-            res.status(403).send('Acceso denegado. No tienes los permisos necesarios.');
-        }
-    };
-};
+function isAuthenticated(req, res, next) {
+  // 🔑 Excepciones (formularios y API)
+  const publicPaths = ['/login', '/register', '/api/login', '/api/register'];
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
+
+  // ✅ Usuario autenticado
+  if (req.session && req.session.userId) {
+    return next();
+  }
+
+  // ❌ Usuario NO autenticado
+  if (wantsJson(req)) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+  return res.redirect('/registro_inicio');
+}
+
+// Alias para compatibilidad
+const requireAuth = isAuthenticated;
+
+/**
+ * Middleware para autorizar por rol
+ * Ejemplo: authorize('admin') o authorize(['admin','superadmin'])
+ */
+function authorize(requiredRole = 'user') {
+  return (req, res, next) => {
+    const role = req.session?.userRole || 'user';
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+
+    if (!roles.includes(role)) {
+      if (wantsJson(req)) {
+        return res.status(403).json({ error: 'Prohibido' });
+      }
+      return res.status(403).render('403', { title: 'Prohibido' });
+    }
+
+    next();
+  };
+}
+
+module.exports = { isAuthenticated, requireAuth, authorize };
