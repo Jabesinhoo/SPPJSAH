@@ -5,6 +5,9 @@ const path = require('path');
 const session = require('express-session');
 const expressLayouts = require('express-ejs-layouts');
 const flash = require('connect-flash');
+const helmet = require('helmet'); // arriba con los requires
+const pgSession = require('connect-pg-simple')(session);
+
 const errorHandler = require('./middleware/errorHandler');
 
 const { sequelize, User, Role } = require('./models');
@@ -28,6 +31,32 @@ const allowedOrigins = [
   process.env.NGROK_URL // 👈 añadimos el dominio ngrok desde .env
 ];
 const app = express();
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "default-src": ["'self'"],
+        "script-src": [
+          "'self'",
+          "https://cdn.tailwindcss.com",  // permite Tailwind CDN
+          "'unsafe-inline'"               // permite tus scripts inline
+        ],
+        "style-src": [
+          "'self'",
+          "https://cdn.jsdelivr.net",     // si usas css externo
+          "'unsafe-inline'"               // permite estilos inline
+        ],
+        "img-src": ["'self'", "data:", "https:"], // imágenes locales y externas
+      },
+    },
+  })
+);
+
+app.disable('x-powered-by');      // para ocultar la cabecera "X-Powered-By: Express"
+
+
+
 const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
@@ -54,10 +83,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'tecnonacho_secret_key',
+  store: new pgSession({
+    conObject: {
+      connectionString: process.env.DATABASE_URL, // o tus credenciales PG
+    },
+    tableName: 'session'
+  }),
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'strict',
+    maxAge: 1000 * 60 * 60 * 2 // 2 horas
+  }
 }));
+
 app.use(flash());
 
 
