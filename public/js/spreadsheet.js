@@ -2,7 +2,7 @@
 let currentSpreadsheetId = null;
 let currentSpreadsheetData = null;
 
-// Inicializar la aplicación
+// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     loadSpreadsheets();
     setupEventListeners();
@@ -11,10 +11,39 @@ document.addEventListener('DOMContentLoaded', function() {
 // Configurar event listeners
 function setupEventListeners() {
     // Formulario crear spreadsheet
-    document.getElementById('createSpreadsheetForm').addEventListener('submit', createSpreadsheet);
+    const createForm = document.getElementById('createSpreadsheetForm');
+    if (createForm) {
+        createForm.addEventListener('submit', createSpreadsheet);
+    }
     
     // Formulario agregar columna
-    document.getElementById('addColumnForm').addEventListener('submit', handleAddColumn);
+    const columnForm = document.getElementById('addColumnForm');
+    if (columnForm) {
+        columnForm.addEventListener('submit', handleAddColumn);
+    }
+}
+
+// Funciones para modales
+function openCreateModal() {
+    document.getElementById('createSpreadsheetModal').classList.remove('hidden');
+    document.getElementById('createSpreadsheetModal').classList.add('flex');
+}
+
+function closeCreateModal() {
+    document.getElementById('createSpreadsheetModal').classList.add('hidden');
+    document.getElementById('createSpreadsheetModal').classList.remove('flex');
+}
+
+function addColumn() {
+    document.getElementById('addColumnModal').classList.remove('hidden');
+    document.getElementById('addColumnModal').classList.add('flex');
+    document.getElementById('addColumnForm').reset();
+    toggleSelectOptions();
+}
+
+function closeColumnModal() {
+    document.getElementById('addColumnModal').classList.add('hidden');
+    document.getElementById('addColumnModal').classList.remove('flex');
 }
 
 // Cargar lista de spreadsheets
@@ -40,37 +69,58 @@ function renderSpreadsheetsList(spreadsheets) {
     
     if (spreadsheets.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-table fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No hay hojas de cálculo</h5>
-                <p class="text-muted">Crea tu primera hoja de cálculo haciendo clic en "Nueva Hoja"</p>
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay hojas de cálculo</h3>
+                <p class="text-gray-500 dark:text-gray-400">Crea tu primera hoja de cálculo haciendo clic en "Nueva Hoja"</p>
             </div>
         `;
         return;
     }
     
     const html = spreadsheets.map(spreadsheet => `
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h5 class="card-title mb-1">${escapeHtml(spreadsheet.name)}</h5>
-                        <p class="card-text text-muted small mb-1">
-                            ${spreadsheet.description || 'Sin descripción'}
-                        </p>
-                        <small class="text-muted">
-                            ${spreadsheet.columns?.length || 0} columnas • 
-                            Creado: ${new Date(spreadsheet.createdAt).toLocaleDateString()}
-                        </small>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        ${escapeHtml(spreadsheet.name)}
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                        ${spreadsheet.description || 'Sin descripción'}
+                    </p>
+                    <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                            </svg>
+                            ${spreadsheet.columns?.length || 0} columnas
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ${new Date(spreadsheet.createdAt).toLocaleDateString()}
+                        </span>
                     </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-primary btn-sm me-2" onclick="openSpreadsheet(${spreadsheet.id})">
-                            <i class="fas fa-edit me-1"></i>Abrir
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteSpreadsheet(${spreadsheet.id}, '${escapeHtml(spreadsheet.name)}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button 
+                        onclick="openSpreadsheet(${spreadsheet.id})" 
+                        class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Abrir
+                    </button>
+                    <button 
+                        onclick="deleteSpreadsheet(${spreadsheet.id}, '${escapeHtml(spreadsheet.name)}')" 
+                        class="inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -105,7 +155,7 @@ async function createSpreadsheet(e) {
         if (result.success) {
             showAlert('Hoja de cálculo creada exitosamente', 'success');
             document.getElementById('createSpreadsheetForm').reset();
-            bootstrap.Modal.getInstance(document.getElementById('createSpreadsheetModal')).hide();
+            closeCreateModal();
             loadSpreadsheets();
         } else {
             showAlert(result.message || 'Error al crear la hoja de cálculo', 'danger');
@@ -145,7 +195,6 @@ function renderSpreadsheetEditor(data) {
     document.getElementById('currentSpreadsheetName').textContent = data.name;
     document.getElementById('currentSpreadsheetDesc').textContent = data.description || '';
     
-    const table = document.getElementById('spreadsheetTable');
     const thead = document.getElementById('tableHeader');
     const tbody = document.getElementById('tableBody');
     
@@ -156,37 +205,48 @@ function renderSpreadsheetEditor(data) {
     if (!data.columns || data.columns.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="100%" class="text-center py-4">
-                    <i class="fas fa-columns fa-2x text-muted mb-3"></i>
-                    <h6 class="text-muted">No hay columnas</h6>
-                    <p class="text-muted mb-0">Agrega tu primera columna haciendo clic en "Columna"</p>
+                <td colspan="100%" class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay columnas</h3>
+                    <p class="text-gray-500 dark:text-gray-400">Agrega tu primera columna haciendo clic en "Columna"</p>
                 </td>
             </tr>
         `;
         return;
     }
     
-    // Crear header
+    // Crear header con clases de Tailwind
     const headerRow = document.createElement('tr');
     
     // Columna de acciones de fila
     const actionsHeader = document.createElement('th');
-    actionsHeader.className = 'row-actions';
-    actionsHeader.innerHTML = '<i class="fas fa-cog"></i>';
+    actionsHeader.className = 'row-actions bg-gray-50 dark:bg-gray-700 p-3 text-center border-r border-gray-200 dark:border-gray-600';
+    actionsHeader.innerHTML = `
+        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.84 2.37 2.37a1.724 1.724 0 00.462 2.697c.956.56.956 2.085 0 2.645a1.724 1.724 0 00-.462 2.697c.94 1.543-.84 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.84-2.37-2.37a1.724 1.724 0 00-.462-2.697c-.956-.56-.956-2.085 0-2.645a1.724 1.724 0 00.462-2.697c-.94-1.543.84-3.31 2.37-2.37a1.724 1.724 0 002.573-1.066z"></path>
+        </svg>
+    `;
     headerRow.appendChild(actionsHeader);
     
     // Headers de columnas
     data.columns.forEach(column => {
         const th = document.createElement('th');
-        th.className = 'column-header';
+        th.className = 'column-header bg-gray-50 dark:bg-gray-700 p-3 border-r border-gray-200 dark:border-gray-600 relative group';
         th.innerHTML = `
-            <span>${escapeHtml(column.name)}</span>
-            <small class="d-block text-muted">${getColumnTypeLabel(column.columnType)}</small>
-            <div class="column-actions">
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteColumn(${column.id})" title="Eliminar columna">
-                    <i class="fas fa-trash"></i>
-                </button>
+            <div class="flex flex-col">
+                <span class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(column.name)}</span>
+                <small class="text-gray-500 dark:text-gray-400">${getColumnTypeLabel(column.columnType)}</small>
             </div>
+            <button 
+                onclick="deleteColumn(${column.id})" 
+                title="Eliminar columna"
+                class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded bg-red-600 hover:bg-red-700 text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
         `;
         headerRow.appendChild(th);
     });
@@ -198,10 +258,12 @@ function renderSpreadsheetEditor(data) {
         const emptyRow = document.createElement('tr');
         const td = document.createElement('td');
         td.colSpan = data.columns.length + 1;
-        td.className = 'text-center py-3';
+        td.className = 'text-center py-12';
         td.innerHTML = `
-            <i class="fas fa-plus text-muted me-2"></i>
-            <span class="text-muted">No hay filas. Agrega la primera fila haciendo clic en "Fila"</span>
+            <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span class="text-gray-500 dark:text-gray-400">No hay filas. Agrega la primera fila haciendo clic en "Fila"</span>
         `;
         emptyRow.appendChild(td);
         tbody.appendChild(emptyRow);
@@ -210,13 +272,19 @@ function renderSpreadsheetEditor(data) {
     
     data.rows.forEach(row => {
         const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200';
         
         // Columna de acciones de fila
         const actionsTd = document.createElement('td');
-        actionsTd.className = 'row-actions';
+        actionsTd.className = 'row-actions bg-gray-50 dark:bg-gray-700 p-3 text-center border-r border-gray-200 dark:border-gray-600';
         actionsTd.innerHTML = `
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteRow(${row.id})" title="Eliminar fila">
-                <i class="fas fa-trash"></i>
+            <button 
+                onclick="deleteRow(${row.id})" 
+                title="Eliminar fila"
+                class="p-1 rounded bg-red-600 hover:bg-red-700 text-white transition-colors duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
             </button>
         `;
         tr.appendChild(actionsTd);
@@ -225,7 +293,7 @@ function renderSpreadsheetEditor(data) {
         data.columns.forEach(column => {
             const cell = row.cells?.find(c => c.columnId === column.id);
             const td = document.createElement('td');
-            td.className = 'editable-cell';
+            td.className = 'editable-cell p-3 border-r border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200';
             td.setAttribute('data-row-id', row.id);
             td.setAttribute('data-column-id', column.id);
             td.setAttribute('data-column-type', column.columnType);
@@ -251,7 +319,7 @@ function renderSpreadsheetEditor(data) {
 function editCell(cellElement) {
     if (cellElement.querySelector('.cell-input')) return; // Ya está editándose
     
-    const currentValue = cellElement.textContent;
+    const currentValue = cellElement.textContent.trim();
     const columnType = cellElement.getAttribute('data-column-type');
     const selectOptions = cellElement.getAttribute('data-select-options');
     
@@ -260,7 +328,7 @@ function editCell(cellElement) {
     if (columnType === 'select' && selectOptions) {
         // Crear select
         input = document.createElement('select');
-        input.className = 'form-select form-select-sm cell-input';
+        input.className = 'cell-input w-full px-2 py-1 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100';
         
         const options = JSON.parse(selectOptions);
         input.innerHTML = '<option value="">-- Seleccionar --</option>' +
@@ -269,17 +337,17 @@ function editCell(cellElement) {
     } else if (columnType === 'boolean') {
         // Crear select para boolean
         input = document.createElement('select');
-        input.className = 'form-select form-select-sm cell-input';
+        input.className = 'cell-input w-full px-2 py-1 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100';
         input.innerHTML = `
             <option value="">--</option>
-            <option value="true" ${currentValue === 'true' ? 'selected' : ''}>Sí</option>
-            <option value="false" ${currentValue === 'false' ? 'selected' : ''}>No</option>
+            <option value="true" ${currentValue === 'Sí' ? 'selected' : ''}>Sí</option>
+            <option value="false" ${currentValue === 'No' ? 'selected' : ''}>No</option>
         `;
     } else {
         // Crear input
         input = document.createElement('input');
-        input.className = 'form-control form-control-sm cell-input';
-        input.value = currentValue;
+        input.className = 'cell-input w-full px-2 py-1 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100';
+        input.value = currentValue === '--' ? '' : currentValue;
         
         // Configurar tipo de input
         switch (columnType) {
@@ -357,28 +425,20 @@ function cancelCellEdit(cellElement, originalValue, columnType) {
 
 // Formatear valor de celda para mostrar
 function formatCellValue(value, columnType) {
-    if (!value) return '<span class="text-muted">--</span>';
+    if (!value || value === '') return '<span class="text-gray-400 dark:text-gray-500">--</span>';
     
     switch (columnType) {
         case 'boolean':
             return value === 'true' ? 
-                '<span class="badge bg-success">Sí</span>' : 
-                '<span class="badge bg-secondary">No</span>';
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Sí</span>' : 
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">No</span>';
         case 'email':
-            return `<a href="mailto:${escapeHtml(value)}">${escapeHtml(value)}</a>`;
+            return `<a href="mailto:${escapeHtml(value)}" class="text-blue-600 dark:text-blue-400 hover:underline">${escapeHtml(value)}</a>`;
         case 'url':
-            return `<a href="${escapeHtml(value)}" target="_blank" rel="noopener">${escapeHtml(value)}</a>`;
+            return `<a href="${escapeHtml(value)}" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">${escapeHtml(value)}</a>`;
         default:
             return escapeHtml(value);
     }
-}
-
-// Agregar columna
-function addColumn() {
-    const modal = new bootstrap.Modal(document.getElementById('addColumnModal'));
-    document.getElementById('addColumnForm').reset();
-    toggleSelectOptions(); // Reset select options visibility
-    modal.show();
 }
 
 // Manejar formulario agregar columna
@@ -429,7 +489,7 @@ async function handleAddColumn(e) {
         
         if (result.success) {
             showAlert('Columna agregada exitosamente', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('addColumnModal')).hide();
+            closeColumnModal();
             openSpreadsheet(currentSpreadsheetId); // Recargar
         } else {
             showAlert(result.message || 'Error al agregar la columna', 'danger');
@@ -581,35 +641,61 @@ function showAlert(message, type = 'info') {
     const alertContainer = document.getElementById('alertContainer');
     const alertId = 'alert-' + Date.now();
     
+    const typeClasses = {
+        'success': 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900 dark:border-green-700 dark:text-green-200',
+        'danger': 'bg-red-100 border-red-500 text-red-700 dark:bg-red-900 dark:border-red-700 dark:text-red-200',
+        'warning': 'bg-yellow-100 border-yellow-500 text-yellow-700 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-200',
+        'info': 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-200'
+    };
+    
+    const iconPaths = {
+        'success': 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+        'danger': 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+        'warning': 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+        'info': 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+    };
+    
     const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
-            <i class="fas fa-${getAlertIcon(type)} me-2"></i>
-            ${escapeHtml(message)}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="border-l-4 p-4 rounded-r-lg ${typeClasses[type]} transition-all duration-300 transform translate-x-full" id="${alertId}">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPaths[type]}"></path>
+                </svg>
+                <span class="text-sm font-medium">${escapeHtml(message)}</span>
+                <button onclick="removeAlert('${alertId}')" class="ml-auto text-current hover:opacity-70">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     `;
     
     alertContainer.insertAdjacentHTML('beforeend', alertHtml);
     
-    // Auto-remove después de 5 segundos
+    // Animar entrada
     setTimeout(() => {
         const alert = document.getElementById(alertId);
         if (alert) {
-            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-            bsAlert.close();
+            alert.classList.remove('translate-x-full');
+            alert.classList.add('translate-x-0');
         }
+    }, 10);
+    
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+        removeAlert(alertId);
     }, 5000);
 }
 
-// Obtener icono para alerta
-function getAlertIcon(type) {
-    const icons = {
-        'success': 'check-circle',
-        'danger': 'exclamation-triangle',
-        'warning': 'exclamation-circle',
-        'info': 'info-circle'
-    };
-    return icons[type] || 'info-circle';
+function removeAlert(alertId) {
+    const alert = document.getElementById(alertId);
+    if (alert) {
+        alert.classList.add('translate-x-full');
+        setTimeout(() => {
+            alert.remove();
+        }, 300);
+    }
 }
 
 // Escapar HTML
@@ -624,3 +710,20 @@ function escapeHtml(text) {
     };
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
+
+// Cerrar modales con escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCreateModal();
+        closeColumnModal();
+    }
+});
+
+// Cerrar modales al hacer clic fuera
+document.getElementById('createSpreadsheetModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCreateModal();
+});
+
+document.getElementById('addColumnModal').addEventListener('click', function(e) {
+    if (e.target === this) closeColumnModal();
+});

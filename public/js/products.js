@@ -1015,7 +1015,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`/api/excel/search/${encodeURIComponent(sku)}`);
             if (!res.ok) {
-                showMessage('No se pudo consultar el Excel', 'error');
                 return;
             }
 

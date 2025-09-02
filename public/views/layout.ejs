@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="es" class="">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/img/logo.png" type="image/png">
     <title>SPJSAH | <%= title %></title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
 </head>
-
-<body style="font-family: Verdana, Geneva, Tahoma, sans-serif;">
-
+<body style="font-family: Verdana, Geneva, Tahoma, sans-serif;" class="bg-gray-100 dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
     <%- body %>
-
-    </body>
+</body>
 </html>

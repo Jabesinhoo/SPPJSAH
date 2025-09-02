@@ -24,11 +24,13 @@ const { authorize } = require('./middleware/authMiddleware');
 const allowedOrigins = [
   'http://localhost:3000',            // 🔹 solo en desarrollo local
   'https://tecnonacho.com',           // 🔹 dominio principal
-  'https://sppjsah.tecnonacho.com'        // 🔹 tu subdominio de producción
+  'https://sppjsah.tecnonacho.com',
+  process.env.NGROK_URL // 👈 añadimos el dominio ngrok desde .env
 ];
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
 
 app.use(cors({
   origin: function (origin, callback) {
