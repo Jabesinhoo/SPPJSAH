@@ -20,34 +20,66 @@ const userRoutes = require('./routes/userRoutes');
 const supplierRoutes = require('./routes/suppliersRoutes');
 const spreadsheetRoutes = require('./routes/spreadsheetRoutes');
 
-const settingsRoutes = require('./routes/settingsRoutes');     
-const settingsPageRoutes = require('./routes/settingsPage');   
+const settingsRoutes = require('./routes/settingsRoutes');
+const settingsPageRoutes = require('./routes/settingsPage');
 
 const { authorize } = require('./middleware/authMiddleware');
 const allowedOrigins = [
   'http://localhost:3000',            // 🔹 solo en desarrollo local
   'https://tecnonacho.com',           // 🔹 dominio principal
   'https://sppjsah.tecnonacho.com',
-  process.env.NGROK_URL // 👈 añadimos el dominio ngrok desde .env
+  process.env.NGROK_URL,
+  null // 👈 permite formularios sin origin
+  // 👈 añadimos el dominio ngrok desde .env
 ];
 const app = express();
+
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
         "default-src": ["'self'"],
+        "base-uri": ["'self'"],
+        "object-src": ["'none'"],
+
+        // 🧠 Scripts (Tailwind CDN + jsdelivr) y permitir atributos inline (onclick=)
         "script-src": [
           "'self'",
-          "https://cdn.tailwindcss.com",  // permite Tailwind CDN
-          "'unsafe-inline'"               // permite tus scripts inline
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net",
+          "'unsafe-inline'"
         ],
+        "script-src-attr": ["'unsafe-inline'"],
+
+        // 🎨 Estilos: jsdelivr + cdnjs (Font Awesome) + permitir inline styles
         "style-src": [
           "'self'",
-          "https://cdn.jsdelivr.net",     // si usas css externo
-          "'unsafe-inline'"               // permite estilos inline
+          "https://cdn.jsdelivr.net",
+          "https://cdnjs.cloudflare.com",
+          "'unsafe-inline'"
         ],
-        "img-src": ["'self'", "data:", "https:"], // imágenes locales y externas
+        // algunos navegadores usan esta directiva separada para <link rel="stylesheet">
+        "style-src-elem": [
+          "'self'",
+          "https://cdn.jsdelivr.net",
+          "https://cdnjs.cloudflare.com",
+          "'unsafe-inline'"
+        ],
+
+        // 🔤 Fuentes: permitir que Font Awesome descargue woff/woff2 desde cdnjs
+        "font-src": [
+          "'self'",
+          "https://cdnjs.cloudflare.com",
+          "data:"
+        ],
+
+        // 🖼️ Imágenes
+        "img-src": ["'self'", "data:", "https:"],
+
+        // 🔌 Llamados XHR/Fetch (por si usas jsdelivr/tailwind en runtime)
+        "connect-src": ["'self'", "https://cdn.jsdelivr.net"]
       },
     },
   })
@@ -61,21 +93,20 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-app.use(cors({
+app.use('/api', cors({
   origin: function (origin, callback) {
-    // Permite peticiones sin origin (ej: curl, Postman)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
-    } else {
-      return callback(new Error('❌ No autorizado por CORS: ' + origin), false);
     }
+    return callback(new Error('❌ No autorizado por CORS: ' + origin), false);
   },
-  credentials: true, // Necesario para sesiones/cookies
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -106,15 +137,15 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.userRole = req.session.userRole;
 
-  const success      = req.flash('success');
-  const error        = req.flash('error');
-  const success_msg  = req.flash('success_msg');
-  const error_msg    = req.flash('error_msg');
+  const success = req.flash('success');
+  const error = req.flash('error');
+  const success_msg = req.flash('success_msg');
+  const error_msg = req.flash('error_msg');
 
-  res.locals.success     = success[0]     || success_msg[0] || '';
-  res.locals.error       = error[0]       || error_msg[0]   || '';
+  res.locals.success = success[0] || success_msg[0] || '';
+  res.locals.error = error[0] || error_msg[0] || '';
   res.locals.success_msg = res.locals.success;
-  res.locals.error_msg   = res.locals.error;
+  res.locals.error_msg = res.locals.error;
   next();
 });
 
@@ -135,7 +166,7 @@ app.get('/spreadsheets', (req, res) => {
 
 app.use('/api', spreadsheetRoutes);
 
-app.use('/', settingsPageRoutes); 
+app.use('/', settingsPageRoutes);
 
 app.get('/registro_inicio', (req, res) => {
   res.render('registro_inicio', { title: 'Registro / Inicio de Sesión', layout: false });

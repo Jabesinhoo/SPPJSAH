@@ -3,14 +3,29 @@ const express = require('express');
 const router = express.Router();
 const roleController = require('../controllers/roleController');
 const authMiddleware = require('../middleware/authMiddleware');
+const { roleValidation, assignRoleValidation } = require('../middleware/validationRole');
 
-// Route to get all roles
-router.get('/roles', authMiddleware.authorize('admin'), roleController.getAllRoles);
+// Obtener todos los roles
+router.get(
+  '/roles',
+  authMiddleware.authorize('admin'),
+  roleController.getAllRoles
+);
 
-// Route to create a new role
-router.post('/roles', authMiddleware.authorize('admin'), roleController.createRole);
+// Crear un nuevo rol
+router.post(
+  '/roles',
+  authMiddleware.authorize('admin'),
+  roleValidation,
+  roleController.createRole
+);
 
-// Route to assign a role to a user
-router.put('/users/:id/role', authMiddleware.authorize('admin'), roleController.assignRole);
+// Asignar un rol a un usuario
+router.put(
+  '/users/:id/role',
+  authMiddleware.authorize('admin'),
+  assignRoleValidation,
+  roleController.assignRole
+);
 
 module.exports = router;

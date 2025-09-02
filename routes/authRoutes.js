@@ -33,7 +33,8 @@ router.post(
       .withMessage('El usuario solo puede contener letras, números, guiones y guiones bajos'),
 
     body('email')
-      .optional({ checkFalsy: true })   // 👈 ahora puede estar vacío o faltar
+      .optional({ checkFalsy: true })
+      .normalizeEmail()
       .isEmail()
       .withMessage('Debe ser un email válido'),
 
@@ -44,13 +45,13 @@ router.post(
       .withMessage('Debe incluir al menos un número')
       .matches(/[A-Z]/)
       .withMessage('Debe incluir al menos una letra mayúscula')
+      .not()
+      .isIn(['12345678', 'password', 'qwerty'])
+      .withMessage('La contraseña es demasiado común')
   ]),
-  (req, res, next) => {
-    console.log('📥 [REGISTER] Body:', req.body);
-    next();
-  },
   authController.register
 );
+
 
 /* ==============================
    Login de usuario
@@ -62,6 +63,7 @@ router.post(
   validate([
     body('username')
       .trim()
+      .escape()
       .notEmpty()
       .withMessage('El usuario es requerido')
       .isLength({ min: 3 })
@@ -74,9 +76,15 @@ router.post(
   authController.login
 );
 
+
 /* ==============================
    Logout de usuario
    ============================== */
-router.post('/logout', authController.logout);
+router.post('/logout', (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(400).json({ success: false, message: 'No hay sesión activa' });
+  }
+  authController.logout(req, res, next);
+});
 
 module.exports = router;

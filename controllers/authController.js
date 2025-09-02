@@ -4,47 +4,64 @@ const bcrypt = require('bcrypt');
 
 exports.register = async (req, res) => {
   try {
-    const { username, password, email } = req.body;  // 👈 incluir email
+    const { username, password, email } = req.body;
 
+    // Validación de campos requeridos
     if (!username || !password) {
-      return res.status(400).json({ error: 'Usuario y contraseña son obligatorios' });
+      return res.status(400).json({ success: false, message: 'Usuario y contraseña son obligatorios.' });
     }
 
+    // Verificar duplicados antes de crear
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'El nombre de usuario ya está en uso.' });
+    }
+
+    if (email) {
+      const existingEmail = await User.findOne({ where: { email } });
+      if (existingEmail) {
+        return res.status(409).json({ success: false, message: 'El correo electrónico ya está en uso.' });
+      }
+    }
+
+    // Obtener rol por defecto
     const defaultRole = await Role.findOne({ where: { name: 'user' } });
     if (!defaultRole) {
-      return res.status(500).json({ error: 'Default role not found. Please create a "user" role first.' });
+      return res.status(500).json({ success: false, message: 'Rol por defecto no encontrado. Crea el rol "user".' });
     }
 
+    // Crear usuario
     const newUser = await User.create({
       username,
-      password,
-      email,          // 👈 ahora sí existe
+      password,   // bcrypt se ejecuta en hook del modelo (beforeCreate/beforeUpdate)
+      email: email || null,
       roleUuid: defaultRole.uuid
     });
 
+    // Crear sesión
     req.session.userId = newUser.uuid;
     req.session.username = newUser.username;
     req.session.userRole = defaultRole.name;
 
     const { password: _omit, ...safe } = newUser.toJSON();
     return res.status(201).json({
+      success: true,
       message: 'Usuario registrado con éxito.',
       user: safe,
       redirect: '/'
     });
+
   } catch (error) {
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ error: 'El usuario ya existe' });
-    }
     console.error('❌ Error en register:', error);
-    return res.status(400).json({ error: error.message });
+    return res.status(500).json({ success: false, message: 'Error en el registro.', details: error.message });
   }
 };
 
 
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body || {};
+    const username = (req.body.username || '').trim();
+    const password = req.body.password || '';
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos.' });
@@ -76,7 +93,8 @@ exports.login = async (req, res) => {
       user: {
         uuid: user.uuid,
         username: user.username,
-        role: user.role?.name
+        role: user.role?.name,
+        email: user.email || null
       },
       redirect: '/'
     });
@@ -85,6 +103,7 @@ exports.login = async (req, res) => {
     return res.status(500).json({ error: 'Error inesperado en el inicio de sesión.' });
   }
 };
+
 
 
 exports.logout = (req, res) => {

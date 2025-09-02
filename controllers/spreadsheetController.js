@@ -464,36 +464,37 @@ class SpreadsheetController {
 
   // Eliminar spreadsheet
   static async deleteSpreadsheet(req, res) {
-    try {
-      const { id } = req.params;
-      const { userId } = req.session;
+  try {
+    const { id } = req.params;
+    const { userId } = req.session;
 
-      const spreadsheet = await Spreadsheet.findOne({
-        where: { id: spreadsheetId, userUuid: req.session.userId }
-      });
+    const spreadsheet = await Spreadsheet.findOne({
+      where: { id, userUuid: userId }   // 👈 aquí usas "id"
+    });
 
-      if (!spreadsheet) {
-        return res.status(404).json({
-          success: false,
-          message: 'Hoja de cálculo no encontrada'
-        });
-      }
-
-      await spreadsheet.update({ isActive: false });
-
-      res.json({
-        success: true,
-        message: 'Hoja de cálculo eliminada exitosamente'
-      });
-    } catch (error) {
-      console.error('Error al eliminar spreadsheet:', error);
-      res.status(500).json({
+    if (!spreadsheet) {
+      return res.status(404).json({
         success: false,
-        message: 'Error al eliminar la hoja de cálculo',
-        error: error.message
+        message: 'Hoja de cálculo no encontrada'
       });
     }
+
+    await spreadsheet.update({ isActive: false });
+
+    res.json({
+      success: true,
+      message: 'Hoja de cálculo eliminada exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar spreadsheet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar la hoja de cálculo',
+      error: error.message
+    });
   }
+}
+
 }
 
 module.exports = SpreadsheetController;
