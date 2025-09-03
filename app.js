@@ -10,10 +10,9 @@ const pgSession = require('connect-pg-simple')(session);
 const winston = require('winston');
 const logger = require('./utils/logger');
 const csrf = require('csurf');
-const rateLimit = require('express-rate-limit'); // ✅ Nuevo: Rate limiter
+const rateLimit = require('express-rate-limit');
 
 const errorHandler = require('./middleware/errorHandler');
-
 const { sequelize, User, Role } = require('./models');
 
 // Rutas
@@ -23,11 +22,10 @@ const roleRoutes = require('./routes/roleRoutes');
 const userRoutes = require('./routes/userRoutes');
 const supplierRoutes = require('./routes/suppliersRoutes');
 const spreadsheetRoutes = require('./routes/spreadsheetRoutes');
-
 const settingsRoutes = require('./routes/settingsRoutes');
 const settingsPageRoutes = require('./routes/settingsPage');
-
 const { authorize } = require('./middleware/authMiddleware');
+
 const allowedOrigins = [
   'http://localhost:3000',
   'https://tecnonacho.com',
@@ -35,23 +33,37 @@ const allowedOrigins = [
   process.env.NGROK_URL,
   null
 ];
+
 const app = express();
 
-// ✅ Rate Limiter Global: 100 requests por minuto por IP
+// ✅ MIDDLEWARE PARA FORZAR HTTPS EN PRODUCCIÓN
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    
+    if (!isSecure) {
+      const httpsUrl = `https://${req.headers.host}${req.originalUrl}`;
+      return res.redirect(301, httpsUrl);
+    }
+    
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
+// ✅ Rate Limiter Global
 const globalLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 100, // Límite de 100 requests por IP por ventana de tiempo
+  windowMs: 1 * 60 * 1000,
+  max: 100,
   message: {
     error: 'Demasiadas solicitudes desde esta IP, intenta nuevamente en un minuto.'
   },
-  standardHeaders: true, // Devuelve información del rate limit en headers `RateLimit-*`
-  legacyHeaders: false, // Desactiva headers `X-RateLimit-*`
+  standardHeaders: true,
+  legacyHeaders: false,
   skip: (req) => {
-    // Opcional: Saltar rate limiting para ciertas IPs o rutas
     const skipPaths = ['/health', '/favicon.ico'];
     if (skipPaths.includes(req.path)) return true;
     
-    // Saltar para IPs de confianza (opcional)
     const trustedIPs = ['127.0.0.1', '::1'];
     if (trustedIPs.includes(req.ip)) return true;
     
@@ -64,14 +76,12 @@ const globalLimiter = rateLimit({
       method: req.method
     });
     
-    // Responder con JSON para APIs, con render para vistas
     if (req.xhr || req.path.startsWith('/api')) {
       return res.status(429).json({
         error: 'Demasiadas solicitudes. Intenta nuevamente en un minuto.'
       });
     }
     
-    // Para rutas de vistas, mostrar página de error
     res.status(429).render('error', {
       title: 'Demasiadas solicitudes',
       error: 'Has excedido el límite de solicitudes. Intenta nuevamente en un minuto.'
@@ -79,9 +89,10 @@ const globalLimiter = rateLimit({
   }
 });
 
-// ✅ Aplicar rate limiter globalmente
 app.use(globalLimiter);
 
+// ✅ CONFIGURACIÓN COMPLETA DE HELMET CON CABECERAS EXTRA DE SEGURIDAD
+// En tu app.js - Reemplaza la configuración de Helmet
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -99,12 +110,14 @@ app.use(
         "script-src-attr": ["'unsafe-inline'"],
         "style-src": [
           "'self'",
+          "https://cdn.tailwindcss.com",
           "https://cdn.jsdelivr.net",
           "https://cdnjs.cloudflare.com",
           "'unsafe-inline'"
         ],
         "style-src-elem": [
           "'self'",
+          "https://cdn.tailwindcss.com",
           "https://cdn.jsdelivr.net",
           "https://cdnjs.cloudflare.com",
           "'unsafe-inline'"
@@ -118,15 +131,41 @@ app.use(
         "connect-src": ["'self'", "https://cdn.jsdelivr.net"]
       },
     },
+    
+    // ✅ POLÍTICAS MÁS PERMISIVAS PARA RECURSOS EXTERNOS
+    crossOriginOpenerPolicy: { 
+      policy: "same-origin" 
+    },
+    crossOriginEmbedderPolicy: { 
+      policy: "credentialless"  // Más permisivo para CDNs
+    },
+    crossOriginResourcePolicy: { 
+      policy: "cross-origin"    // Permite recursos de otros orígenes
+    },
+    
+    // Otras configuraciones
+    frameguard: { 
+      action: 'deny' 
+    },
+    hsts: { 
+      maxAge: 31536000, 
+      includeSubDomains: true, 
+      preload: true 
+    },
+    ieNoOpen: true,
+    noSniff: true,
+    referrerPolicy: { 
+      policy: 'strict-origin-when-cross-origin' 
+    },
+    xssFilter: true
   })
 );
 
 app.disable('x-powered-by');
-
 const PORT = process.env.PORT || 3000;
+app.set('trust proxy', 1);
 
-app.set('trust proxy', 1); // Importante para rate limiting detrás de proxy
-
+// ... el resto de tu configuración permanece igual ...
 app.use('/api', cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -153,7 +192,7 @@ const sessionStore =
     })
     : undefined;
 
-// ✅ Middleware de sesión primero
+// ✅ Configuración de sesión
 app.use(
   session({
     store: sessionStore,
@@ -161,7 +200,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // ✅ Cookie solo se envía por HTTPS en producción
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'strict',
       maxAge: 1000 * 60 * 60 * 2,
