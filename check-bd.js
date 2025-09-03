@@ -1,9 +1,10 @@
 // check-models.js
 const { sequelize, User, Product, Role, Supplier, Spreadsheet } = require('./models');
+const logger = require('../utils/logger');
 
 async function checkModels() {
   try {
-    console.log('🔍 Verificando modelos cargados...');
+    logger.info('🔍 Verificando modelos cargados...');
     
     const models = [
       { name: 'User', model: User },
@@ -15,15 +16,15 @@ async function checkModels() {
 
     models.forEach(({ name, model }) => {
       if (model) {
-        console.log(`✅ ${name} cargado correctamente`);
+        logger.info(`✅ ${name} cargado correctamente`);
       } else {
-        console.log(`❌ ${name} NO cargado`);
+        logger.info(`❌ ${name} NO cargado`);
       }
     });
 
-    console.log('\n🔄 Sincronizando base de datos...');
+    logger.info('\n🔄 Sincronizando base de datos...');
     await sequelize.sync({ force: true });
-    console.log('✅ Base de datos sincronizada');
+    logger.info('✅ Base de datos sincronizada');
 
     const [tables] = await sequelize.query(`
       SELECT table_name 
@@ -32,11 +33,11 @@ async function checkModels() {
       ORDER BY table_name
     `);
     
-    console.log('\n📊 Tablas creadas:');
-    tables.forEach(table => console.log(`- ${table.table_name}`));
+    logger.info('\n📊 Tablas creadas:');
+    tables.forEach(table => logger.info(`- ${table.table_name}`));
 
   } catch (error) {
-    console.error('❌ Error:', error);
+    logger.error('❌ Error:', error);
   } finally {
     await sequelize.close();
   }

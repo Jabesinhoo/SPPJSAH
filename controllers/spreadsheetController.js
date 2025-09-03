@@ -25,7 +25,7 @@ class SpreadsheetController {
         data: spreadsheets
       });
     } catch (error) {
-      console.error('Error al obtener spreadsheets:', error);
+      logger.error('Error al obtener spreadsheets:', error);
       res.status(500).json({
         success: false,
         message: 'Error al obtener las hojas de cálculo',
@@ -61,7 +61,7 @@ class SpreadsheetController {
         data: spreadsheet
       });
     } catch (error) {
-      console.error('Error al crear spreadsheet:', error);
+      logger.error('Error al crear spreadsheet:', error);
       res.status(500).json({
         success: false,
         message: 'Error al crear la hoja de cálculo',
@@ -117,7 +117,7 @@ class SpreadsheetController {
       data: spreadsheet
     });
   } catch (error) {
-    console.error('Error al obtener spreadsheet:', error);
+    logger.error('Error al obtener spreadsheet:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener la hoja de cálculo',
@@ -195,7 +195,7 @@ class SpreadsheetController {
         data: column
       });
     } catch (error) {
-      console.error('Error al agregar columna:', error);
+      logger.error('Error al agregar columna:', error);
       res.status(500).json({
         success: false,
         message: 'Error al agregar la columna',
@@ -253,7 +253,7 @@ class SpreadsheetController {
         data: row
       });
     } catch (error) {
-      console.error('Error al agregar fila:', error);
+      logger.error('Error al agregar fila:', error);
       res.status(500).json({
         success: false,
         message: 'Error al agregar la fila',
@@ -363,7 +363,7 @@ class SpreadsheetController {
         data: { value: validatedValue }
       });
     } catch (error) {
-      console.error('Error al actualizar celda:', error);
+      logger.error('Error al actualizar celda:', error);
       res.status(500).json({
         success: false,
         message: 'Error al actualizar la celda',
@@ -408,7 +408,7 @@ class SpreadsheetController {
         message: 'Columna eliminada exitosamente'
       });
     } catch (error) {
-      console.error('Error al eliminar columna:', error);
+      logger.error('Error al eliminar columna:', error);
       res.status(500).json({
         success: false,
         message: 'Error al eliminar la columna',
@@ -453,7 +453,7 @@ class SpreadsheetController {
         message: 'Fila eliminada exitosamente'
       });
     } catch (error) {
-      console.error('Error al eliminar fila:', error);
+      logger.error('Error al eliminar fila:', error);
       res.status(500).json({
         success: false,
         message: 'Error al eliminar la fila',
@@ -486,7 +486,7 @@ class SpreadsheetController {
       message: 'Hoja de cálculo eliminada exitosamente'
     });
   } catch (error) {
-    console.error('Error al eliminar spreadsheet:', error);
+    logger.error('Error al eliminar spreadsheet:', error);
     res.status(500).json({
       success: false,
       message: 'Error al eliminar la hoja de cálculo',

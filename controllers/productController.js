@@ -11,7 +11,7 @@ exports.getAllUsers = async (req, res) => {
         });
         res.status(200).json(users.map(user => user.username));
     } catch (err) {
-        console.error('Error al obtener usuarios:', err);
+        logger.error('Error al obtener usuarios:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
@@ -61,7 +61,7 @@ exports.getAllProducts = async (req, res) => {
 
         res.status(200).json(products);
     } catch (err) {
-        console.error('Error al obtener productos:', err);
+        logger.error('Error al obtener productos:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
@@ -93,7 +93,7 @@ exports.getProductById = async (req, res) => {
         // TODOS pueden ver productos "Realizado", solo restringimos edición
         res.status(200).json(product);
     } catch (err) {
-        console.error('Error al obtener el producto por ID:', err);
+        logger.error('Error al obtener el producto por ID:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
@@ -218,7 +218,7 @@ exports.createProduct = async (req, res) => {
             product: newProduct
         });
     } catch (err) {
-        console.error('Error al crear el producto:', err);
+        logger.error('Error al crear el producto:', err);
 
         if (err.name === 'SequelizeUniqueConstraintError') {
             return res.status(409).json({ error: 'Ya existe un producto con este SKU.' });
@@ -364,7 +364,7 @@ exports.updateProduct = async (req, res) => {
 
         res.status(404).json({ error: 'Producto no encontrado.' });
     } catch (err) {
-        console.error('Error al actualizar el producto:', err);
+        logger.error('Error al actualizar el producto:', err);
         res.status(500).json({ error: 'Error interno del servidor.', details: err.message });
     }
 };
@@ -397,7 +397,7 @@ exports.deleteProduct = async (req, res) => {
 
         res.status(404).json({ error: 'Producto no encontrado.' });
     } catch (err) {
-        console.error('Error al eliminar el producto:', err);
+        logger.error('Error al eliminar el producto:', err);
         res.status(500).json({ error: 'Error interno del servidor.', details: err.message });
     }
 };
@@ -430,7 +430,7 @@ exports.getProductStats = async (req, res) => {
             byCategory: stats
         });
     } catch (err) {
-        console.error('Error al obtener estadísticas:', err);
+        logger.error('Error al obtener estadísticas:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
@@ -449,7 +449,7 @@ exports.getTopProducts = async (req, res) => {
         });
         res.json(topProducts);
     } catch (err) {
-        console.error('Error al obtener top productos:', err);
+        logger.error('Error al obtener top productos:', err);
         res.status(500).json({ error: 'Error al obtener top productos' });
     }
 };
@@ -468,7 +468,7 @@ exports.getTopUsers = async (req, res) => {
         });
         res.json(topUsers);
     } catch (err) {
-        console.error('Error al obtener top usuarios:', err);
+        logger.error('Error al obtener top usuarios:', err);
         res.status(500).json({ error: 'Error al obtener top usuarios' });
     }
 };
@@ -491,7 +491,7 @@ exports.getTimeStats = async (req, res) => {
 
         res.json({ promedioMinutos: promedio, total: tiempos.length });
     } catch (err) {
-        console.error('Error al calcular tiempos:', err);
+        logger.error('Error al calcular tiempos:', err);
         res.status(500).json({ error: 'Error al calcular tiempos' });
     }
 };
@@ -502,7 +502,7 @@ exports.getGeneralStats = async (req, res) => {
         const stats = await Product.getStatsByCategory(); // definido en el modelo:contentReference[oaicite:1]{index=1}
         res.json(stats);
     } catch (err) {
-        console.error('Error al obtener estadísticas generales:', err);
+        logger.error('Error al obtener estadísticas generales:', err);
         res.status(500).json({ error: 'Error al obtener estadísticas generales' });
     }
 };
@@ -547,7 +547,7 @@ exports.getBrandStats = async (req, res) => {
 
         res.status(200).json(formattedStats);
     } catch (err) {
-        console.error('Error al obtener estadísticas de marcas:', err);
+        logger.error('Error al obtener estadísticas de marcas:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };

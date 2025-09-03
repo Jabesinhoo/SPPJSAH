@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const logger = require('../utils/logger');
 
 // Configuración de almacenamiento
 const storage = multer.diskStorage({
@@ -10,26 +11,26 @@ const storage = multer.diskStorage({
     const uploadPath = path.join(__dirname, '../public/uploads/suppliers');
     try {
       if (!fs.existsSync(uploadPath)) {
-        console.log('📁 [UPLOAD] Carpeta no existe, creando:', uploadPath);
+        logger.info('📁 [UPLOAD] Carpeta no existe, creando:', uploadPath);
         fs.mkdirSync(uploadPath, { recursive: true });
       }
-      console.log('📁 [UPLOAD] Guardando en:', uploadPath);
+      logger.info('📁 [UPLOAD] Guardando en:', uploadPath);
       cb(null, uploadPath);
     } catch (e) {
-      console.error('❌ [UPLOAD] Error creando carpeta:', e);
+      logger.error('❌ [UPLOAD] Error creando carpeta:', e);
       cb(e);
     }
   },
   filename: (req, file, cb) => {
     const uniqueName = `${uuidv4()}${path.extname(file.originalname).toLowerCase()}`;
-    console.log('🖼️ [UPLOAD] Generado nombre de archivo:', uniqueName);
+    logger.info('🖼️ [UPLOAD] Generado nombre de archivo:', uniqueName);
     cb(null, uniqueName);
   }
 });
 
 // Validación de archivos
 const fileFilter = (req, file, cb) => {
-  console.log('🔎 [UPLOAD] Revisando mimetype:', file.mimetype);
+  logger.info('🔎 [UPLOAD] Revisando mimetype:', file.mimetype);
 
   // Validar tipo MIME
   if (!file.mimetype?.startsWith('image/')) {
@@ -56,10 +57,10 @@ const upload = multer({
 // Middleware para capturar errores de Multer
 function uploadErrorHandler(err, req, res, next) {
   if (err instanceof multer.MulterError) {
-    console.error('❌ [UPLOAD] MulterError:', err);
+    logger.error('❌ [UPLOAD] MulterError:', err);
     return res.status(400).json({ error: `Error de subida: ${err.message}` });
   } else if (err) {
-    console.error('❌ [UPLOAD] Error:', err);
+    logger.error('❌ [UPLOAD] Error:', err);
     return res.status(400).json({ error: err.message });
   }
   next();

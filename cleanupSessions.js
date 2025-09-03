@@ -1,6 +1,7 @@
 // Script para limpiar sesiones expiradas (ejecutar periódicamente)
 const { sequelize } = require('../models');
 const PostgreSQLStore = require('connect-pg-simple')(session);
+const logger = require('../utils/logger');
 
 const cleanup = async () => {
   const store = new PostgreSQLStore({
@@ -8,7 +9,7 @@ const cleanup = async () => {
   });
   
   store.cleanup();
-  console.log('Sesiones expiradas limpiadas');
+  logger.info('Sesiones expiradas limpiadas');
 };
 
 cleanup();

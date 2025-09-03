@@ -1,4 +1,3 @@
-// models/user.js
 const bcrypt = require('bcrypt');
 
 module.exports = (sequelize, DataTypes) => {
@@ -26,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
     profilePicture: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    roleUuid: {
+      type: DataTypes.UUID,
+      allowNull: false
     }
   }, {
     tableName: 'users',
@@ -47,11 +50,10 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.associate = (models) => {
-    User.belongsToMany(models.Role, {
-      through: 'user_roles',
-      foreignKey: 'userUuid',
-      otherKey: 'roleUuid',
-      as: 'roles'
+    // Se cambia la relación a "belongsTo" para coincidir con el schema de la base de datos
+    User.belongsTo(models.Role, {
+      foreignKey: 'roleUuid',
+      as: 'roles' // Se mantiene el alias 'roles' para consistencia en la aplicación
     });
   };
 

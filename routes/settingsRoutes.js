@@ -58,7 +58,7 @@ router.get('/', authMiddleware.requireAuth, async (req, res) => {
 
         res.status(200).json(user);
     } catch (error) {
-        console.error('Error fetching user settings:', error);
+        logger.error('Error fetching user settings:', error);
         res.status(500).json({ error: 'Error al obtener información del usuario.' });
     }
 });
@@ -93,7 +93,7 @@ router.put('/password', authMiddleware.requireAuth, async (req, res) => {
 
         res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });
     } catch (error) {
-        console.error('Error changing password:', error);
+        logger.error('Error changing password:', error);
         res.status(500).json({ error: 'Error al cambiar la contraseña.' });
     }
 });
@@ -130,7 +130,7 @@ router.put('/username', authMiddleware.requireAuth, async (req, res) => {
             newUsername: newUsername
         });
     } catch (error) {
-        console.error('Error changing username:', error);
+        logger.error('Error changing username:', error);
         res.status(500).json({ error: 'Error al cambiar el nombre de usuario.' });
     }
 });
@@ -167,7 +167,7 @@ router.post('/profile-picture', authMiddleware.requireAuth, upload.single('profi
             profilePicture: relativePath
         });
     } catch (error) {
-        console.error('Error uploading profile picture:', error);
+        logger.error('Error uploading profile picture:', error);
         res.status(500).json({ error: 'Error al subir la foto de perfil.' });
     }
 });
@@ -194,7 +194,7 @@ router.delete('/profile-picture', authMiddleware.requireAuth, async (req, res) =
 
         res.status(200).json({ message: 'Foto de perfil eliminada exitosamente.' });
     } catch (error) {
-        console.error('Error deleting profile picture:', error);
+        logger.error('Error deleting profile picture:', error);
         res.status(500).json({ error: 'Error al eliminar la foto de perfil.' });
     }
 });

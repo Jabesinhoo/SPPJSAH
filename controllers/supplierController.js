@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { City } = require('country-state-city');
 const { Op } = require('sequelize'); // Importamos Op para usar operadores como LIKE
+const logger = require('../utils/logger');
 
 // Configuración de paginación
 const ITEMS_PER_PAGE = 10; // Puedes ajustar este número según tu preferencia
@@ -76,7 +77,7 @@ exports.getAllSuppliers = async (req, res) => {
             userRole: req.session.userRole
         });
     } catch (error) {
-        console.error('Error al obtener proveedores:', error);
+        logger.error('Error al obtener proveedores:', error);
         req.flash('error', 'Error al obtener los proveedores');
         res.redirect('/');
     }
@@ -88,12 +89,12 @@ exports.getAllSuppliers = async (req, res) => {
 // Crear nuevo proveedor
 exports.createSupplier = async (req, res) => {
     try {
-        console.log('📦 [CTRL] body:', req.body);
-        console.log('📁 [CTRL] file:', req.file);
+        logger.info('📦 [CTRL] body:', req.body);
+        logger.info('📁 [CTRL] file:', req.file);
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            console.log('❌ [CTRL] Errores de validación (count):', errors.array().length);
+            logger.info('❌ [CTRL] Errores de validación (count):', errors.array().length);
             console.table(errors.array());
 
             const errorMessages = errors.array().map(error => error.msg);
@@ -104,12 +105,12 @@ exports.createSupplier = async (req, res) => {
         let imagenPath = null;
         if (req.file) {
             imagenPath = `/uploads/suppliers/${req.file.filename}`;
-            console.log('🖼️ [CTRL] imagenPath listo:', imagenPath);
+            logger.info('🖼️ [CTRL] imagenPath listo:', imagenPath);
         } else {
-            console.log('ℹ️ [CTRL] Sin archivo de imagen adjunto');
+            logger.info('ℹ️ [CTRL] Sin archivo de imagen adjunto');
         }
 
-        console.log('💾 [CTRL] Creando proveedor en DB...');
+        logger.info('💾 [CTRL] Creando proveedor en DB...');
         const nuevoProveedor = await Supplier.create({
             marca: req.body.marca,
             categoria: req.body.categoria,
@@ -121,13 +122,13 @@ exports.createSupplier = async (req, res) => {
             ciudad: req.body.ciudad,
             imagen: imagenPath
         });
-        console.log('✅ [CTRL] Proveedor creado ID:', nuevoProveedor.id);
+        logger.info('✅ [CTRL] Proveedor creado ID:', nuevoProveedor.id);
 
         req.flash('success', 'Proveedor creado exitosamente');
         res.redirect('/suppliers');
     } catch (error) {
-        console.error('❌ [CTRL] Error al crear proveedor:', error);
-        console.error('❌ [CTRL] Stack:', error.stack);
+        logger.error('❌ [CTRL] Error al crear proveedor:', error);
+        logger.error('❌ [CTRL] Stack:', error.stack);
         req.flash('error', 'Error al crear el proveedor');
         res.redirect('/suppliers');
     }
@@ -138,7 +139,7 @@ exports.updateSupplier = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            console.log('❌ [CTRL] Errores de validación (count):', errors.array().length);
+            logger.info('❌ [CTRL] Errores de validación (count):', errors.array().length);
             console.table(errors.array());
 
             const errorMessages = errors.array().map(error => error.msg);
@@ -178,7 +179,7 @@ exports.updateSupplier = async (req, res) => {
         req.flash('success', 'Proveedor actualizado exitosamente');
         res.redirect('/suppliers');
     } catch (error) {
-        console.error('Error al actualizar proveedor:', error);
+        logger.error('Error al actualizar proveedor:', error);
         req.flash('error', 'Error al actualizar el proveedor');
         res.redirect('/suppliers');
     }
@@ -204,7 +205,7 @@ exports.deleteSupplier = async (req, res) => {
         req.flash('success', 'Proveedor eliminado exitosamente');
         res.redirect('/suppliers');
     } catch (error) {
-        console.error('Error al eliminar proveedor:', error);
+        logger.error('Error al eliminar proveedor:', error);
         req.flash('error', 'Error al eliminar el proveedor');
         res.redirect('/suppliers');
     }

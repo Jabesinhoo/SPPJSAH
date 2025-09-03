@@ -71,9 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const username = document.getElementById('username').value;
         const password = passwordInput.value;
-        const email = document.getElementById('email')?.value || null;  // 👈 asegúrate de tener <input id="email">
+        const email = document.getElementById('email')?.value || null;
 
-        // ✅ endpoint
         const endpoint = isRegistering ? '/api/register' : '/api/login';
 
         console.log('➡️ Enviando al servidor:', { username, email, password, endpoint });
@@ -86,24 +85,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // 👇 Cambia body según el modo
             const body = isRegistering
-                ? {
-                    username,
-                    password,
-                    ...(email ? { email } : {})   // 👈 agrega email solo si no está vacío
-                }
+                ? { username, password, ...(email ? { email } : {}) }
                 : { username, password };
-            // login necesita email + password
+
+            // 👇 Obtenemos el token del <meta>
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'CSRF-Token': csrfToken   // 👈 aquí viaja el token
                 },
                 body: JSON.stringify(body),
             });
+
 
             const data = await response.json();
 
@@ -126,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageElement.classList.remove('text-green-500');
         }
     });
+
 
 
 

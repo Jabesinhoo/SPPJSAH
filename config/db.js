@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
+const logger = require('../utils/logger');
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -20,7 +21,7 @@ const sequelize = new Sequelize(
 );
 
 sequelize.authenticate()
-  .then(() => console.log('✅ Conexión a PostgreSQL establecida'))
-  .catch(err => console.error('❌ Error de conexión:', err));
+  .then(() => logger.info('✅ Conexión a PostgreSQL establecida'))
+  .catch(err => logger.error('❌ Error de conexión:', err));
 
 module.exports = sequelize;

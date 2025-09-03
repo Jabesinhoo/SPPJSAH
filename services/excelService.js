@@ -1,6 +1,7 @@
 // services/excelService.js
 const XLSX = require('xlsx');
 const path = require('path');
+const logger = require('../utils/logger');
 
 class ExcelService {
     constructor() {
@@ -17,9 +18,9 @@ class ExcelService {
             
             // Convertir a JSON
             this.excelData = XLSX.utils.sheet_to_json(worksheet);
-            console.log('Datos de Excel cargados correctamente. Total de productos:', this.excelData.length);
+            logger.info('Datos de Excel cargados correctamente. Total de productos:', this.excelData.length);
         } catch (error) {
-            console.error('Error al cargar el archivo Excel:', error);
+            logger.error('Error al cargar el archivo Excel:', error);
             this.excelData = [];
         }
     }

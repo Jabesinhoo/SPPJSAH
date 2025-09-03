@@ -1,4 +1,5 @@
 const { sequelize, User, Role, Supplier } = require('./models');
+const logger = require('../utils/logger');
 
 async function createAdminUser() {
     const username = 'xxx';
@@ -13,7 +14,7 @@ async function createAdminUser() {
         });
 
         if (!adminRole) {
-            console.error('❌ Error: El rol "admin" no existe. Por favor, asegúrate de que app.js lo haya creado.');
+            logger.error('❌ Error: El rol "admin" no existe. Por favor, asegúrate de que app.js lo haya creado.');
             return;
         }
 
@@ -28,13 +29,13 @@ async function createAdminUser() {
         });
 
         if (created) {
-            console.log(`✅ Superusuario '${username}' creado con éxito.`);
+            logger.info(`✅ Superusuario '${username}' creado con éxito.`);
         } else {
-            console.log(`⚠️ El superusuario '${username}' ya existe. No se realizaron cambios.`);
+            logger.info(`⚠️ El superusuario '${username}' ya existe. No se realizaron cambios.`);
         }
 
     } catch (error) {
-        console.error('❌ Error al crear el superusuario:', error);
+        logger.error('❌ Error al crear el superusuario:', error);
     } finally {
         await sequelize.close();
     }

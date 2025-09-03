@@ -1,4 +1,3 @@
-// controllers/authController.js
 const { User, Role } = require('../models');
 const bcrypt = require('bcrypt');
 
@@ -38,17 +37,25 @@ exports.register = async (req, res) => {
       roleUuid: defaultRole.uuid
     });
 
-    // Crear sesión
-    req.session.userId = newUser.uuid;
-    req.session.username = newUser.username;
-    req.session.userRole = defaultRole.name;
+    // ✅ REGENERAR SESIÓN para prevenir session fixation
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('❌ Error al regenerar sesión en registro:', err);
+        return res.status(500).json({ success: false, message: 'Error en el registro.' });
+      }
 
-    const { password: _omit, ...safe } = newUser.toJSON();
-    return res.status(201).json({
-      success: true,
-      message: 'Usuario registrado con éxito.',
-      user: safe,
-      redirect: '/'
+      // Crear nueva sesión
+      req.session.userId = newUser.uuid;
+      req.session.username = newUser.username;
+      req.session.userRole = defaultRole.name;
+
+      const { password: _omit, ...safe } = newUser.toJSON();
+      return res.status(201).json({
+        success: true,
+        message: 'Usuario registrado con éxito.',
+        user: safe,
+        redirect: '/'
+      });
     });
 
   } catch (error) {
@@ -56,7 +63,6 @@ exports.register = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error en el registro.', details: error.message });
   }
 };
-
 
 exports.login = async (req, res) => {
   try {
@@ -70,7 +76,7 @@ exports.login = async (req, res) => {
     // Buscar usuario por username
     const user = await User.findOne({
       where: { username },
-      include: [{ model: Role, as: 'role' }]
+      include: [{ model: Role, as: 'roles' }]
     });
 
     if (!user) {
@@ -83,28 +89,35 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
-    // Crear sesión
-    req.session.userId = user.uuid;
-    req.session.username = user.username;
-    req.session.userRole = user.role?.name;
+    // ✅ REGENERAR SESIÓN para prevenir session fixation
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('❌ Error al regenerar sesión en login:', err);
+        return res.status(500).json({ error: 'Error en el inicio de sesión.' });
+      }
 
-    return res.status(200).json({
-      message: 'Sesión iniciada correctamente.',
-      user: {
-        uuid: user.uuid,
-        username: user.username,
-        role: user.role?.name,
-        email: user.email || null
-      },
-      redirect: '/'
+      // Crear nueva sesión
+      req.session.userId = user.uuid;
+      req.session.username = user.username;
+      req.session.userRole = user.roles?.name;
+
+      return res.status(200).json({
+        message: 'Sesión iniciada correctamente.',
+        user: {
+          uuid: user.uuid,
+          username: user.username,
+          role: user.roles?.name,
+          email: user.email || null
+        },
+        redirect: '/'
+      });
     });
+
   } catch (err) {
     console.error('❌ Login error:', err);
     return res.status(500).json({ error: 'Error inesperado en el inicio de sesión.' });
   }
 };
-
-
 
 exports.logout = (req, res) => {
   req.session.destroy((err) => {
