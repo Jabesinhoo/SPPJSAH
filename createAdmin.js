@@ -1,8 +1,8 @@
 const { sequelize, User, Role, Supplier } = require('./models');
-const logger = require('../utils/logger');
+const logger = require('./utils/logger');
 
 async function createAdminUser() {
-    const username = 'xxx';
+    const username = 'xxxx';
     const password = 'xxx'; 
 
     try {

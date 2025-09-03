@@ -75,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const endpoint = isRegistering ? '/api/register' : '/api/login';
 
-        console.log('➡️ Enviando al servidor:', { username, email, password, endpoint });
 
         if (isRegistering && password !== confirmPasswordInput.value) {
             messageElement.textContent = 'Las contraseñas no coinciden.';
@@ -104,9 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             const data = await response.json();
-
-            console.log('⬅️ Respuesta del servidor:', data);
-
+            
             if (response.ok) {
                 messageElement.textContent = data.message || (isRegistering ? 'Registrado.' : 'Sesión iniciada.');
                 messageElement.classList.remove('text-red-500');

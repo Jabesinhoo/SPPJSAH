@@ -88,13 +88,9 @@ exports.login = async (req, res) => {
     }
 
     // ✅ VERIFICACIÓN EXTRA: Log para debug
-    console.log('Usuario encontrado:', user.username);
-    console.log('Contraseña en DB:', user.password.substring(0, 20) + '...');
-    console.log('Rol del usuario:', user.roles?.name);
 
     // Verificar contraseña
     const ok = await bcrypt.compare(password, user.password);
-    console.log('Resultado de bcrypt.compare:', ok);
     
     if (!ok) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
