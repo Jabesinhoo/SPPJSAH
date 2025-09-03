@@ -1,3 +1,4 @@
+// models/user.js
 const bcrypt = require('bcrypt');
 
 module.exports = (sequelize, DataTypes) => {
@@ -28,7 +29,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     roleUuid: {
       type: DataTypes.UUID,
-      allowNull: false
+      allowNull: false,
+      field: 'roleUuid' // ✅ ESTA LÍNEA ES CRUCIAL
     }
   }, {
     tableName: 'users',
@@ -41,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
       beforeUpdate: async (user) => {
-        if (user.changed('password')) {
+        if (user.changed('password') && user.password) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
         }
@@ -50,10 +52,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.associate = (models) => {
-    // Se cambia la relación a "belongsTo" para coincidir con el schema de la base de datos
     User.belongsTo(models.Role, {
-      foreignKey: 'roleUuid',
-      as: 'roles' // Se mantiene el alias 'roles' para consistencia en la aplicación
+      foreignKey: 'roleUuid', // ✅ Esto ahora funcionará correctamente
+      as: 'roles'
     });
   };
 

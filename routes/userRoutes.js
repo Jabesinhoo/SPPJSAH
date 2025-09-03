@@ -52,7 +52,7 @@ router.get('/users/management', authMiddleware.authorize('admin'), async (req, r
     }
 });
 
-// === Cambiar contraseña de un usuario (solo admins) ===
+// routes/userRoutes.js - Solo la ruta de cambio de contraseña corregida
 router.put(
     '/users/:id/password',
     authMiddleware.authorize('admin'),
@@ -65,13 +65,13 @@ router.put(
             const user = await User.findByPk(userUuid);
             if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
 
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(newPassword, salt);
+            // ✅ CORRECCIÓN: Usar set y save para que se dispare el hook
+            user.set('password', newPassword);
             await user.save();
 
             res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });
         } catch (error) {
-            logger.error('Error changing password:', error);
+            console.error('Error changing password:', error);
             res.status(500).json({ error: 'Error al cambiar la contraseña.' });
         }
     }

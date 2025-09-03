@@ -73,18 +73,29 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos.' });
     }
 
-    // Buscar usuario por username
+    // Buscar usuario por username CON LA RELACIÓN CORRECTA
     const user = await User.findOne({
       where: { username },
-      include: [{ model: Role, as: 'roles' }]
+      include: [{ 
+        model: Role, 
+        as: 'roles', // ✅ Esto debe coincidir con tu alias en la asociación
+        attributes: ['name'] 
+      }]
     });
 
     if (!user) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
+    // ✅ VERIFICACIÓN EXTRA: Log para debug
+    console.log('Usuario encontrado:', user.username);
+    console.log('Contraseña en DB:', user.password.substring(0, 20) + '...');
+    console.log('Rol del usuario:', user.roles?.name);
+
     // Verificar contraseña
     const ok = await bcrypt.compare(password, user.password);
+    console.log('Resultado de bcrypt.compare:', ok);
+    
     if (!ok) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
@@ -113,7 +124,7 @@ exports.login = async (req, res) => {
       });
     });
 
-  } catch (err) {
+   } catch (err) {
     console.error('❌ Login error:', err);
     return res.status(500).json({ error: 'Error inesperado en el inicio de sesión.' });
   }
