@@ -25,6 +25,7 @@ const spreadsheetRoutes = require('./routes/spreadsheetRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const settingsPageRoutes = require('./routes/settingsPage');
 const { authorize } = require('./middleware/authMiddleware');
+const checkApproval = require('./middleware/checkApproval');
 
 const allowedOrigins = [
   'http://localhost:3000',
@@ -92,7 +93,6 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // ✅ CONFIGURACIÓN COMPLETA DE HELMET CON CABECERAS EXTRA DE SEGURIDAD
-// En tu app.js - Reemplaza la configuración de Helmet
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -132,18 +132,16 @@ app.use(
       },
     },
     
-    // ✅ POLÍTICAS MÁS PERMISIVAS PARA RECURSOS EXTERNOS
     crossOriginOpenerPolicy: { 
       policy: "same-origin" 
     },
     crossOriginEmbedderPolicy: { 
-      policy: "credentialless"  // Más permisivo para CDNs
+      policy: "credentialless"
     },
     crossOriginResourcePolicy: { 
-      policy: "cross-origin"    // Permite recursos de otros orígenes
+      policy: "cross-origin"
     },
     
-    // Otras configuraciones
     frameguard: { 
       action: 'deny' 
     },
@@ -165,7 +163,6 @@ app.disable('x-powered-by');
 const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
-// ... el resto de tu configuración permanece igual ...
 app.use('/api', cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -208,14 +205,22 @@ app.use(
   })
 );
 
+// ✅ Middleware de verificación de aprobación
+app.use((req, res, next) => {
+  const publicPaths = ['/registro_inicio', '/api/login', '/api/register', '/health'];
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
+  checkApproval(req, res, next);
+});
+
 app.use(flash());
 
-// ✅ CSRF configurado para usar sesiones (sin cookie: true)
+// ✅ CSRF configurado para usar sesiones
 const csrfProtection = csrf();
 
 // ✅ Aplicar CSRF solo a rutas que renderizan vistas
 app.use((req, res, next) => {
-  // Saltar CSRF para rutas API
   if (req.path.startsWith('/api/')) {
     return next();
   }
@@ -245,7 +250,7 @@ app.set('views', path.join(__dirname, 'public', 'views'));
 app.use(expressLayouts);
 app.set('layout', 'base');
 
-// Ruta de health check (sin rate limiting)
+// Ruta de health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
@@ -270,14 +275,31 @@ app.get('/registro_inicio', (req, res) => {
   });
 });
 
+// ✅ Ruta principal con verificación de aprobación
 app.get('/', async (req, res) => {
   if (req.session.userId) {
     const user = await User.findByPk(req.session.userId, {
       include: [{ model: Role, as: 'roles' }]
     });
-    if (user) return res.render('home', { title: 'Inicio', user });
+    
+    if (user && user.isApproved) {
+      return res.render('home', { title: 'Inicio', user });
+    } else {
+      req.session.destroy(() => {
+        return res.redirect('/registro_inicio');
+      });
+    }
   }
   return res.redirect('/registro_inicio');
+});
+
+// ✅ Ruta para aprobación de usuarios
+app.get('/user-approval', authorize('admin'), (req, res) => {
+  res.render('user_approval', {
+    title: 'Aprobación de Usuarios',
+    username: req.session.username,
+    userRole: req.session.userRole
+  });
 });
 
 app.get('/products', (req, res) => {
@@ -318,11 +340,11 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// ✅ Rutas API - no usan CSRF (ya que se saltó en el middleware)
+// ✅ MONTAR RUTAS API - ORDEN CORREGIDO
 app.use('/api', authRoutes);
+app.use('/api', userRoutes); // ✅ ESTA LÍNEA FALTABA O ESTABA EN ORDEN INCORRECTO
 app.use('/api', productRoutes);
 app.use('/api', roleRoutes);
-app.use('/api', userRoutes);
 app.use('/api/settings', settingsRoutes);
 
 const seedRoles = async () => {

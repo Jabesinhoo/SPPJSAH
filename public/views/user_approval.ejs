@@ -1,0 +1,154 @@
+<!-- public/views/user_approval.ejs -->
+<div class="container mx-auto px-4 py-4 sm:py-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Aprobación de Usuarios</h1>
+        <a href="/roles" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 text-center">
+            Volver a Gestión de Roles
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Usuarios Pendientes de Aprobación</h2>
+        
+        <div id="pending-users-list" class="space-y-4">
+            <!-- Los usuarios se cargarán aquí dinámicamente -->
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400" id="no-pending-users">
+                No hay usuarios pendientes de aprobación.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para cargar usuarios pendientes
+    function loadPendingUsers() {
+        fetch('/api/users/pending', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(users => {
+            const container = document.getElementById('pending-users-list');
+            const noUsersMessage = document.getElementById('no-pending-users');
+            
+            // Verificar que users sea un array
+            if (!Array.isArray(users)) {
+                console.error('La respuesta no es un array:', users);
+                noUsersMessage.textContent = 'Error al cargar usuarios. Formato de respuesta inválido.';
+                noUsersMessage.classList.remove('hidden');
+                container.innerHTML = '';
+                return;
+            }
+            
+            if (users.length === 0) {
+                noUsersMessage.classList.remove('hidden');
+                container.innerHTML = '';
+                return;
+            }
+            
+            noUsersMessage.classList.add('hidden');
+            container.innerHTML = '';
+            
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow';
+                userCard.innerHTML = `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">${user.username}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${user.email || 'Sin email'}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">Registrado: ${new Date(user.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button onclick="approveUser('${user.uuid}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                                Aprobar
+                            </button>
+                            <button onclick="rejectUser('${user.uuid}')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(userCard);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading pending users:', error);
+            const noUsersMessage = document.getElementById('no-pending-users');
+            noUsersMessage.textContent = `Error al cargar usuarios: ${error.message}`;
+            noUsersMessage.classList.remove('hidden');
+        });
+    }
+    
+    // Función para aprobar usuario
+    window.approveUser = function(userUuid) {
+        fetch(`/api/users/${userUuid}/approve`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.message) {
+                alert('Usuario aprobado exitosamente');
+                loadPendingUsers();
+            } else {
+                alert('Error: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error approving user:', error);
+            alert('Error al aprobar usuario: ' + error.message);
+        });
+    };
+    
+    // Función para rechazar usuario
+    window.rejectUser = function(userUuid) {
+        if (!confirm('¿Estás seguro de que deseas rechazar y eliminar este usuario?')) {
+            return;
+        }
+        
+        fetch(`/api/users/${userUuid}/reject`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.message) {
+                alert('Usuario rechazado exitosamente');
+                loadPendingUsers();
+            } else {
+                alert('Error: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error rejecting user:', error);
+            alert('Error al rechazar usuario: ' + error.message);
+        });
+    };
+    
+    // Cargar usuarios al iniciar
+    loadPendingUsers();
+});
+</script>

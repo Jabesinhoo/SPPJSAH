@@ -30,7 +30,13 @@ module.exports = (sequelize, DataTypes) => {
     roleUuid: {
       type: DataTypes.UUID,
       allowNull: false,
-      field: 'roleUuid' // ✅ ESTA LÍNEA ES CRUCIAL
+      field: 'roleUuid'
+    },
+    // ✅ NUEVO CAMPO: Aprobación de usuario
+    isApproved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
     }
   }, {
     tableName: 'users',
@@ -53,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
 
   User.associate = (models) => {
     User.belongsTo(models.Role, {
-      foreignKey: 'roleUuid', // ✅ Esto ahora funcionará correctamente
+      foreignKey: 'roleUuid',
       as: 'roles'
     });
   };

@@ -64,6 +64,7 @@ exports.register = async (req, res) => {
   }
 };
 
+
 exports.login = async (req, res) => {
   try {
     const username = (req.body.username || '').trim();
@@ -73,12 +74,11 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos.' });
     }
 
-    // Buscar usuario por username CON LA RELACIÓN CORRECTA
     const user = await User.findOne({
       where: { username },
       include: [{ 
         model: Role, 
-        as: 'roles', // ✅ Esto debe coincidir con tu alias en la asociación
+        as: 'roles', 
         attributes: ['name'] 
       }]
     });
@@ -87,26 +87,27 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
-    // ✅ VERIFICACIÓN EXTRA: Log para debug
+    // ✅ Verificar si el usuario está aprobado
+    if (!user.isApproved) {
+      return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación por un administrador.' });
+    }
 
-    // Verificar contraseña
     const ok = await bcrypt.compare(password, user.password);
     
     if (!ok) {
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
-    // ✅ REGENERAR SESIÓN para prevenir session fixation
     req.session.regenerate((err) => {
       if (err) {
         console.error('❌ Error al regenerar sesión en login:', err);
         return res.status(500).json({ error: 'Error en el inicio de sesión.' });
       }
 
-      // Crear nueva sesión
       req.session.userId = user.uuid;
       req.session.username = user.username;
       req.session.userRole = user.roles?.name;
+      req.session.isApproved = user.isApproved; // ✅ Guardar estado de aprobación en sesión
 
       return res.status(200).json({
         message: 'Sesión iniciada correctamente.',
@@ -114,7 +115,8 @@ exports.login = async (req, res) => {
           uuid: user.uuid,
           username: user.username,
           role: user.roles?.name,
-          email: user.email || null
+          email: user.email || null,
+          isApproved: user.isApproved
         },
         redirect: '/'
       });
@@ -125,6 +127,7 @@ exports.login = async (req, res) => {
     return res.status(500).json({ error: 'Error inesperado en el inicio de sesión.' });
   }
 };
+
 
 exports.logout = (req, res) => {
   req.session.destroy((err) => {

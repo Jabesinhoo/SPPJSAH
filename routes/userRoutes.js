@@ -3,6 +3,8 @@ const router = express.Router();
 const { User, Role } = require('../models');
 const authMiddleware = require('../middleware/authMiddleware');
 const bcrypt = require('bcrypt');
+const logger = require('../utils/logger');
+
 const { validationResult } = require('express-validator');
 
 const {
@@ -21,6 +23,68 @@ const validate = (validations) => async (req, res, next) => {
     }
     next();
 };
+
+// === Obtener usuarios pendientes de aprobación (solo admins) ===
+router.get('/users/pending', authMiddleware.authorize('admin'), async (req, res) => {
+    try {
+        const pendingUsers = await User.findAll({
+            where: { isApproved: false },
+            attributes: ['uuid', 'username', 'email', 'createdAt'],
+            include: [{ model: Role, as: 'roles', attributes: ['name'] }],
+            order: [['createdAt', 'ASC']]
+        });
+        
+        res.status(200).json(pendingUsers);
+    } catch (error) {
+        logger.error('Error fetching pending users:', error);
+        res.status(500).json({ error: 'Error al obtener usuarios pendientes.' });
+    }
+});
+
+// === Aprobar usuario (solo admins) ===
+router.put('/users/:id/approve', authMiddleware.authorize('admin'), async (req, res) => {
+    try {
+        const userUuid = req.params.id;
+        const user = await User.findByPk(userUuid);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        await user.update({ isApproved: true });
+        res.status(200).json({ 
+            message: 'Usuario aprobado exitosamente.',
+            user: {
+                uuid: user.uuid,
+                username: user.username,
+                isApproved: true
+            }
+        });
+    } catch (error) {
+        logger.error('Error approving user:', error);
+        res.status(500).json({ error: 'Error al aprobar usuario.' });
+    }
+});
+
+// === Rechazar usuario (solo admins) ===
+router.delete('/users/:id/reject', authMiddleware.authorize('admin'), async (req, res) => {
+    try {
+        const userUuid = req.params.id;
+        const user = await User.findByPk(userUuid);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        await user.destroy();
+        res.status(200).json({ 
+            message: 'Usuario rechazado y eliminado exitosamente.'
+        });
+    } catch (error) {
+        logger.error('Error rejecting user:', error);
+        res.status(500).json({ error: 'Error al rechazar usuario.' });
+    }
+});
 
 // === Obtener todos los usuarios (para sistema de etiquetado) ===
 router.get('/users', authMiddleware.isAuthenticated, async (req, res) => {
