@@ -1,9 +1,5 @@
-
-function wantsJson(req) {
-  const accept = req.get('Accept') || '';
-  return req.xhr || accept.includes('application/json') || req.query.ajax === '1';
-}
-
+// middleware/authMiddleware.js
+const { wantsJson } = require('../utils/helpers'); // Asegúrate de tener este helper
 
 function isAuthenticated(req, res, next) {
   const publicPaths = ['/login', '/register', '/api/login', '/api/register', '/registro_inicio'];
@@ -27,6 +23,7 @@ function isAuthenticated(req, res, next) {
   }
   return res.redirect('/registro_inicio');
 }
+
 const requireAuth = isAuthenticated;
 
 function authorize(requiredRole = 'user') {
@@ -38,7 +35,12 @@ function authorize(requiredRole = 'user') {
       if (wantsJson(req)) {
         return res.status(403).json({ error: 'Prohibido' });
       }
-      return res.status(403).render('403', { title: 'Prohibido' });
+      // ✅ Usar la vista unificada de error
+      return res.status(403).render('error', { 
+        title: 'Acceso Denegado',
+        errorCode: 403,
+        errorMessage: 'No tienes permisos suficientes para acceder a esta página.'
+      });
     }
 
     next();

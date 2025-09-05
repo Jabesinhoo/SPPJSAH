@@ -32,8 +32,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       field: 'roleUuid'
     },
-    // ✅ NUEVO CAMPO: Aprobación de usuario
-    isApproved: {
+    status: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      defaultValue: 'pending',
+      allowNull: false
+    }, isApproved: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false

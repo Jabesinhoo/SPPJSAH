@@ -77,15 +77,19 @@ const globalLimiter = rateLimit({
       method: req.method
     });
     
-    if (req.xhr || req.path.startsWith('/api')) {
+    const wantsJson = req.xhr || req.get('Accept')?.includes('application/json') || req.path.startsWith('/api');
+    
+    if (wantsJson) {
       return res.status(429).json({
         error: 'Demasiadas solicitudes. Intenta nuevamente en un minuto.'
       });
     }
     
+    // ✅ Usar la vista unificada de error
     res.status(429).render('error', {
       title: 'Demasiadas solicitudes',
-      error: 'Has excedido el límite de solicitudes. Intenta nuevamente en un minuto.'
+      errorCode: 429,
+      errorMessage: 'Has excedido el límite de solicitudes. Intenta nuevamente en un minuto.'
     });
   }
 });
@@ -298,7 +302,8 @@ app.get('/user-approval', authorize('admin'), (req, res) => {
   res.render('user_approval', {
     title: 'Aprobación de Usuarios',
     username: req.session.username,
-    userRole: req.session.userRole
+    userRole: req.session.userRole,
+    csrfToken: req.csrfToken ? req.csrfToken() : ''
   });
 });
 
@@ -336,16 +341,31 @@ app.get('/logout', (req, res) => {
       logger.error('Error al destruir la sesión:', err);
       return res.status(500).send('No se pudo cerrar la sesión.');
     }
-    res.redirect('/registro_inicio');
   });
 });
 
 // ✅ MONTAR RUTAS API - ORDEN CORREGIDO
 app.use('/api', authRoutes);
-app.use('/api', userRoutes); // ✅ ESTA LÍNEA FALTABA O ESTABA EN ORDEN INCORRECTO
+app.use('/api', userRoutes);
 app.use('/api', productRoutes);
 app.use('/api', roleRoutes);
 app.use('/api/settings', settingsRoutes);
+
+// ✅ Manejo de rutas no encontradas (404) - DEBE IR ANTES DE errorHandler
+// ✅ FORMA CORRECTA para manejar rutas no encontradas
+app.use((req, res) => {
+  const wantsJson = req.xhr || req.get('Accept')?.includes('application/json') || req.path.startsWith('/api');
+  
+  if (wantsJson) {
+    return res.status(404).json({ error: 'Ruta no encontrada' });
+  }
+  
+  res.status(404).render('error', {
+    title: 'Página No Encontrada',
+    errorCode: 404,
+    errorMessage: 'La página que buscas no existe.'
+  });
+});
 
 const seedRoles = async () => {
   try {
@@ -365,6 +385,7 @@ const seedRoles = async () => {
   }
 };
 
+// ✅ Error handler debe ser el último middleware
 app.use(errorHandler);
 
 if (require.main === module) {

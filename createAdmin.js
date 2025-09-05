@@ -4,8 +4,8 @@ const logger = require('./utils/logger');
 const bcrypt = require('bcrypt');
 
 async function createAdminUser() {
-    const username = 'admin'; // Reemplaza con tu usuario admin
-    const password = 'admin';  // Reemplaza con tu contraseña admin
+    const username = 'admin1'; // Reemplaza con tu usuario admin
+    const password = 'admin1';  // Reemplaza con tu contraseña admin
 
     try {
         await sequelize.sync();
