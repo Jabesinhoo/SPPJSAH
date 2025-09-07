@@ -1,7 +1,7 @@
 // Funciones para modales
 function openCreateModal() {
     document.getElementById('modalTitle').textContent = 'Crear Proveedor';
-    document.getElementById('supplierForm').action = '/suppliers';
+    document.getElementById('supplierForm').setAttribute('data-action', '/api/suppliers');
     document.getElementById('supplierForm').reset();
     document.getElementById('imagePreview').classList.add('hidden');
     document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
@@ -11,7 +11,8 @@ function openCreateModal() {
 
 function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen) {
     document.getElementById('modalTitle').textContent = 'Editar Proveedor';
-    document.getElementById('supplierForm').action = `/suppliers/${id}/edit`;
+    document.getElementById('supplierForm').setAttribute('data-action', `/api/suppliers/${id}`);
+    document.getElementById('supplierForm').setAttribute('data-method', 'PUT');
     document.getElementById('marca').value = marca;
     document.getElementById('categoria').value = categoria;
     document.getElementById('nombre').value = nombre;
@@ -35,16 +36,19 @@ function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombre
 
 function openDeleteModal(id, nombre) {
     document.getElementById('deleteSupplierName').textContent = nombre;
-    document.getElementById('deleteForm').action = `/suppliers/${id}/delete`;
+    document.getElementById('deleteForm').setAttribute('data-id', id);
     document.getElementById('deleteModal').classList.remove('hidden');
 }
 
 function closeModal() {
     document.getElementById('supplierModal').classList.add('hidden');
+    document.getElementById('supplierForm').removeAttribute('data-action');
+    document.getElementById('supplierForm').removeAttribute('data-method');
 }
 
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteForm').removeAttribute('data-id');
 }
 
 function clearErrorMessages() {
@@ -60,6 +64,124 @@ function clearErrorMessages() {
     });
 }
 
+// Función para mostrar notificaciones
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-opacity ${
+        type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Función para manejar el envío del formulario
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const action = form.getAttribute('data-action');
+    const method = form.getAttribute('data-method') || 'POST';
+    const formData = new FormData(form);
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    try {
+        // Mostrar loading
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
+        submitBtn.disabled = true;
+        
+        const response = await fetch(action, {
+            method: method,
+            body: formData,
+            headers: {
+                // No necesitamos Content-Type para FormData, el navegador lo setea automáticamente
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            showNotification(result.message, 'success');
+            closeModal();
+            
+            // Esperar un momento antes de recargar para que se vea la notificación
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            // Mostrar errores de validación
+            if (result.errors) {
+                result.errors.forEach(error => {
+                    const field = error.path;
+                    const errorElement = document.getElementById(`${field}Error`);
+                    if (errorElement) {
+                        errorElement.textContent = error.msg;
+                        errorElement.classList.remove('hidden');
+                        document.getElementById(field)?.classList.add('input-error');
+                    }
+                });
+                showNotification('Por favor corrige los errores del formulario', 'error');
+            } else {
+                showNotification(result.error || 'Error desconocido', 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error de conexión. Intenta nuevamente.', 'error');
+    } finally {
+        // Restaurar botón
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Función para manejar la eliminación
+async function handleDelete(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const id = form.getAttribute('data-id');
+    const deleteBtn = form.querySelector('button[type="submit"]');
+    const originalText = deleteBtn.innerHTML;
+    
+    try {
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Eliminando...';
+        deleteBtn.disabled = true;
+        
+        const response = await fetch(`/api/suppliers/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            showNotification(result.message, 'success');
+            closeDeleteModal();
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showNotification(result.error || 'Error al eliminar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error de conexión. Intenta nuevamente.', 'error');
+    } finally {
+        deleteBtn.innerHTML = originalText;
+        deleteBtn.disabled = false;
+    }
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     // Abrir modal de crear
@@ -72,6 +194,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar modal de eliminar
     document.getElementById('closeDeleteModalIconBtn').addEventListener('click', closeDeleteModal);
     document.getElementById('cancelDeleteModalBtn').addEventListener('click', closeDeleteModal);
+    
+    // Manejar envío de formulario
+    document.getElementById('supplierForm').addEventListener('submit', handleFormSubmit);
+    
+    // Manejar eliminación
+    document.getElementById('deleteForm').addEventListener('submit', handleDelete);
     
     // Delegación de eventos para los botones de editar y eliminar
     document.body.addEventListener('click', (e) => {

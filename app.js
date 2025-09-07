@@ -41,12 +41,12 @@ const app = express();
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    
+
     if (!isSecure) {
       const httpsUrl = `https://${req.headers.host}${req.originalUrl}`;
       return res.redirect(301, httpsUrl);
     }
-    
+
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
   next();
@@ -64,10 +64,10 @@ const globalLimiter = rateLimit({
   skip: (req) => {
     const skipPaths = ['/health', '/favicon.ico'];
     if (skipPaths.includes(req.path)) return true;
-    
+
     const trustedIPs = ['127.0.0.1', '::1'];
     if (trustedIPs.includes(req.ip)) return true;
-    
+
     return false;
   },
   handler: (req, res) => {
@@ -76,16 +76,15 @@ const globalLimiter = rateLimit({
       path: req.path,
       method: req.method
     });
-    
+
     const wantsJson = req.xhr || req.get('Accept')?.includes('application/json') || req.path.startsWith('/api');
-    
+
     if (wantsJson) {
       return res.status(429).json({
         error: 'Demasiadas solicitudes. Intenta nuevamente en un minuto.'
       });
     }
-    
-    // ✅ Usar la vista unificada de error
+
     res.status(429).render('error', {
       title: 'Demasiadas solicitudes',
       errorCode: 429,
@@ -96,7 +95,7 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// ✅ CONFIGURACIÓN COMPLETA DE HELMET CON CABECERAS EXTRA DE SEGURIDAD
+// ✅ CONFIGURACIÓN COMPLETA DE HELMET
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -135,30 +134,15 @@ app.use(
         "connect-src": ["'self'", "https://cdn.jsdelivr.net"]
       },
     },
-    
-    crossOriginOpenerPolicy: { 
-      policy: "same-origin" 
-    },
-    crossOriginEmbedderPolicy: { 
-      policy: "credentialless"
-    },
-    crossOriginResourcePolicy: { 
-      policy: "cross-origin"
-    },
-    
-    frameguard: { 
-      action: 'deny' 
-    },
-    hsts: { 
-      maxAge: 31536000, 
-      includeSubDomains: true, 
-      preload: true 
-    },
+
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    crossOriginEmbedderPolicy: { policy: "credentialless" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    frameguard: { action: 'deny' },
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
     ieNoOpen: true,
     noSniff: true,
-    referrerPolicy: { 
-      policy: 'strict-origin-when-cross-origin' 
-    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     xssFilter: true
   })
 );
@@ -176,22 +160,19 @@ app.use('/api', cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const sessionStore =
-  process.env.SESSION_STORE === 'postgres'
-    ? new pgSession({
-      conObject: {
-        connectionString: process.env.DATABASE_URL,
-      },
-      tableName: 'session',
-    })
-    : undefined;
+const sessionStore = process.env.SESSION_STORE === 'postgres'
+  ? new pgSession({
+    conObject: { connectionString: process.env.DATABASE_URL },
+    tableName: 'session',
+  })
+  : undefined;
 
 // ✅ Configuración de sesión
 app.use(
@@ -201,11 +182,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,       // en local NO https
       httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 2,
-    },
+      sameSite: 'lax',     // en vez de strict
+      maxAge: 1000 * 60 * 60 * 2
+    }
   })
 );
 
@@ -220,20 +201,22 @@ app.use((req, res, next) => {
 
 app.use(flash());
 
-// ✅ CSRF configurado para usar sesiones
+// ✅ CSRF configurado
 const csrfProtection = csrf();
 
-// ✅ Aplicar CSRF solo a rutas que renderizan vistas
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) {
-    return next();
-  }
-  csrfProtection(req, res, next);
-});
-
+// ✅ Hacer el token CSRF disponible para todas las vistas
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken ? req.csrfToken() : '';
   next();
+});
+
+// ✅ Aplicar validación CSRF solo a rutas no-API
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith('/api')) {
+    // 🔧 Saltamos CSRF para TODO lo que sea API
+    return next();
+  }
+  csrfProtection(req, res, next);
 });
 
 app.use((req, res, next) => {
@@ -285,7 +268,7 @@ app.get('/', async (req, res) => {
     const user = await User.findByPk(req.session.userId, {
       include: [{ model: Role, as: 'roles' }]
     });
-    
+
     if (user && user.isApproved) {
       return res.render('home', { title: 'Inicio', user });
     } else {
@@ -325,7 +308,76 @@ app.get('/products/stats', (req, res) => {
   });
 });
 
-app.use('/suppliers', supplierRoutes);
+// ✅ Ruta para la vista de suppliers (solo renderiza HTML)
+app.get('/suppliers', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/registro_inicio');
+
+  try {
+    const { City } = require('country-state-city');
+    const { Supplier } = require('./models');
+    const { Op } = require('sequelize');
+
+    const page = parseInt(req.query.page) || 1;
+    const searchQuery = req.query.search || '';
+    const categoryFilter = req.query.category || '';
+    const cityFilter = req.query.city || '';
+
+    const whereClause = {};
+    if (searchQuery) {
+      whereClause[Op.or] = [
+        { marca: { [Op.like]: `%${searchQuery}%` } },
+        { categoria: { [Op.like]: `%${searchQuery}%` } },
+        { nombre: { [Op.like]: `%${searchQuery}%` } },
+        { celular: { [Op.like]: `%${searchQuery}%` } },
+        { ciudad: { [Op.like]: `%${searchQuery}%` } },
+        { tipoAsesor: { [Op.like]: `%${searchQuery}%` } },
+        { nombreEmpresa: { [Op.like]: `%${searchQuery}%` } }
+      ];
+    }
+
+    if (categoryFilter) whereClause.categoria = categoryFilter;
+    if (cityFilter) whereClause.ciudad = cityFilter;
+
+    const totalItems = await Supplier.count({ where: whereClause });
+    const totalPages = Math.ceil(totalItems / 10);
+    const offset = (page - 1) * 10;
+
+    const suppliers = await Supplier.findAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: 10,
+      offset: offset
+    });
+
+    const colombiaCities = City.getCitiesOfCountry('CO');
+    const allCategories = await Supplier.findAll({
+      attributes: ['categoria'],
+      group: ['categoria'],
+      order: [['categoria', 'ASC']]
+    });
+
+    res.render('suppliers', {
+      title: 'Asesores de Marca',
+      suppliers,
+      cities: colombiaCities,
+      categories: allCategories.map(c => c.categoria),
+      currentPage: page,
+      totalPages: totalPages,
+      searchQuery: searchQuery,
+      categoryFilter: categoryFilter,
+      cityFilter: cityFilter,
+      success: req.flash('success')[0],
+      error: req.flash('error')[0],
+      username: req.session.username,
+      userRole: req.session.userRole,
+      csrfToken: req.csrfToken ? req.csrfToken() : ''
+    });
+  } catch (error) {
+    logger.error('Error en ruta /suppliers:', error);
+    req.flash('error', 'Error al cargar la página de proveedores');
+    res.redirect('/');
+  }
+});
 
 app.get('/roles', authorize('admin'), (req, res) => {
   res.render('roles', {
@@ -341,25 +393,26 @@ app.get('/logout', (req, res) => {
       logger.error('Error al destruir la sesión:', err);
       return res.status(500).send('No se pudo cerrar la sesión.');
     }
+    res.redirect('/registro_inicio');
   });
 });
 
-// ✅ MONTAR RUTAS API - ORDEN CORREGIDO
+// ✅ MONTAR RUTAS API
 app.use('/api', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', productRoutes);
 app.use('/api', roleRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/suppliers', supplierRoutes); // ← Nueva ruta API para suppliers
 
-// ✅ Manejo de rutas no encontradas (404) - DEBE IR ANTES DE errorHandler
-// ✅ FORMA CORRECTA para manejar rutas no encontradas
+// ✅ Manejo de rutas no encontradas (404)
 app.use((req, res) => {
   const wantsJson = req.xhr || req.get('Accept')?.includes('application/json') || req.path.startsWith('/api');
-  
+
   if (wantsJson) {
     return res.status(404).json({ error: 'Ruta no encontrada' });
   }
-  
+
   res.status(404).render('error', {
     title: 'Página No Encontrada',
     errorCode: 404,

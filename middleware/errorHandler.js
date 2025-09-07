@@ -29,7 +29,8 @@ function errorHandler(err, req, res, next) {
       : res.status(400).render('error', { 
           errorCode: 400,
           errorMessage: msg,
-          title: 'Error de Subida'
+          title: 'Error de Subida',
+          errorStack: '' // ← Agregar esto
         });
   }
 
@@ -40,7 +41,8 @@ function errorHandler(err, req, res, next) {
       : res.status(400).render('error', { 
           errorCode: 400,
           errorMessage: msg,
-          title: 'Error de Validación'
+          title: 'Error de Validación',
+          errorStack: '' // ← Agregar esto
         });
   }
 
@@ -54,12 +56,12 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // ✅ Usar la vista unificada de error
+  // ✅ Usar la vista unificada de error - CORREGIDO
   res.status(statusCode).render('error', {
     title: `Error ${statusCode}`,
     errorCode: statusCode,
     errorMessage: err.message,
-    errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    errorStack: process.env.NODE_ENV === 'development' ? err.stack : '' // ← CAMBIO AQUÍ
   });
 }
 

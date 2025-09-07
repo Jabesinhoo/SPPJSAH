@@ -67,8 +67,7 @@
             </div>
 
             <!-- Información para desarrolladores (solo en desarrollo) -->
-            <% if (process.env.NODE_ENV === 'development' && errorStack) { %>
-                <details class="mt-6 text-left">
+<% if (process.env.NODE_ENV === 'development' && typeof errorStack !== 'undefined' && errorStack) { %>                <details class="mt-6 text-left">
                     <summary class="text-sm text-gray-500 dark:text-gray-400 cursor-pointer">
                         Detalles técnicos (Desarrollo)
                     </summary>
