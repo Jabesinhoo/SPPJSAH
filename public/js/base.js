@@ -82,6 +82,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+     const modal = document.getElementById("warningModal");
+    const message = document.getElementById("warningMessage");
+    const closeModal = document.getElementById("closeModal");
+
+    function showModal(msg) {
+      message.textContent = msg;
+      modal.classList.remove("hidden");
+    }
+
+    closeModal.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
+
+    // Bloquear Ctrl+U (ver código fuente)
+    document.addEventListener("keydown", function (e) {
+      if (e.ctrlKey && (e.key === "u" || e.key === "U")) {
+        e.preventDefault();
+        showModal("No puedes ver el código fuente con Ctrl+U ");
+      }
+      if (e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C"))) {
+        e.preventDefault();
+        showModal("Inspeccionar está deshabilitado ");
+      }
+    });
+
+    // Detectar si se abre la consola de DevTools
+    (function() {
+      const element = new Image();
+      Object.defineProperty(element, 'id', {
+        get: function () {
+          showModal("Inspeccionar está deshabilitado ");
+        }
+      });
+      console.log(element);
+    })();
+
+    // Bloquear clic derecho
+    document.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      showModal("El clic derecho está deshabilitado ");
+    });
     // Lógica para el botón de "Cerrar Sesión"
     if (logoutButton) {
   logoutButton.addEventListener('click', async () => {

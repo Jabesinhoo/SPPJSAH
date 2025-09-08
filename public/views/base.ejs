@@ -125,6 +125,15 @@
                 <%- body %>
             </main>
         </div>
+        <div id="warningModal" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
+      <h2 class="text-xl font-bold text-red-600 mb-4"> Acción no permitida</h2>
+      <p id="warningMessage" class="text-gray-700 mb-6"></p>
+      <button id="closeModal" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+        Cerrar
+      </button>
+    </div>
+  </div>
 
         <footer class="mt-auto bg-gray-200 dark:bg-gray-900 text-center py-4 dark:text-gray-400 text-gray-700">
             <p>Software hecho por Jabesinho &copy; <span id="current-year"></span></p>
