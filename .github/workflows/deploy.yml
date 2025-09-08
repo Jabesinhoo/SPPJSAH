@@ -22,7 +22,12 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script: |
             cd /var/www/sppjsah
+            git reset --hard
             git pull origin main
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
             npm install --production
             npx sequelize-cli db:migrate
             pm2 restart sppjsah --update-env
