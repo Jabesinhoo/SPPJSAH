@@ -2,14 +2,18 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main   # cada vez que hagas push a main, se despliega
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy over SSH
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -18,4 +22,7 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script: |
             cd /var/www/sppjsah
-            ./deploy.sh
+            git pull origin main
+            npm install --production
+            npx sequelize-cli db:migrate
+            pm2 restart sppjsah --update-env
