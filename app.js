@@ -387,15 +387,8 @@ app.get('/roles', authorize('admin'), (req, res) => {
   });
 });
 
-app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      logger.error('Error al destruir la sesión:', err);
-      return res.status(500).send('No se pudo cerrar la sesión.');
-    }
-    res.redirect('/registro_inicio');
-  });
-});
+
+
 
 // ✅ MONTAR RUTAS API
 app.use('/api', authRoutes);

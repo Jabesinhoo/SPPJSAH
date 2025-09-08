@@ -84,8 +84,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lógica para el botón de "Cerrar Sesión"
     if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            window.location.href = '/logout';
-        });
+  logoutButton.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/logout', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        window.location.href = data.redirect || '/registro_inicio';
+      } else {
+        console.error('Error al cerrar sesión:', data.error || data.message);
+      }
+    } catch (err) {
+      console.error(' Error de red:', err);
     }
+  });
+}
+
+
 });

@@ -132,10 +132,10 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error('❌ Error al cerrar sesión:', err);
+      console.error('Error al cerrar sesión:', err);
       return res.status(500).json({ error: 'No se pudo cerrar la sesión.' });
     }
     res.clearCookie('connect.sid');
-    return res.status(200).json({ message: 'Sesión cerrada con éxito.', redirect: '/registro_inicio' });
+    return res.status(200).json({ success: true, message: 'Sesión cerrada con éxito.', redirect: '/registro_inicio' });
   });
 };
