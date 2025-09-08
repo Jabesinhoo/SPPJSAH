@@ -102,6 +102,7 @@ async function handleFormSubmit(e) {
         const response = await fetch(action, {
             method: method,
             body: formData,
+            credentials: 'include',
             headers: {
                 // No necesitamos Content-Type para FormData, el navegador lo setea automáticamente
             }
@@ -158,7 +159,8 @@ async function handleDelete(e) {
         deleteBtn.disabled = true;
         
         const response = await fetch(`/api/suppliers/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
         
         const result = await response.json();
