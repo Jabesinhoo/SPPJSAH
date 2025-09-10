@@ -20,6 +20,7 @@ const Product = require('./product')(sequelize, DataTypes);
 const Role = require('./role')(sequelize, DataTypes);
 const Supplier = require('./supplier')(sequelize, DataTypes); // ✅ Así debe cargarse
 const SpreadsheetModels = require('./spreadsheet')(sequelize, DataTypes);
+const Notification = require('./notification')(sequelize, DataTypes);
 const { Spreadsheet, SpreadsheetColumn, SpreadsheetRow, SpreadsheetCell } = SpreadsheetModels;
 
 Object.values(sequelize.models)
@@ -33,8 +34,9 @@ module.exports = {
     Product,
     Role,
     Supplier,
+    Notification, 
     Spreadsheet,
-    SpreadsheetColumn, 
+    SpreadsheetColumn,
     SpreadsheetRow,
     SpreadsheetCell
 };

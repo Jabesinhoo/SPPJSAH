@@ -24,6 +24,8 @@ const supplierRoutes = require('./routes/suppliersRoutes');
 const spreadsheetRoutes = require('./routes/spreadsheetRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const settingsPageRoutes = require('./routes/settingsPage');
+const notificationRoutes = require('./routes/notificationRoutes'); // <- singular, coincide con el archivo
+
 const { authorize } = require('./middleware/authMiddleware');
 const checkApproval = require('./middleware/checkApproval');
 
@@ -397,6 +399,7 @@ app.use('/api', productRoutes);
 app.use('/api', roleRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/suppliers', supplierRoutes); // ← Nueva ruta API para suppliers
+app.use('/api/notifications', notificationRoutes);
 
 // ✅ Manejo de rutas no encontradas (404)
 app.use((req, res) => {

@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar que los elementos existen antes de usarlos
     if (!confirmationModal || !resultModal || !noUsersMessage) {
-        console.error('Error: No se encontraron todos los elementos del DOM necesarios');
         return;
     }
 

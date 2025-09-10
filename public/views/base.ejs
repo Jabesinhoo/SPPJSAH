@@ -4,36 +4,71 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="<%= csrfToken %>">
 
-    <title>SPJSAH | <%= title %>
-    </title>
+    <% 
+      // defaults seguros para evitar ReferenceError
+      const _title     = typeof title !== 'undefined' ? title : '';
+      const _csrfToken = typeof csrfToken !== 'undefined' ? csrfToken : '';
+      const _username  = typeof username !== 'undefined' ? username : null;
+      const _userRole  = typeof userRole !== 'undefined' ? userRole : null;
+      const _userId    = typeof userId !== 'undefined' ? userId : null;
+    %>
+
+    <meta name="csrf-token" content="<%= _csrfToken %>">
+    <title>SPJSAH | <%= _title %></title>
     <link rel="icon" href="/img/logo.png" type="image/png" />
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
+        tailwind.config = { darkMode: 'class' };
+        // Hacer disponible información del usuario para el sistema de notificaciones
+        window.currentUsername = '<%= _username || "" %>';
+        window.currentUserId = '<%= _userId || "" %>';
+        window.currentUserRole = '<%= _userRole || "" %>';
     </script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+
 </head>
 
 <body style="font-family: Verdana, Geneva, Tahoma, sans-serif;"
     class="bg-gray-100 dark:bg-slate-950 transition-colors duration-500">
-    <button id="menu-toggle"
-        class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-    </button>
+    
+<div id="global-mention-container" class="hidden fixed z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto min-w-[200px]"></div>
+    
+<!-- Overlay para cerrar el sidebar en móviles -->
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<!-- Barra superior simplificada con solo la campana de notificaciones -->
+<div class="fixed top-4 right-4 z-40 flex items-center space-x-4">
+    <div id="notification-bell">
+        <!-- Aquí se inyectará el componente de notificaciones -->
+    </div>
+    
+    <% if (_username) { %>
+        <div class="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full shadow-md py-1 px-3">
+            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                <%= _username.charAt(0).toUpperCase() %>
+            </div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden md:block">
+                <%= _username %>
+            </span>
+        </div>
+    <% } %>
+</div>
 
     <div class="min-h-screen flex flex-col">
         <div class="flex-1 flex flex-col md:flex-row">
             <aside id="sidebar"
                 class="fixed inset-y-0 left-0 z-40 w-64 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out bg-gray-200 dark:bg-gray-900 shadow-lg md:shadow-none flex flex-col py-6 px-4 md:sticky md:top-0 md:h-screen md:w-64 overflow-y-auto">
 
+                <button id="menu-close" class="md:hidden absolute top-4 right-4 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
                 <button id="theme-toggle" type="button"
-                    class="absolute top-4 right-4 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    class="absolute top-4 right-12 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <svg id="sun-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -60,8 +95,7 @@
                             <span>Inicio</span>
                         </a>
 
-                        <a href="/products"
-                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                        <a href="/products" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
                             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -69,8 +103,7 @@
                             <span>Productos</span>
                         </a>
 
-                        <a href="/suppliers"
-                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                        <a href="/suppliers" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
                             <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <rect x="1" y="7" width="11" height="7" rx="1"></rect>
@@ -81,8 +114,7 @@
                             <span>Asesores de marca</span>
                         </a>
 
-                        <a href="/settings"
-                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                        <a href="/settings" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
                             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.84 2.37 2.37a1.724 1.724 0 00.177 2.895c1.543.94 1.543 3.314 0 4.254a1.724 1.724 0 00-.177 2.897c.94 1.543-.84 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.84-2.37-2.37a1.724 1.724 0 00-.177-2.895c-1.543-.94-1.543-3.314 0-4.254a1.724 1.724 0 00.177-2.897c-.94-1.543.84-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
@@ -91,27 +123,24 @@
                             </svg>
                             <span>Ajustes</span>
                         </a>
-                        <a href="/spreadsheets"
-   class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
-   <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9m-6-9v9" />
-   </svg>
-   <span>Hojas Dinámicas</span>
-</a>
+                        
+                        <a href="/spreadsheets" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                           <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9m-6-9v9" />
+                           </svg>
+                           <span>Hojas Dinámicas</span>
+                        </a>
 
-                        <% if (userRole && userRole==='admin' ) { %>
-                            <a href="/roles"
-                                class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
-                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                    stroke-width="2">
+                        <% if (_userRole && _userRole==='admin') { %>
+                            <a href="/roles" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M17 20h2a2 2 0 002-2V7a2 2 0 00-2-2h-2M17 20v-2a2 2 0 00-2-2H9a2 2 0 00-2 2v2M17 20h-8M7 10a2 2 0 11-4 0 2 2 0 014 0zM17 10a2 2 0 11-4 0 2 2 0 014 0zM12 20a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 <span>Roles</span>
                             </a>
-                            
-                            <% } %>
+                        <% } %>
                     </nav>
 
                     <button id="logout-button"
@@ -121,26 +150,35 @@
                 </div>
             </aside>
 
-            <main class="flex-1 p-8 min-w-0">
+            <!-- Botón para abrir el menú en móviles -->
+            <button id="menu-toggle" class="md:hidden fixed top-4 left-4 z-30 p-2 rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            <main class="flex-1 p-8 min-w-0 pt-20 md:pt-8 md:ml-0">
                 <%- body %>
             </main>
         </div>
-        <div id="warningModal" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
-      <h2 class="text-xl font-bold text-red-600 mb-4"> Acción no permitida</h2>
-      <p id="warningMessage" class="text-gray-700 mb-6"></p>
-      <button id="closeModal" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
-        Cerrar
-      </button>
-    </div>
-  </div>
+        
+        <!-- Modal de advertencia -->
+        <div id="warningModal" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md notification-container">
+                <h2 class="text-xl font-bold text-red-600 mb-4">Acción no permitida</h2>
+                <p id="warningMessage" class="text-gray-700 dark:text-gray-300 mb-6"></p>
+                <button id="closeModal" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto">
+                    Cerrar
+                </button>
+            </div>
+        </div>
 
         <footer class="mt-auto bg-gray-200 dark:bg-gray-900 text-center py-4 dark:text-gray-400 text-gray-700">
             <p>Software hecho por Jabesinho &copy; <span id="current-year"></span></p>
         </footer>
     </div>
 
-    <script src="/js/base.js" defer></script>
-</body>
-
-</html>
+<script src="/js/base.js" defer></script>
+<script src="/js/notifications.js" defer></script>
+<script src="/js/global-mentions.js" defer></script>
+<script src="/js/mention-processor.js" defer></script>

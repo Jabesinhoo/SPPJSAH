@@ -6,15 +6,18 @@
     <title>Estadísticas de Productos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+   <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-200 transition-colors duration-200 font-sans">
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200 min-h-screen transition-colors duration-200 font-sans">
 
-    <!-- Encabezado -->
     <header class="bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 lg:p-8">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-center sm:text-left">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-center sm:text-left text-gray-900 dark:text-gray-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path d="M12 20V10"></path>
                     <path d="M18 20V4"></path>
                     <path d="M6 20v-4"></path>
@@ -22,9 +25,6 @@
                 Dashboard de Estadísticas
             </h1>
             <div class="flex items-center gap-4 mt-4 sm:mt-0">
-                <span class="text-sm bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-3 py-1 rounded-full">
-                    <%= username %>
-                </span>
                 <a href="/products" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full shadow hover:bg-indigo-700 transition-colors text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -35,11 +35,8 @@
         </div>
     </header>
 
-    <!-- Contenido principal -->
     <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        
-        <!-- Resumen de estadísticas -->
-        <!-- La grilla se adapta: 1 columna en móviles, 2 en tablets y 4 en ordenadores -->
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
                 <div class="flex items-center">
@@ -50,7 +47,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Productos</p>
-                        <h3 id="total-products" class="text-2xl font-bold mt-1 pulse">--</h3>
+                        <h3 id="total-products" class="text-2xl font-bold mt-1 pulse text-gray-900 dark:text-gray-50">--</h3>
                     </div>
                 </div>
             </div>
@@ -64,7 +61,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Usuarios</p>
-                        <h3 id="total-users" class="text-2xl font-bold mt-1 pulse">--</h3>
+                        <h3 id="total-users" class="text-2xl font-bold mt-1 pulse text-gray-900 dark:text-gray-50">--</h3>
                     </div>
                 </div>
             </div>
@@ -78,7 +75,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Tiempo Promedio</p>
-                        <h3 id="avg-time" class="text-2xl font-bold mt-1 pulse">-- min</h3>
+                        <h3 id="avg-time" class="text-2xl font-bold mt-1 pulse text-gray-900 dark:text-gray-50">-- min</h3>
                     </div>
                 </div>
             </div>
@@ -92,7 +89,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Productos Realizados</p>
-                        <h3 id="completed-products" class="text-2xl font-bold mt-1 pulse">--</h3>
+                        <h3 id="completed-products" class="text-2xl font-bold mt-1 pulse text-gray-900 dark:text-gray-50">--</h3>
                     </div>
                 </div>
             </div>
@@ -100,72 +97,74 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-        </svg>
-        Productos Más Agregados
-    </h3>
-    <div class="overflow-x-auto">
-        <div id="loadingTopProducts" class="loading text-center">
-            <div class="pulse">Cargando datos...</div>
-        </div>
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden" id="tableTopProducts">
-            <thead class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">SKU</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Producto</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Veces Agregado</th>
-                </tr>
-            </thead>
-            <tbody id="top-products-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                </tbody>
-        </table>
-    </div>
-</div>
-<div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
-    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-        Estadísticas por Marca (Top 10)
-    </h3>
-    <div class="overflow-x-auto">
-        <div id="loadingBrands" class="loading text-center">
-            <div class="pulse">Cargando datos de marcas...</div>
-        </div>
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden" id="tableBrands">
-            <thead class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Marca</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Productos</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Importancia Promedio</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cantidad Total</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Precio Promedio</th>
-                </tr>
-            </thead>
-            <tbody id="brands-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            </tbody>
-        </table>
-    </div>
-</div>
-<!-- Gráfico de Marcas -->
-<div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
-    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-        </svg>
-        Distribución por Marca
-    </h3>
-    <div class="chart-container" style="height: 300px;">
-        <div id="loadingBrandsChart" class="loading">
-            <div class="pulse">Cargando gráfico de marcas...</div>
-        </div>
-        <canvas id="chartBrands"></canvas>
-    </div>
-</div>
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Productos Más Agregados
+                </h3>
+                <div class="overflow-x-auto">
+                    <div id="loadingTopProducts" class="loading text-center">
+                        <div class="pulse text-gray-900 dark:text-gray-50">Cargando datos...</div>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden" id="tableTopProducts">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">SKU</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Producto</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Veces Agregado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-products-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-gray-900 dark:text-gray-50">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Estadísticas por Marca (Top 10)
+                </h3>
+                <div class="overflow-x-auto">
+                    <div id="loadingBrands" class="loading text-center">
+                        <div class="pulse text-gray-900 dark:text-gray-50">Cargando datos de marcas...</div>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden" id="tableBrands">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Marca</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Productos</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Importancia Promedio</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cantidad Total</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Precio Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="brands-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-gray-900 dark:text-gray-50" >
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+                Distribución por Marca
+            </h3>
+            <div class="chart-container" style="height: 300px;">
+                <div id="loadingBrandsChart" class="loading">
+                    <div class="pulse text-gray-900 dark:text-gray-50">Cargando gráfico de marcas...</div>
+                </div>
+                <canvas id="chartBrands"></canvas>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
@@ -173,14 +172,14 @@
                 </h3>
                 <div class="chart-container">
                     <div id="loadingTopUsers" class="loading">
-                        <div class="pulse">Cargando datos...</div>
+                        <div class="pulse text-gray-900 dark:text-gray-50">Cargando datos...</div>
                     </div>
                     <canvas id="chartTopUsers"></canvas>
                 </div>
             </div>
 
             <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -188,7 +187,7 @@
                 </h3>
                 <div class="chart-container">
                     <div id="loadingTime" class="loading">
-                        <div class="pulse">Cargando datos...</div>
+                        <div class="pulse text-gray-900 dark:text-gray-50">Cargando datos...</div>
                     </div>
                     <canvas id="chartTime"></canvas>
                 </div>
@@ -196,9 +195,9 @@
                     Tiempo promedio que toma completar un producto
                 </p>
             </div>
-
+            
             <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
@@ -206,22 +205,20 @@
                 </h3>
                 <div class="chart-container">
                     <div id="loadingCategories" class="loading">
-                        <div class="pulse">Cargando datos...</div>
+                        <div class="pulse text-gray-900 dark:text-gray-50">Cargando datos...</div>
                     </div>
                     <canvas id="chartCategories"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Tabla de estadísticas detalladas -->
         <div class="stat-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 Estadísticas por Categoría
             </h3>
-            <!-- La clase overflow-x-auto hace que la tabla sea horizontalmente deslizable en pantallas pequeñas -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
@@ -233,9 +230,9 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Precio Promedio</th>
                         </tr>
                     </thead>
-                    <tbody id="stats-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody id="stats-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-gray-900 dark:text-gray-50">
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center pulse">Cargando datos...</td>
+                            <td colspan="5" class="px-6 py-4 text-center pulse text-gray-900 dark:text-gray-50">Cargando datos...</td>
                         </tr>
                     </tbody>
                 </table>

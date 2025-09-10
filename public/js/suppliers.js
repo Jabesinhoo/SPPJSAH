@@ -102,10 +102,7 @@ async function handleFormSubmit(e) {
         const response = await fetch(action, {
             method: method,
             body: formData,
-            credentials: 'include',
-            headers: {
-                // No necesitamos Content-Type para FormData, el navegador lo setea automáticamente
-            }
+            credentials: 'include'
         });
         
         const result = await response.json();
@@ -113,6 +110,22 @@ async function handleFormSubmit(e) {
         if (response.ok && result.success) {
             showNotification(result.message, 'success');
             closeModal();
+
+            // 🚀 Procesar menciones en el campo nota si existen
+            const noteField = form.querySelector('#nota');
+            if (noteField && noteField.value.includes('@') && result.data?.id) {
+                try {
+                    await MentionHelpers.processMentions(noteField.value, {
+                        section: 'suppliers',
+                        redirectUrl: `/suppliers#supplier-${result.data.id}`,
+                        metadata: {
+                            supplierId: result.data.id,
+                            supplierName: result.data.nombre
+                        }
+                    });
+                } catch (err) {
+                }
+            }
             
             // Esperar un momento antes de recargar para que se vea la notificación
             setTimeout(() => {
@@ -144,6 +157,8 @@ async function handleFormSubmit(e) {
         submitBtn.disabled = false;
     }
 }
+
+
 
 // Función para manejar la eliminación
 async function handleDelete(e) {

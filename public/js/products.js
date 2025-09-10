@@ -1,4 +1,4 @@
-// products.js - Modificado con autocompletado desde Excel
+// products.js - Completamente modificado con sistema de menciones
 document.addEventListener('DOMContentLoaded', () => {
     // Obteniendo elementos del DOM
     const form = document.getElementById('product-form');
@@ -33,23 +33,174 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingProductId = null;
     let deleteProductId = null;
     let currentNotes = [];
-    let availableUsers = []; // Lista de usuarios para etiquetado
-    let mentionUsers = []; // Usuarios mencionados en la nota actual
     let searchTimeout;
+    let availableUsers = [];
 
-    // Obtener lista de usuarios para etiquetado
-    const fetchUsers = async () => {
+    // ==================== FUNCIÓN PARA PROCESAR MENCIONES ====================
+    const processMentionsInNotes = async (notes, productId, productName) => {
         try {
-            const res = await fetch('/api/users');
-            if (res.ok) {
-                const users = await res.json();
-                availableUsers = users.map(user => ({ username: user }));
-                console.log('Usuarios disponibles para etiquetado:', availableUsers);
+            const mentions = [];
+            const mentionRegex = /@(\w+)/g;
+            
+            // Buscar todas las menciones en todas las notas
+            notes.forEach(note => {
+                let match;
+                while ((match = mentionRegex.exec(note.text)) !== null) {
+                    if (!mentions.includes(match[1])) {
+                        mentions.push(match[1]);
+                    }
+                }
+            });
+
+            if (mentions.length === 0) {
+                return;
+            }
+
+
+            // Enviar menciones al servidor para procesar
+            const response = await fetch('/api/notifications/process-mentions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({
+                    text: notes.map(n => n.text).join(' '),
+                    mentions: mentions,
+                    context: {
+                        section: 'productos',
+                        redirectUrl: `/products#product-${productId}`,
+                        metadata: {
+                            productId: productId,
+                            productName: productName,
+                            productSKU: document.getElementById('sku').value
+                        }
+                    }
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+            } else {
             }
         } catch (error) {
-            console.error('Error fetching users:', error);
         }
     };
+
+    // ==================== SISTEMA DE SUGERENCIAS DE USUARIOS ====================
+    const loadAvailableUsers = async () => {
+        try {
+            const response = await fetch('/api/notifications/available-users');
+            if (response.ok) {
+                const data = await response.json();
+                availableUsers = data.users || [];
+            }
+        } catch (error) {
+        }
+    };
+
+    const showUserSuggestions = (element, query) => {
+        if (!availableUsers.length || !query) {
+            hideUserSuggestions();
+            return;
+        }
+
+        const filteredUsers = availableUsers.filter(user =>
+            user.username.toLowerCase().includes(query.toLowerCase())
+        );
+
+        if (filteredUsers.length === 0) {
+            hideUserSuggestions();
+            return;
+        }
+
+        suggestionsList.innerHTML = '';
+        filteredUsers.forEach(user => {
+            const suggestion = document.createElement('div');
+            suggestion.className = 'px-3 py-2 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800 text-sm flex items-center';
+            suggestion.innerHTML = `
+                <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-white text-xs mr-2">
+                    ${user.username.charAt(0).toUpperCase()}
+                </div>
+                <span>@${user.username}</span>
+            `;
+
+            suggestion.addEventListener('click', () => {
+                insertMention(element, user.username);
+            });
+
+            suggestionsList.appendChild(suggestion);
+        });
+
+        userSuggestions.classList.remove('hidden');
+        positionSuggestions(element);
+    };
+
+    const hideUserSuggestions = () => {
+        userSuggestions.classList.add('hidden');
+    };
+
+    const positionSuggestions = (element) => {
+        const rect = element.getBoundingClientRect();
+        userSuggestions.style.top = `${rect.bottom + window.scrollY}px`;
+        userSuggestions.style.left = `${rect.left + window.scrollX}px`;
+        userSuggestions.style.width = `${rect.width}px`;
+    };
+
+    const insertMention = (element, username) => {
+        const currentValue = element.value;
+        const cursorPos = element.selectionStart;
+        
+        const beforeCursor = currentValue.substring(0, cursorPos);
+        const lastAtIndex = beforeCursor.lastIndexOf('@');
+        
+        if (lastAtIndex !== -1) {
+            const newText = currentValue.substring(0, lastAtIndex) + `@${username} ` + currentValue.substring(cursorPos);
+            element.value = newText;
+            
+            // Posicionar cursor después del mention
+            const newCursorPos = lastAtIndex + username.length + 2;
+            element.setSelectionRange(newCursorPos, newCursorPos);
+        }
+        
+        hideUserSuggestions();
+        element.focus();
+    };
+
+    // ==================== MANEJO DE MENCIONES EN TEXTAREA ====================
+    newNoteTextarea.addEventListener('input', (e) => {
+        const text = e.target.value;
+        const cursorPos = e.target.selectionStart;
+        
+        const beforeCursor = text.substring(0, cursorPos);
+        const lastAtIndex = beforeCursor.lastIndexOf('@');
+        
+        if (lastAtIndex !== -1) {
+            const textAfterAt = beforeCursor.substring(lastAtIndex + 1);
+            if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+                showUserSuggestions(newNoteTextarea, textAfterAt);
+                return;
+            }
+        }
+        
+        hideUserSuggestions();
+    });
+
+    newNoteTextarea.addEventListener('click', (e) => {
+        hideUserSuggestions();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!userSuggestions.contains(e.target) && !newNoteTextarea.contains(e.target)) {
+            hideUserSuggestions();
+        }
+    });
+
+    newNoteTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideUserSuggestions();
+        }
+    });
 
     // Lógica del modo oscuro
     const isDarkMode = () => document.documentElement.classList.contains('dark');
@@ -85,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
      * Muestra un mensaje al usuario.
      */
     const showMessage = (message, type) => {
-        // Crear contenedor de mensaje si no existe
         let messageContainer = document.getElementById('message-container');
         if (!messageContainer) {
             messageContainer = document.createElement('div');
@@ -141,186 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
         noNotesMessage.classList.remove('hidden');
         currentNotes = [];
         newNoteTextarea.value = '';
-        mentionUsers = [];
+        hideUserSuggestions();
 
         // Resetear categoría para usuarios normales
         if (userRole !== 'admin') {
             document.getElementById('category').value = 'Faltantes';
         }
-    };
-
-    /**
-     * Sistema de etiquetado con @ - CORREGIDO
-     */
-    const setupMentionSystem = () => {
-        let currentQuery = '';
-        let mentionStart = -1;
-
-        newNoteTextarea.addEventListener('input', (e) => {
-            const text = e.target.value;
-            const cursorPos = e.target.selectionStart;
-
-            // Buscar @ más reciente antes del cursor
-            const beforeCursor = text.substring(0, cursorPos);
-            const lastAtIndex = beforeCursor.lastIndexOf('@');
-
-            if (lastAtIndex !== -1) {
-                const textAfterAt = beforeCursor.substring(lastAtIndex + 1);
-
-                // Verificar si no hay espacios después del @
-                if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
-                    currentQuery = textAfterAt.toLowerCase();
-                    mentionStart = lastAtIndex;
-                    showUserSuggestions(currentQuery, cursorPos);
-                    return;
-                }
-            }
-
-            hideUserSuggestions();
-        });
-
-        newNoteTextarea.addEventListener('keydown', (e) => {
-            const suggestions = userSuggestions.querySelectorAll('.user-suggestion');
-            const activeSuggestion = userSuggestions.querySelector('.user-suggestion.active');
-
-            if (suggestions.length > 0 && !userSuggestions.classList.contains('hidden')) {
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    const nextSuggestion = activeSuggestion ?
-                        activeSuggestion.nextElementSibling || suggestions[0] :
-                        suggestions[0];
-                    setActiveSuggestion(nextSuggestion);
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const prevSuggestion = activeSuggestion ?
-                        activeSuggestion.previousElementSibling || suggestions[suggestions.length - 1] :
-                        suggestions[suggestions.length - 1];
-                    setActiveSuggestion(prevSuggestion);
-                } else if (e.key === 'Enter' && activeSuggestion) {
-                    e.preventDefault();
-                    selectUser(activeSuggestion.dataset.username);
-                } else if (e.key === 'Escape') {
-                    hideUserSuggestions();
-                }
-            }
-        });
-
-        // Mostrar sugerencias al enfocar
-        newNoteTextarea.addEventListener('focus', () => {
-            if (availableUsers.length > 0) {
-                showAllUsersSuggestions();
-            }
-        });
-    };
-
-    const showUserSuggestions = (query, cursorPos) => {
-        console.log('Buscando usuarios con query:', query);
-        const filteredUsers = availableUsers.filter(user =>
-            user.username.toLowerCase().includes(query)
-        );
-
-        console.log('Usuarios filtrados:', filteredUsers);
-
-        if (filteredUsers.length === 0) {
-            hideUserSuggestions();
-            return;
-        }
-
-        suggestionsList.innerHTML = '';
-        filteredUsers.forEach((user, index) => {
-            const suggestion = document.createElement('div');
-            suggestion.className = 'user-suggestion px-3 py-2 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800 text-sm flex items-center';
-            suggestion.dataset.username = user.username;
-
-            suggestion.innerHTML = `
-                <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-white text-xs mr-2">
-                    ${user.username.charAt(0).toUpperCase()}
-                </div>
-                <span>@${user.username}</span>
-            `;
-
-            if (index === 0) {
-                suggestion.classList.add('active', 'bg-indigo-100', 'dark:bg-indigo-800');
-            }
-
-            suggestion.addEventListener('click', () => selectUser(user.username));
-            suggestionsList.appendChild(suggestion);
-        });
-
-        userSuggestions.classList.remove('hidden');
-
-        // Posicionar el dropdown
-        const textareaRect = newNoteTextarea.getBoundingClientRect();
-        userSuggestions.style.top = `${textareaRect.height + 5}px`;
-        userSuggestions.style.left = '0';
-    };
-
-    const showAllUsersSuggestions = () => {
-        suggestionsList.innerHTML = '';
-
-        availableUsers.forEach((user, index) => {
-            const suggestion = document.createElement('div');
-            suggestion.className = 'user-suggestion px-3 py-2 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800 text-sm flex items-center';
-            suggestion.dataset.username = user.username;
-
-            suggestion.innerHTML = `
-                <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-white text-xs mr-2">
-                    ${user.username.charAt(0).toUpperCase()}
-                </div>
-                <span>@${user.username}</span>
-            `;
-
-            suggestion.addEventListener('click', () => selectUser(user.username));
-            suggestionsList.appendChild(suggestion);
-        });
-
-        userSuggestions.classList.remove('hidden');
-    };
-
-    const hideUserSuggestions = () => {
-        userSuggestions.classList.add('hidden');
-        suggestionsList.innerHTML = '';
-    };
-
-    const setActiveSuggestion = (suggestion) => {
-        userSuggestions.querySelectorAll('.user-suggestion').forEach(s => {
-            s.classList.remove('active', 'bg-indigo-100', 'dark:bg-indigo-800');
-        });
-        suggestion.classList.add('active', 'bg-indigo-100', 'dark:bg-indigo-800');
-    };
-
-    const selectUser = (username) => {
-        const textarea = newNoteTextarea;
-        const currentText = textarea.value;
-        const cursorPos = textarea.selectionStart;
-
-        // Encontrar el inicio del @
-        const beforeCursor = currentText.substring(0, cursorPos);
-        const lastAtIndex = beforeCursor.lastIndexOf('@');
-
-        if (lastAtIndex !== -1) {
-            const beforeMention = currentText.substring(0, lastAtIndex);
-            const textAfterAt = beforeCursor.substring(lastAtIndex + 1);
-            const afterCursor = currentText.substring(cursorPos);
-
-            // Reemplazar solo la parte después del @
-            const newText = `${beforeMention}@${username} ${afterCursor}`;
-
-            textarea.value = newText;
-            const newCursorPos = lastAtIndex + username.length + 2;
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-
-            // Agregar usuario a la lista de mencionados
-            if (!mentionUsers.includes(username)) {
-                mentionUsers.push(username);
-            }
-
-            console.log('Usuario etiquetado:', username);
-            console.log('Mencionados actuales:', mentionUsers);
-        }
-
-        hideUserSuggestions();
-        textarea.focus();
     };
 
     /**
@@ -335,15 +311,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'p-3 my-2 rounded-md bg-gray-100 dark:bg-gray-600 border-l-4 border-indigo-500';
 
-                // Procesar menciones en el texto
-                let processedText = note.text;
-                const mentionRegex = /@(\w+)/g;
-                processedText = processedText.replace(mentionRegex, '<span class="bg-indigo-200 dark:bg-indigo-700 px-1 rounded text-indigo-800 dark:text-indigo-200 font-semibold">@$1</span>');
-
                 // Formatear fecha y hora
                 const noteDate = new Date(note.date);
                 const formattedDate = noteDate.toLocaleDateString();
                 const formattedTime = noteDate.toLocaleTimeString();
+
+                // Procesar menciones en el texto
+                let noteText = note.text;
+                const mentionRegex = /@(\w+)/g;
+                noteText = noteText.replace(mentionRegex, '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded">@$1</span>');
 
                 noteDiv.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
@@ -353,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-800 dark:text-gray-200">${processedText}</p>
+                    <p class="text-sm text-gray-800 dark:text-gray-200">${noteText}</p>
                 `;
                 notesContainer.appendChild(noteDiv);
             });
@@ -442,11 +418,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ${product.categoria === 'Faltantes' ? `
       <div class="absolute z-10 invisible group-hover:visible bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md whitespace-nowrap">
-        No puede marcarse “Listo” si está en “Faltantes”
+        No puede marcarse "Listo" si está en "Faltantes"
       </div>` : ''}
   </div>
 `;
-
 
                 // Notas con modal
                 let notesHtml = `<td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">-</td>`;
@@ -487,9 +462,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="font-mono">${product.SKU}</span>
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-    <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
-</td>
-
+                            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
+                        </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             ${product.usuario}
                         </td>
@@ -530,9 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                             <span class="font-mono">${product.SKU}</span>
                         </td>
-                       <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-    <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
-</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
+                        </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             ${product.usuario}
                         </td>
@@ -556,8 +530,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${product.proveedor || '-'}
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-  ${product.marca || '-'} <!-- Nuevo campo marca -->
-</td>
+                            ${product.marca || '-'}
+                        </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             <span class="text-xs">${formattedDate}</span><br>
                             <span class="text-xs">${formattedTime}</span>
@@ -586,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         } catch (err) {
-            console.error('Error fetching products:', err);
             showMessage('Error de conexión. Inténtalo de nuevo.', 'error');
         }
     };
@@ -631,8 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userRole === 'admin') {
             productData.purchasePrice = Math.max(0, parseFloat(formData.get('purchasePrice')) || 0);
             productData.supplier = formData.get('supplier') || '';
-            productData.brand = formData.get('brand') || ''; // Nuevo campo marca
-
+            productData.brand = formData.get('brand') || '';
             productData.ready = readyToggle ? readyToggle.checked : false;
         } else {
             // Para usuarios normales, forzar valores por defecto
@@ -647,8 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newNote = {
                 text: newNoteText,
                 user: currentUsername,
-                date: new Date().toISOString(),
-                mentions: mentionUsers
+                date: new Date().toISOString()
             };
             const updatedNotes = [...currentNotes, newNote];
             productData.notes = JSON.stringify(updatedNotes);
@@ -670,6 +641,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.ok) {
                 showMessage(data.message || 'Producto guardado correctamente', 'success');
+                
+                // ✅ PROCESAR MENCIONES DESPUÉS DE GUARDAR
+                const productName = formData.get('name');
+                const notesToProcess = newNoteText ? [...currentNotes, { text: newNoteText, user: currentUsername }] : currentNotes;
+                
+                if (notesToProcess.length > 0) {
+                    const productId = editingProductId || data.product?.id;
+                    if (productId) {
+                        // Procesar menciones de forma asíncrona (no esperar)
+                        processMentionsInNotes(notesToProcess, productId, productName)
+                            .catch(error => console.error('Error en procesamiento de menciones:', error));
+                    }
+                }
+                
                 closeModal();
                 fetchProducts();
             } else {
@@ -687,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = () => {
         modal.classList.add('hidden');
         resetForm();
-        hideUserSuggestions();
     };
 
     /**
@@ -712,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (userRole === 'admin') {
                     document.getElementById('purchase-price').value = product.precio_compra || '';
                     document.getElementById('supplier').value = product.proveedor || '';
-                    document.getElementById('brand').value = product.marca || ''; // Nuevo campo marca
+                    document.getElementById('brand').value = product.marca || '';
 
                     if (readyToggle) readyToggle.checked = product.listo || false;
                 }
@@ -726,8 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentNotes = [{
                             text: product.nota,
                             user: 'Sistema',
-                            date: new Date().toISOString(),
-                            mentions: []
+                            date: new Date().toISOString()
                         }];
                         renderNotes(currentNotes);
                     }
@@ -873,11 +856,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 </div>
                                             </div>
                                             <p class="text-gray-800 dark:text-gray-200">${note.text}</p>
-                                            ${note.mentions && note.mentions.length > 0 ? `
-                                                <div class="mt-2">
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400">Mencionados: ${note.mentions.join(', ')}</span>
-                                                </div>
-                                            ` : ''}
                                         </div>
                                     `).join('') : '<p class="text-gray-500 dark:text-gray-400 text-center">No hay notas para este producto.</p>'}
                                 </div>
@@ -972,7 +950,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } catch (error) {
-                    console.log('Error en búsqueda automática:', error);
                     hideSuggestions();
                 }
             }, 300);
@@ -1074,13 +1051,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const newNote = {
                 text: newNoteText,
                 user: currentUsername,
-                date: new Date().toISOString(),
-                mentions: mentionUsers.slice()
+                date: new Date().toISOString()
             };
             currentNotes.push(newNote);
             renderNotes(currentNotes);
             newNoteTextarea.value = '';
-            mentionUsers = [];
             hideUserSuggestions();
         }
     });
@@ -1112,21 +1087,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Cerrar sugerencias al hacer clic fuera
-    document.addEventListener('click', (e) => {
-        if (!userSuggestions.contains(e.target) && e.target !== newNoteTextarea) {
-            hideUserSuggestions();
-        }
-    });
-
     // Inicialización
     const init = async () => {
-        await fetchUsers();
-        setupMentionSystem();
-        setupSKUautocomplete(); // Configurar autocompletado de SKU
+        setupSKUautocomplete();
         fetchProducts();
-        // Establecer importancia inicial
         updateStarDisplay(1);
+        // Cargar usuarios disponibles para menciones
+        await loadAvailableUsers();
     };
 
     // Iniciar la aplicación
