@@ -18,14 +18,15 @@
     <title>SPJSAH | <%= _title %></title>
     <link rel="icon" href="/img/logo.png" type="image/png" />
     
-    <script>
-        tailwind.config = { darkMode: 'class' };
-        // Hacer disponible información del usuario para el sistema de notificaciones
+    <script>        // Hacer disponible información del usuario para el sistema de notificaciones
         window.currentUsername = '<%= _username || "" %>';
         window.currentUserId = '<%= _userId || "" %>';
         window.currentUserRole = '<%= _userRole || "" %>';
     </script>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
 
 
 </head>

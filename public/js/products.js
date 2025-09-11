@@ -213,6 +213,20 @@ document.addEventListener('DOMContentLoaded', () => {
             moonIcon.classList.remove('hidden');
         }
     };
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            if (isDarkMode()) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateIcons();
+        });
+    }
+
+    updateIcons();
 
     // Aplicar tema guardado
     const savedTheme = localStorage.getItem('theme');
