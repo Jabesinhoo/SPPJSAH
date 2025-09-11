@@ -110,6 +110,8 @@ app.use(
           "'self'",
           "https://cdn.tailwindcss.com",
           "https://cdn.jsdelivr.net",
+          "https://cdnjs.cloudflare.com",
+
           "'unsafe-inline'"
         ],
         "script-src-attr": ["'unsafe-inline'"],

@@ -70,7 +70,10 @@ exports.login = async (req, res) => {
     const username = (req.body.username || '').trim();
     const password = req.body.password || '';
 
+    console.log('🟢 Body recibido en login:', req.body);
+
     if (!username || !password) {
+      console.warn('⚠️ Faltan credenciales en la petición:', { username, password });
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos.' });
     }
 
@@ -84,17 +87,23 @@ exports.login = async (req, res) => {
     });
 
     if (!user) {
+      console.warn('⚠️ Usuario no encontrado:', username);
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
     // ✅ Verificar si el usuario está aprobado
     if (!user.isApproved) {
+      console.warn('⚠️ Usuario no aprobado:', username);
       return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación por un administrador.' });
     }
 
+    console.log('🟢 Hash en DB:', user.password);
+
     const ok = await bcrypt.compare(password, user.password);
-    
+    console.log('🟢 Comparación bcrypt:', { ingresado: password, ok });
+
     if (!ok) {
+      console.warn('⚠️ Contraseña incorrecta para usuario:', username);
       return res.status(400).json({ error: 'Credenciales inválidas.' });
     }
 
@@ -107,7 +116,9 @@ exports.login = async (req, res) => {
       req.session.userId = user.uuid;
       req.session.username = user.username;
       req.session.userRole = user.roles?.name;
-      req.session.isApproved = user.isApproved; // ✅ Guardar estado de aprobación en sesión
+      req.session.isApproved = user.isApproved;
+
+      console.log('✅ Sesión creada correctamente para:', username);
 
       return res.status(200).json({
         message: 'Sesión iniciada correctamente.',
@@ -122,11 +133,12 @@ exports.login = async (req, res) => {
       });
     });
 
-   } catch (err) {
+  } catch (err) {
     console.error('❌ Login error:', err);
     return res.status(500).json({ error: 'Error inesperado en el inicio de sesión.' });
   }
 };
+
 
 
 exports.logout = (req, res) => {

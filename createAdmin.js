@@ -26,33 +26,35 @@ async function createAdminUser() {
                 username: username
             },
             defaults: {
-                password: password, 
-                roleUuid: adminRole.uuid,
-                isApproved: true // ✅ Asegurar que esté aprobado
-            },
+  password: 'admin1',
+  roleUuid: adminRole.uuid,
+  isApproved: true
+}
+
         });
 
-        if (created) {
-            logger.info(`✅ Superusuario '${username}' creado con éxito.`);
-        } else {
-            // ✅ Si el usuario ya existe, ACTUALIZARLO para asegurar que esté aprobado
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-            
-            await user.update({
-                password: hashedPassword,
-                roleUuid: adminRole.uuid,
-                isApproved: true // ✅ Forzar aprobación
-            });
-            
-            logger.info(`✅ Superusuario '${username}' actualizado y aprobado con éxito.`);
-        }
 
-    } catch (error) {
-        logger.error('❌ Error al crear/actualizar el superusuario:', error);
-    } finally {
-        await sequelize.close();
+    if (created) {
+        logger.info(`✅ Superusuario '${username}' creado con éxito.`);
+    } else {
+        // ✅ Si el usuario ya existe, ACTUALIZARLO para asegurar que esté aprobado
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        await user.update({
+            password: hashedPassword,
+            roleUuid: adminRole.uuid,
+            isApproved: true // ✅ Forzar aprobación
+        });
+
+        logger.info(`✅ Superusuario '${username}' actualizado y aprobado con éxito.`);
     }
+
+} catch (error) {
+    logger.error('❌ Error al crear/actualizar el superusuario:', error);
+} finally {
+    await sequelize.close();
+}
 }
 
 createAdminUser();
