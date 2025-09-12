@@ -1,3 +1,4 @@
+// migrations/20240910120000-create-user-roles.js
 'use strict';
 
 module.exports = {
@@ -27,20 +28,12 @@ module.exports = {
       }
     });
 
-    // Verificar si ya existe el constraint
-    const [results] = await queryInterface.sequelize.query(`
-      SELECT constraint_name
-      FROM information_schema.table_constraints
-      WHERE table_name = 'user_roles' AND constraint_name = 'user_roles_unique'
-    `);
-
-    if (results.length === 0) {
-      await queryInterface.addConstraint('user_roles', {
-        fields: ['userUuid', 'roleUuid'],
-        type: 'unique',
-        name: 'user_roles_unique'
-      });
-    }
+    // índice único para que un usuario no tenga el mismo rol dos veces
+    await queryInterface.addConstraint('user_roles', {
+      fields: ['userUuid', 'roleUuid'],
+      type: 'unique',
+      name: 'user_roles_unique'
+    });
   },
 
   async down(queryInterface) {

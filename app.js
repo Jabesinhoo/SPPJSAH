@@ -57,7 +57,7 @@ app.use((req, res, next) => {
 // ✅ Rate Limiter Global
 const globalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: {
     error: 'Demasiadas solicitudes desde esta IP, intenta nuevamente en un minuto.'
   },

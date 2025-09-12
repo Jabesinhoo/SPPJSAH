@@ -85,11 +85,6 @@ module.exports = {
       updatedAt: { type: Sequelize.DATE, allowNull: false, defaultValue: Sequelize.fn('NOW') }
     });
 
-    // Proteger constraint único
-    await queryInterface.sequelize.query(`
-      ALTER TABLE "user_roles" DROP CONSTRAINT IF EXISTS "user_roles_unique";
-    `);
-
     await queryInterface.addConstraint('user_roles', {
       fields: ['userUuid', 'roleUuid'],
       type: 'unique',
@@ -127,9 +122,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    // eliminar constraint antes de borrar tablas
-    await queryInterface.removeConstraint('user_roles', 'user_roles_unique');
-
     await queryInterface.dropTable('session');
     await queryInterface.dropTable('notifications');
     await queryInterface.dropTable('user_roles');
