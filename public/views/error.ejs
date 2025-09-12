@@ -1,31 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPJSAH | Error <%= errorCode %></title>
+    <title>SPJSAH | Error <%= errorCode %>
+    </title>
 </head>
+
 <body style="font-family: Verdana, Geneva, Tahoma, sans-serif;"
-      class="bg-gray-100 dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
+    class="bg-gray-100 dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
 
     <div class="min-h-screen flex items-center justify-center px-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 max-w-md w-full text-center">
-            
+
             <!-- Icono según tipo de error -->
             <div class="mb-6">
-                <% if (errorCode === 403) { %>
-                    <svg class="h-16 w-16 text-red-500 dark:text-red-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <% if (errorCode===403) { %>
+                    <svg class="h-16 w-16 text-red-500 dark:text-red-400 mx-auto" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                <% } else if (errorCode === 404) { %>
-                    <svg class="h-16 w-16 text-blue-500 dark:text-blue-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                <% } else { %>
-                    <svg class="h-16 w-16 text-orange-500 dark:text-orange-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                <% } %>
+                    <% } else if (errorCode===404) { %>
+                        <svg class="h-16 w-16 text-blue-500 dark:text-blue-400 mx-auto" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <% } else if (errorCode===429) { %>
+                            <svg class="h-16 w-16 text-yellow-500 dark:text-yellow-400 mx-auto" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M4.93 4.93a10 10 0 1014.14 0A10 10 0 004.93 4.93z" />
+                            </svg>
+                            <% } else { %>
+                                <svg class="h-16 w-16 text-orange-500 dark:text-orange-400 mx-auto" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <% } %>
             </div>
 
             <!-- Título -->
@@ -35,15 +50,17 @@
 
             <!-- Mensaje -->
             <p class="text-gray-600 dark:text-gray-300 mb-4">
-                <% if (errorCode === 403) { %>
+                <% if (errorCode===403) { %>
                     Acceso Denegado. No tienes permisos para acceder a esta página.
-                <% } else if (errorCode === 404) { %>
-                    Página No Encontrada. La página que buscas no existe.
-                <% } else if (errorCode === 500) { %>
-                    Error Interno del Servidor. Algo salió mal en nuestro servidor.
-                <% } else { %>
-                    Ha ocurrido un error inesperado.
-                <% } %>
+                    <% } else if (errorCode===404) { %>
+                        Página No Encontrada. La página que buscas no existe.
+                        <% } else if (errorCode===429) { %>
+                            Demasiadas solicitudes. Intenta nuevamente en un minuto.
+                            <% } else if (errorCode===500) { %>
+                                Error Interno del Servidor. Algo salió mal en nuestro servidor.
+                                <% } else { %>
+                                    Ha ocurrido un error inesperado.
+                                    <% } %>
             </p>
 
             <!-- Mensaje adicional -->
@@ -51,30 +68,32 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
                     <%= errorMessage %>
                 </p>
-            <% } %>
+                <% } %>
 
-            <!-- Botones -->
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="javascript:history.back()"
-                   class="inline-block bg-gray-600 dark:bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition">
-                    Volver Atrás
-                </a>
-                <a href="/"
-                   class="inline-block bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-400 transition">
-                    Ir al Inicio
-                </a>
-            </div>
+                    <!-- Botones -->
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <a href="javascript:history.back()"
+                            class="inline-block bg-gray-600 dark:bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition">
+                            Volver Atrás
+                        </a>
+                        <a href="/"
+                            class="inline-block bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-400 transition">
+                            Ir al Inicio
+                        </a>
+                    </div>
 
-            <!-- Stacktrace -->
-            <% if (process.env.NODE_ENV === 'development' && typeof errorStack !== 'undefined' && errorStack) { %>
-                <details class="mt-6 text-left">
-                    <summary class="text-sm text-gray-500 dark:text-gray-400 cursor-pointer">
-                        Detalles técnicos (Desarrollo)
-                    </summary>
-                    <pre class="text-xs text-gray-700 dark:text-gray-200 mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded overflow-auto"><%= errorStack %></pre>
-                </details>
-            <% } %>
+                    <!-- Stacktrace -->
+                    <% if (process.env.NODE_ENV==='development' && typeof errorStack !=='undefined' && errorStack) { %>
+                        <details class="mt-6 text-left">
+                            <summary class="text-sm text-gray-500 dark:text-gray-400 cursor-pointer">
+                                Detalles técnicos (Desarrollo)
+                            </summary>
+                            <pre
+                                class="text-xs text-gray-700 dark:text-gray-200 mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded overflow-auto"><%= errorStack %></pre>
+                        </details>
+                        <% } %>
         </div>
     </div>
 </body>
+
 </html>
