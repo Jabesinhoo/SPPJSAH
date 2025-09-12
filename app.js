@@ -7,7 +7,7 @@ const expressLayouts = require('express-ejs-layouts');
 const flash = require('connect-flash');
 const helmet = require('helmet');
 const pgSession = require('connect-pg-simple')(session);
-const minifyHTML = require("html-minifier-terser").minify;
+const winston = require('winston');
 const logger = require('./utils/logger');
 const csrf = require('csurf');
 const rateLimit = require('express-rate-limit');
@@ -51,34 +51,6 @@ app.use((req, res, next) => {
 
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
-  next();
-});
-
-app.use((req, res, next) => {
-  if (process.env.NODE_ENV !== "production") {
-    return next(); // no minificar en dev
-  }
-
-  const oldRender = res.render;
-  res.render = function (view, options, callback) {
-    oldRender.call(this, view, options, async (err, html) => {
-      if (err) return callback ? callback(err) : next(err);
-      try {
-        const minified = await minifyHTML(html, {
-          collapseWhitespace: true,
-          removeComments: true,
-          minifyJS: true,
-          minifyCSS: true,
-          // ⚠️ evita romper layouts EJS
-          preserveLineBreaks: true,
-          conservativeCollapse: true
-        });
-        res.send(minified);
-      } catch (e) {
-        res.send(html);
-      }
-    });
-  };
   next();
 });
 
