@@ -13,7 +13,7 @@ function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombre
     document.getElementById('modalTitle').textContent = 'Editar Proveedor';
     document.getElementById('supplierForm').setAttribute('data-action', `/api/suppliers/${id}`);
     document.getElementById('supplierForm').setAttribute('data-method', 'PUT');
-    document.getElementById('marca').value = marca;
+    document.getElementById('marca').value = marca || '';
     document.getElementById('categoria').value = categoria;
     document.getElementById('nombre').value = nombre;
     document.getElementById('celular').value = celular;
@@ -21,6 +21,8 @@ function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombre
     document.getElementById('nombreEmpresa').value = nombreEmpresa || '';
     document.getElementById('ciudad').value = ciudad;
     document.getElementById('nota').value = nota || '';
+    document.getElementById('correo').value = correo || ''; // ✅ nuevo campo
+
     document.getElementById('fileName').textContent = imagen ? 'Imagen actual' : 'Ningún archivo seleccionado';
     clearErrorMessages();
 
@@ -57,7 +59,7 @@ function clearErrorMessages() {
         el.classList.add('hidden');
         el.textContent = '';
     });
-    
+
     const inputElements = document.querySelectorAll('input, select');
     inputElements.forEach(el => {
         el.classList.remove('input-error');
@@ -67,15 +69,14 @@ function clearErrorMessages() {
 // Función para mostrar notificaciones
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-opacity ${
-        type === 'success' 
-            ? 'bg-green-500 text-white' 
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-opacity ${type === 'success'
+            ? 'bg-green-500 text-white'
             : 'bg-red-500 text-white'
-    }`;
+        }`;
     notification.textContent = message;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.style.opacity = '0';
         setTimeout(() => notification.remove(), 300);
@@ -85,28 +86,28 @@ function showNotification(message, type = 'success') {
 // Función para manejar el envío del formulario
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const form = e.target;
     const action = form.getAttribute('data-action');
     const method = form.getAttribute('data-method') || 'POST';
     const formData = new FormData(form);
-    
+
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
-    
+
     try {
         // Mostrar loading
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
         submitBtn.disabled = true;
-        
+
         const response = await fetch(action, {
             method: method,
             body: formData,
             credentials: 'include'
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok && result.success) {
             showNotification(result.message, 'success');
             closeModal();
@@ -126,7 +127,7 @@ async function handleFormSubmit(e) {
                 } catch (err) {
                 }
             }
-            
+
             // Esperar un momento antes de recargar para que se vea la notificación
             setTimeout(() => {
                 window.location.reload();
@@ -163,27 +164,27 @@ async function handleFormSubmit(e) {
 // Función para manejar la eliminación
 async function handleDelete(e) {
     e.preventDefault();
-    
+
     const form = e.target;
     const id = form.getAttribute('data-id');
     const deleteBtn = form.querySelector('button[type="submit"]');
     const originalText = deleteBtn.innerHTML;
-    
+
     try {
         deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Eliminando...';
         deleteBtn.disabled = true;
-        
+
         const response = await fetch(`/api/suppliers/${id}`, {
             method: 'DELETE',
             credentials: 'include'
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok && result.success) {
             showNotification(result.message, 'success');
             closeDeleteModal();
-            
+
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
@@ -211,22 +212,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar modal de eliminar
     document.getElementById('closeDeleteModalIconBtn').addEventListener('click', closeDeleteModal);
     document.getElementById('cancelDeleteModalBtn').addEventListener('click', closeDeleteModal);
-    
+
     // Manejar envío de formulario
     document.getElementById('supplierForm').addEventListener('submit', handleFormSubmit);
-    
+
     // Manejar eliminación
     document.getElementById('deleteForm').addEventListener('submit', handleDelete);
-    
+
     // Delegación de eventos para los botones de editar y eliminar
     document.body.addEventListener('click', (e) => {
         const editBtn = e.target.closest('.edit-btn');
         const deleteBtn = e.target.closest('.delete-btn');
 
         if (editBtn) {
-            const { id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen } = editBtn.dataset;
-            openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen);
+            const { id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen, correo } = editBtn.dataset;
+            openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen, correo);
         }
+
 
         if (deleteBtn) {
             const { id, nombre } = deleteBtn.dataset;
@@ -238,10 +240,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('imagen').addEventListener('change', function (e) {
         const file = e.target.files[0];
         const fileNameElement = document.getElementById('fileName');
-        
+
         if (file) {
             fileNameElement.textContent = file.name;
-            
+
             const reader = new FileReader();
             reader.onload = function (e) {
                 document.getElementById('imagePreview').classList.remove('hidden');
@@ -255,18 +257,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Validación en tiempo real para el campo celular
-    document.getElementById('celular').addEventListener('input', function(e) {
+    document.getElementById('celular').addEventListener('input', function (e) {
         const value = e.target.value;
         const errorElement = document.getElementById('celularError');
-        
+
         // Solo permitir números
         e.target.value = value.replace(/\D/g, '');
-        
+
         // Validar longitud
         if (e.target.value.length > 10) {
             e.target.value = e.target.value.slice(0, 10);
         }
-        
+
         // Mostrar error si no tiene 10 dígitos
         if (e.target.value.length === 10 || e.target.value.length === 0) {
             errorElement.classList.add('hidden');
@@ -285,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Cerrar modales con la tecla Escape
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeModal();
             closeDeleteModal();

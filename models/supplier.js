@@ -8,10 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     marca: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
+      allowNull: true,
     },
     categoria: {
       type: DataTypes.STRING,
@@ -37,6 +34,15 @@ module.exports = (sequelize, DataTypes) => {
         is: {
           args: /^[0-9]{10}$/,
           msg: 'El celular debe tener exactamente 10 dígitos numéricos'
+        }
+      }
+    },
+correo: { 
+      type: DataTypes.STRING,
+      allowNull: true, // ✅ opcional
+      validate: {
+        isEmail: {
+          msg: 'Debe ser un correo electrónico válido'
         }
       }
     },

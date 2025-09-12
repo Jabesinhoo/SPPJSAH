@@ -2,9 +2,9 @@ const { body } = require('express-validator');
 
 const supplierValidation = [
   body('marca')
+    .optional({ checkFalsy: true })
     .trim()
     .escape()
-    .notEmpty().withMessage('La marca es requerida')
     .isLength({ max: 100 }).withMessage('La marca no puede tener más de 100 caracteres'),
 
   body('categoria')
@@ -22,6 +22,13 @@ const supplierValidation = [
   body('celular')
     .trim()
     .matches(/^[0-9]{10}$/).withMessage('El celular debe tener 10 dígitos'),
+
+  body('correo')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isEmail().withMessage('Debe de ser un correo válido')
+    .normalizeEmail(),
+
 
   body('ciudad')
     .trim()
