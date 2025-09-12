@@ -9,7 +9,7 @@ function openCreateModal() {
     document.getElementById('supplierModal').classList.remove('hidden');
 }
 
-function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen) {
+function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen,correo) {
     document.getElementById('modalTitle').textContent = 'Editar Proveedor';
     document.getElementById('supplierForm').setAttribute('data-action', `/api/suppliers/${id}`);
     document.getElementById('supplierForm').setAttribute('data-method', 'PUT');

@@ -152,6 +152,7 @@ exports.createSupplierAPI = async (req, res) => {
             categoria: req.body.categoria,
             nombre: req.body.nombre,
             celular: req.body.celular,
+            correo: req.body.correo,   // ✅ nuevo campo
             tipoAsesor: req.body.tipoAsesor,
             nombreEmpresa: req.body.nombreEmpresa,
             nota: req.body.nota,
@@ -159,8 +160,9 @@ exports.createSupplierAPI = async (req, res) => {
             imagen: imagenPath
         });
 
+
         logger.info('✅ [API] Proveedor creado ID:', nuevoProveedor.id);
-        
+
         res.json({
             success: true,
             message: 'Proveedor creado exitosamente',
@@ -209,12 +211,14 @@ exports.updateSupplierAPI = async (req, res) => {
             categoria: req.body.categoria,
             nombre: req.body.nombre,
             celular: req.body.celular,
+            correo: req.body.correo,   // ✅ nuevo campo
             tipoAsesor: req.body.tipoAsesor,
             nombreEmpresa: req.body.nombreEmpresa,
             nota: req.body.nota,
             ciudad: req.body.ciudad,
             imagen: imagenPath
         });
+
 
         res.json({
             success: true,
@@ -248,7 +252,7 @@ exports.deleteSupplierAPI = async (req, res) => {
         }
 
         await supplier.destroy();
-        
+
         res.json({
             success: true,
             message: 'Proveedor eliminado exitosamente'
@@ -285,12 +289,14 @@ exports.createSupplier = async (req, res) => {
             categoria: req.body.categoria,
             nombre: req.body.nombre,
             celular: req.body.celular,
+            correo: req.body.correo,
             tipoAsesor: req.body.tipoAsesor,
             nombreEmpresa: req.body.nombreEmpresa,
             nota: req.body.nota,
             ciudad: req.body.ciudad,
             imagen: imagenPath
         });
+
 
         req.flash('success', 'Proveedor creado exitosamente');
         res.redirect('/suppliers');
@@ -332,6 +338,7 @@ exports.updateSupplier = async (req, res) => {
             categoria: req.body.categoria,
             nombre: req.body.nombre,
             celular: req.body.celular,
+            correo: req.body.correo,   // ✅ nuevo campo
             tipoAsesor: req.body.tipoAsesor,
             nombreEmpresa: req.body.nombreEmpresa,
             nota: req.body.nota,
