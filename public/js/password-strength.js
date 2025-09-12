@@ -61,11 +61,11 @@ class PasswordStrength {
         const strengthLevel = result.score;
         
         const messages = [
-            'Muy débil 😟 - Fácil de adivinar',
-            'Débil 😐 - Mejorable',
-            'Regular 🙂 - Aceptable',
-            'Fuerte 😊 - Buena contraseña',
-            'Muy fuerte 🎉 - Excelente contraseña'
+            'Muy suave esa contraseña',
+            'Peor es nada',
+            'Regularsonga',
+            'Joa cule peñon',
+            'Joa cule ñamazo'
         ];
 
         const suggestions = result.feedback.suggestions.length > 0 
