@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const mentions = [];
             const mentionRegex = /@(\w+)/g;
-            
+
             // Buscar todas las menciones en todas las notas
             notes.forEach(note => {
                 let match;
@@ -150,19 +150,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const insertMention = (element, username) => {
         const currentValue = element.value;
         const cursorPos = element.selectionStart;
-        
+
         const beforeCursor = currentValue.substring(0, cursorPos);
         const lastAtIndex = beforeCursor.lastIndexOf('@');
-        
+
         if (lastAtIndex !== -1) {
             const newText = currentValue.substring(0, lastAtIndex) + `@${username} ` + currentValue.substring(cursorPos);
             element.value = newText;
-            
+
             // Posicionar cursor después del mention
             const newCursorPos = lastAtIndex + username.length + 2;
             element.setSelectionRange(newCursorPos, newCursorPos);
         }
-        
+
         hideUserSuggestions();
         element.focus();
     };
@@ -171,10 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
     newNoteTextarea.addEventListener('input', (e) => {
         const text = e.target.value;
         const cursorPos = e.target.selectionStart;
-        
+
         const beforeCursor = text.substring(0, cursorPos);
         const lastAtIndex = beforeCursor.lastIndexOf('@');
-        
+
         if (lastAtIndex !== -1) {
             const textAfterAt = beforeCursor.substring(lastAtIndex + 1);
             if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
-        
+
         hideUserSuggestions();
     });
 
@@ -615,10 +615,12 @@ document.addEventListener('DOMContentLoaded', () => {
             category: formData.get('category') || 'Faltantes'
         };
 
+        // ✅ Marca la pueden poner todos los roles
+        productData.brand = formData.get('brand') || '';
+
         if (userRole === 'admin') {
             productData.purchasePrice = Math.max(0, parseFloat(formData.get('purchasePrice')) || 0);
             productData.supplier = formData.get('supplier') || '';
-            productData.brand = formData.get('brand') || '';
             productData.ready = readyToggle ? readyToggle.checked : false;
         } else {
             // Para usuarios normales, forzar valores por defecto
@@ -626,6 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
             productData.supplier = 'N/A';
             productData.ready = false;
         }
+
 
         // Manejar notas
         const newNoteText = newNoteTextarea.value.trim();
@@ -655,11 +658,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.ok) {
                 showMessage(data.message || 'Producto guardado correctamente', 'success');
-                
+
                 // ✅ PROCESAR MENCIONES DESPUÉS DE GUARDAR
                 const productName = formData.get('name');
                 const notesToProcess = newNoteText ? [...currentNotes, { text: newNoteText, user: currentUsername }] : currentNotes;
-                
+
                 if (notesToProcess.length > 0) {
                     const productId = editingProductId || data.product?.id;
                     if (productId) {
@@ -668,7 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             .catch(error => console.error('Error en procesamiento de menciones:', error));
                     }
                 }
-                
+
                 closeModal();
                 fetchProducts();
             } else {
@@ -707,10 +710,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('category').value = product.categoria;
                 updateStarDisplay(product.importancia || 1);
 
+                // ✅ Marca editable por todos
+                document.getElementById('brand').value = product.marca || '';
+
                 if (userRole === 'admin') {
                     document.getElementById('purchase-price').value = product.precio_compra || '';
                     document.getElementById('supplier').value = product.proveedor || '';
-                    document.getElementById('brand').value = product.marca || '';
 
                     if (readyToggle) readyToggle.checked = product.listo || false;
                 }
@@ -742,6 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', err);
         }
     };
+
 
     /**
      * Muestra el modal de confirmación de eliminación.

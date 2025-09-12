@@ -97,10 +97,8 @@ exports.getProductById = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
-// ---
 
-// Función para crear un nuevo producto
-// controllers/productController.js - Corregir createProduct
+
 exports.createProduct = async (req, res) => {
     try {
         const { SKU, name, importance, category, notes, quantity } = req.body;
@@ -157,8 +155,8 @@ exports.createProduct = async (req, res) => {
         };
 
         // Solo admin puede establecer marca
-        if (userRole === 'admin' && req.body.brand !== undefined) {
-            productData.marca = req.body.brand || 'N/A';
+        if (req.body.brand !== undefined) {
+            productData.marca = req.body.brand.trim() || 'N/A';
         }
 
         // Definir categorías permitidas según rol
@@ -234,11 +232,6 @@ exports.createProduct = async (req, res) => {
 };
 
 
-// ---
-
-// Función para actualizar un producto
-// controllers/productController.js - Corregir updateProduct
-// controllers/productController.js - Modificar updateProduct
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -297,12 +290,10 @@ exports.updateProduct = async (req, res) => {
         if (userRole === 'admin') {
             if (ready !== undefined) {
                 dataToUpdate.listo = ready === true || ready === 'true';
-                dataToUpdate.marca = req.body.brand || 'N/A';
 
-                // NUEVA LÓGICA: Si se marca como listo y no es "Faltantes", mantener la categoría actual
+                // NUEVA LÓGICA: Si se marca como listo y no es "Realizado", mantener la categoría actual
                 // Solo cambiar a "Realizado" si explícitamente se selecciona esa categoría
                 if (dataToUpdate.listo && category !== 'Realizado') {
-                    // Mantener la categoría actual o la nueva si se proporciona
                     if (category !== undefined) {
                         dataToUpdate.categoria = category;
                     }
@@ -314,12 +305,9 @@ exports.updateProduct = async (req, res) => {
                 if (validCategories.includes(category)) {
                     dataToUpdate.categoria = category;
 
-                    // Si la categoría es "Realizado", marcar como listo automáticamente
                     if (category === 'Realizado') {
                         dataToUpdate.listo = true;
-                    }
-                    // Si la categoría es "Faltantes", no puede estar listo
-                    else if (category === 'Faltantes') {
+                    } else if (category === 'Faltantes') {
                         dataToUpdate.listo = false;
                     }
                 } else {
@@ -337,7 +325,6 @@ exports.updateProduct = async (req, res) => {
                 if (userCategories.includes(category)) {
                     dataToUpdate.categoria = category;
 
-                    // Usuarios normales no pueden marcar como "Realizado"
                     if (category === 'Faltantes') {
                         dataToUpdate.listo = false;
                     }
@@ -526,8 +513,10 @@ exports.getBrandStats = async (req, res) => {
             ],
             where: {
                 marca: {
-                    [Op.ne]: null, // Cambiado de 'N/A' a null
-                    [Op.ne]: '',   // También excluir marcas vacías
+                    [Op.and]: [
+                        { [Op.ne]: null },
+                        { [Op.ne]: '' }
+                    ] // También excluir marcas vacías
                 }
             },
             group: ['marca'],
