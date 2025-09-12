@@ -26,4 +26,3 @@ module.exports = {
     dialect: 'postgres'
   }
 };
-aq

@@ -33,7 +33,7 @@ const supplierValidation = [
     .trim()
     .escape()
     .notEmpty().withMessage('El tipo de asesor es requerido')
-    .isIn(['Representante de Fabrica', 'Mayorista', 'Asesor general Mayorista'])
+    .isIn(['Representante de Fabrica', 'Mayorista', 'Asesor general Mayorista', 'Subdistribuidores', 'Minorista', 'Distribuidor', 'Especialista de Marca' ])
     .withMessage('Tipo de asesor inválido'),
 
   body('nota')

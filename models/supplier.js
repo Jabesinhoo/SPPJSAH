@@ -41,7 +41,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     tipoAsesor: {
-      type: DataTypes.ENUM('Representante de Fabrica', 'Mayorista', 'Asesor general Mayorista'),
+      type: DataTypes.ENUM('Representante de Fabrica', 'Mayorista', 'Asesor general Mayorista', 'Subdistribuidores','Minorista', 'Distribuidor', 'Especialista de Marca' ),
       allowNull: false,
       defaultValue: 'Asesor general Mayorista',
       validate: {
