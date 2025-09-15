@@ -2,6 +2,7 @@
 
 const { Product, User } = require('../models');
 const { Op } = require('sequelize');
+const logger = require('../utils/logger');
 
 // Función para obtener todos los usuarios (para la funcionalidad de etiquetado)
 exports.getAllUsers = async (req, res) => {
@@ -105,6 +106,9 @@ exports.createProduct = async (req, res) => {
         const userRole = req.session.userRole;
         const username = req.session.username;
 
+        // 🔎 Log inicial
+        logger.info('🟢 Body recibido en createProduct:', req.body);
+
         // Validaciones básicas
         if (!SKU || !name) {
             return res.status(400).json({ error: 'SKU y nombre son campos obligatorios.' });
@@ -118,13 +122,11 @@ exports.createProduct = async (req, res) => {
             }
         });
 
-
         if (existingActive) {
-            return res.status(409).json({ error: 'Ya existe un producto con este SKU en estado activo. Marca el anterior como Realizado antes de crear otro.' });
+            return res.status(409).json({
+                error: 'Ya existe un producto con este SKU en estado activo. Marca el anterior como Realizado antes de crear otro.'
+            });
         }
-
-
-
 
         // Validar importancia (1-5 estrellas)
         const validImportance = parseInt(importance);
@@ -139,7 +141,6 @@ exports.createProduct = async (req, res) => {
         }
 
         // Definir valores por defecto
-        // controllers/productController.js - En createProduct
         let productData = {
             SKU: SKU.trim(),
             nombre: name.trim(),
@@ -148,21 +149,21 @@ exports.createProduct = async (req, res) => {
             categoria: 'Faltantes',
             precio_compra: 0,
             proveedor: 'N/A',
-            marca: 'N/A', // Valor por defecto
+            brand: 'N/A', // ✅ cambiado a brand
             listo: false,
             usuario: username,
             nota: notes || null
         };
 
-        // Solo admin puede establecer marca
+        // Admin puede establecer marca
         if (req.body.brand !== undefined) {
-            productData.marca = req.body.brand.trim() || 'N/A';
+            productData.brand = req.body.brand.trim() || 'N/A';
         }
 
         // Definir categorías permitidas según rol
         let allowedCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
         if (userRole === 'admin') {
-            allowedCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado'];
+            allowedCategories = [...allowedCategories, 'Realizado'];
 
             // Solo admin puede establecer precio de compra y proveedor
             if (req.body.purchasePrice !== undefined) {
@@ -189,7 +190,7 @@ exports.createProduct = async (req, res) => {
             return res.status(400).json({ error: 'Categoría no válida para tu rol.' });
         }
 
-        // Procesar notas si existen
+        // Procesar notas
         if (notes) {
             try {
                 if (typeof notes === 'string') {
@@ -209,14 +210,19 @@ exports.createProduct = async (req, res) => {
             }
         }
 
+        // Crear producto
         const newProduct = await Product.create(productData);
+
+        // 🔎 Logs de depuración
+        logger.info('🟢 Datos que se van a guardar en DB:', productData);
+        logger.info('🟢 Producto creado en DB:', newProduct.toJSON());
 
         res.status(201).json({
             message: 'Producto creado con éxito.',
             product: newProduct
         });
     } catch (err) {
-        logger.error('Error al crear el producto:', err);
+        logger.error('❌ Error al crear el producto:', err);
 
         if (err.name === 'SequelizeUniqueConstraintError') {
             return res.status(409).json({ error: 'Ya existe un producto con este SKU.' });
@@ -235,7 +241,7 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { SKU, name, quantity, category, importance, purchasePrice, supplier, notes, ready } = req.body;
+        const { SKU, name, quantity, category, importance, purchasePrice, supplier, notes, ready, brand } = req.body;
         const userRole = req.session.userRole;
         const username = req.session.username;
 
@@ -245,12 +251,18 @@ exports.updateProduct = async (req, res) => {
             return res.status(404).json({ error: 'Producto no encontrado.' });
         }
 
-        // Inicializar dataToUpdate al principio
         let dataToUpdate = {};
 
         // Campos que todos pueden editar
         if (SKU !== undefined) dataToUpdate.SKU = SKU.trim();
         if (name !== undefined) dataToUpdate.nombre = name.trim();
+
+        // 🔥 Nuevo: actualización de marca
+        if (brand !== undefined) {
+            if (userRole === 'admin') {
+                dataToUpdate.brand = brand.trim() || 'N/A';
+            }
+        }
 
         // Validar y parsear cantidad
         if (quantity !== undefined) {
@@ -273,7 +285,6 @@ exports.updateProduct = async (req, res) => {
         }
 
         if (notes !== undefined) {
-            // Procesar notas
             try {
                 if (typeof notes === 'string') {
                     JSON.parse(notes);
@@ -290,9 +301,6 @@ exports.updateProduct = async (req, res) => {
         if (userRole === 'admin') {
             if (ready !== undefined) {
                 dataToUpdate.listo = ready === true || ready === 'true';
-
-                // NUEVA LÓGICA: Si se marca como listo y no es "Realizado", mantener la categoría actual
-                // Solo cambiar a "Realizado" si explícitamente se selecciona esa categoría
                 if (dataToUpdate.listo && category !== 'Realizado') {
                     if (category !== undefined) {
                         dataToUpdate.categoria = category;
@@ -319,12 +327,10 @@ exports.updateProduct = async (req, res) => {
                 dataToUpdate.proveedor = supplier || 'N/A';
             }
         } else {
-            // Los usuarios normales pueden cambiar entre estas categorías
             if (category !== undefined) {
                 const userCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
                 if (userCategories.includes(category)) {
                     dataToUpdate.categoria = category;
-
                     if (category === 'Faltantes') {
                         dataToUpdate.listo = false;
                     }
@@ -334,12 +340,9 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
-        // Actualizar timestamp
         dataToUpdate.updatedAt = new Date();
 
-        const [updated] = await Product.update(dataToUpdate, {
-            where: { id: id }
-        });
+        const [updated] = await Product.update(dataToUpdate, { where: { id } });
 
         if (updated) {
             const updatedProduct = await Product.findByPk(id);
@@ -355,6 +358,9 @@ exports.updateProduct = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.', details: err.message });
     }
 };
+
+
+
 // Función para eliminar un producto
 exports.deleteProduct = async (req, res) => {
     try {
@@ -495,6 +501,7 @@ exports.getGeneralStats = async (req, res) => {
 };
 
 // controllers/productController.js - Método getBrandStats corregido
+// controllers/productController.js - Método getBrandStats corregido con logs
 exports.getBrandStats = async (req, res) => {
     try {
         const userRole = req.session.userRole;
@@ -503,43 +510,50 @@ exports.getBrandStats = async (req, res) => {
             return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden ver estadísticas de marcas.' });
         }
 
+        logger.info('📊 Iniciando consulta de estadísticas de marcas...');
+
         const brandStats = await Product.findAll({
             attributes: [
-                'marca',
+                'brand',
                 [Product.sequelize.fn('COUNT', Product.sequelize.col('id')), 'count'],
                 [Product.sequelize.fn('AVG', Product.sequelize.col('importancia')), 'avgImportance'],
                 [Product.sequelize.fn('SUM', Product.sequelize.col('cantidad')), 'totalQuantity'],
                 [Product.sequelize.fn('AVG', Product.sequelize.col('precio_compra')), 'avgPrice']
             ],
             where: {
-                marca: {
+                brand: {
                     [Op.and]: [
                         { [Op.ne]: null },
                         { [Op.ne]: '' }
-                    ] // También excluir marcas vacías
+                    ]
                 }
             },
-            group: ['marca'],
+            group: ['brand'],
             order: [[Product.sequelize.literal('count'), 'DESC']],
             limit: 10,
-            raw: true // Agregar esto para obtener datos simples
+            raw: true
         });
 
-        // Formatear los resultados correctamente
+        logger.info('🟢 Resultado crudo desde Sequelize:', brandStats);
+
+        // 🔧 Normalizar para frontend (campo "marca")
         const formattedStats = brandStats.map(stat => ({
-            marca: stat.marca || 'Sin marca',
+            marca: stat.brand || 'Sin marca',
             count: parseInt(stat.count || 0),
             avgImportance: parseFloat(stat.avgImportance || 0).toFixed(1),
             totalQuantity: parseInt(stat.totalQuantity || 0),
             avgPrice: parseFloat(stat.avgPrice || 0).toFixed(2)
         }));
 
+        logger.info('🟢 Estadísticas formateadas que se envían al frontend:', formattedStats);
+
         res.status(200).json(formattedStats);
     } catch (err) {
-        logger.error('Error al obtener estadísticas de marcas:', err);
+        logger.error('❌ Error al obtener estadísticas de marcas:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
+
 
 exports.renderProductStats = (req, res) => {
     res.render('product-stats', { title: 'Estadísticas' });

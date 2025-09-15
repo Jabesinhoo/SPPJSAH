@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${product.proveedor || '-'}
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.marca || '-'}
+                            ${product.brand || '-'}
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             <span class="text-xs">${formattedDate}</span><br>
@@ -711,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateStarDisplay(product.importancia || 1);
 
                 // ✅ Marca editable por todos
-                document.getElementById('brand').value = product.marca || '';
+                document.getElementById('brand').value = product.brand || '';
 
                 if (userRole === 'admin') {
                     document.getElementById('purchase-price').value = product.precio_compra || '';

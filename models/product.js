@@ -146,7 +146,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     // models/product.js - Agregar campo marca
-marca: {
+brand: {
   type: DataTypes.STRING,
   allowNull: true,
   defaultValue: 'N/A',
@@ -157,6 +157,8 @@ marca: {
     }
   }
 },
+
+
   }, {
     tableName: 'products',
     timestamps: true,

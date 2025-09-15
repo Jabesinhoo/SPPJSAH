@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Determinar si estamos en modo oscuro
     const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches || document.documentElement.classList.contains('dark');
-    
+
     // Función para obtener color según el modo
     const getColor = (colorName) => isDarkMode ? chartColors[colorName].dark : chartColors[colorName].light;
 
@@ -27,9 +27,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Cargar todas las estadísticas en paralelo
         const [
-            generalStats, 
-            timeStats, 
-            topUsers, 
+            generalStats,
+            timeStats,
+            topUsers,
             topProducts,
             brandStats  // 🆕 NUEVA: Estadísticas de marcas
         ] = await Promise.all([
@@ -44,32 +44,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         const totalProducts = generalStats.reduce((acc, stat) => acc + stat.count, 0);
         document.getElementById('total-products').textContent = totalProducts;
         document.getElementById('total-products').classList.remove('pulse');
-        
+
         const completedCategory = generalStats.find(stat => stat.categoria === 'Realizado');
         document.getElementById('completed-products').textContent = completedCategory ? completedCategory.count : '0';
         document.getElementById('completed-products').classList.remove('pulse');
-        
+
         document.getElementById('avg-time').textContent = timeStats.promedioMinutos + ' min';
         document.getElementById('avg-time').classList.remove('pulse');
-        
+
         document.getElementById('total-users').textContent = topUsers.length;
         document.getElementById('total-users').classList.remove('pulse');
-        
+
         // Llenar la tabla de estadísticas por categoría
         const tableBody = document.getElementById('stats-table-body');
         tableBody.innerHTML = '';
-        
+
         generalStats.forEach(stat => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${stat.categoria}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.count}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.avgImportance} ⭐</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.totalQuantity}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">$${stat.avgPrice}</td>
-            `;
-            tableBody.appendChild(row);
-        });
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${stat.categoria}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.count}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.avgImportance} ⭐</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.totalQuantity}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">$${stat.avgPrice}</td>
+    `;
+    tableBody.appendChild(row);
+});
+
+
 
         // Tabla de top productos
         document.getElementById('loadingTopProducts').style.display = 'none';
@@ -89,47 +91,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 🆕 NUEVA LÓGICA PARA ESTADÍSTICAS DE MARCAS 🆕
         document.getElementById('loadingBrands').style.display = 'none';
         document.getElementById('tableBrands').classList.remove('hidden');
-        
+
         const brandsTableBody = document.getElementById('brands-table-body');
         // Tomar solo las top 10 marcas
         const topBrands = brandStats.slice(0, 10);
-        
+
         topBrands.forEach(brand => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${brand.marca || 'Sin marca'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.count}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.avgImportance} ⭐</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.totalQuantity}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">$${brand.avgPrice}</td>
-            `;
-            brandsTableBody.appendChild(row);
-        });
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${brand.marca || 'Sin marca'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.count}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.avgImportance} ⭐</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.totalQuantity}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">$${brand.avgPrice}</td>
+    `;
+    brandsTableBody.appendChild(row);
+});
+
 
         // 🆕 GRÁFICO DE DISTRIBUCIÓN POR MARCA 🆕
         document.getElementById('loadingBrandsChart').style.display = 'none';
-        
+
         // Preparar datos para el gráfico de marcas (top 8 marcas)
         const topBrandsForChart = brandStats.slice(0, 8);
         const otherBrandsCount = brandStats.slice(8).reduce((acc, brand) => acc + brand.count, 0);
-        
+
         const brandLabels = [
             ...topBrandsForChart.map(b => b.marca || 'Sin marca'),
             ...(otherBrandsCount > 0 ? ['Otras marcas'] : [])
         ];
-        
+
         const brandData = [
             ...topBrandsForChart.map(b => b.count),
             ...(otherBrandsCount > 0 ? [otherBrandsCount] : [])
         ];
-        
+
         // Colores para el gráfico de marcas
         const brandColors = [
             getColor('blue'), getColor('green'), getColor('yellow'), getColor('red'),
             getColor('purple'), getColor('indigo'), getColor('orange'), getColor('pink'),
             getColor('cyan'), getColor('lime')
         ];
-        
+
         new Chart(document.getElementById('chartBrands'), {
             type: 'pie',
             data: {
@@ -154,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const value = context.raw;
                                 const percentage = ((value / total) * 100).toFixed(1);
@@ -168,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Top usuarios
         document.getElementById('loadingTopUsers').style.display = 'none';
-        
+
         new Chart(document.getElementById('chartTopUsers'), {
             type: 'bar',
             data: {
@@ -213,9 +216,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Tiempo promedio
         document.getElementById('loadingTime').style.display = 'none';
-        document.getElementById('time-description').textContent = 
+        document.getElementById('time-description').textContent =
             `Basado en ${timeStats.total} productos completados`;
-        
+
         new Chart(document.getElementById('chartTime'), {
             type: 'doughnut',
             data: {
@@ -240,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Categorías
         document.getElementById('loadingCategories').style.display = 'none';
-        
+
         new Chart(document.getElementById('chartCategories'), {
             type: 'pie',
             data: {
