@@ -1,4 +1,4 @@
-const { Supplier } = require('../models');
+const { Supplier, sequelize } = require('../models'); // 👈 aquí importas ambos
 const { validationResult } = require('express-validator');
 const fs = require('fs');
 const path = require('path');
@@ -19,13 +19,16 @@ exports.getAllSuppliers = async (req, res) => {
         const whereClause = {};
         if (searchQuery) {
             whereClause[Op.or] = [
-                { marca: { [Op.like]: `%${searchQuery}%` } },
-                { categoria: { [Op.like]: `%${searchQuery}%` } },
-                { nombre: { [Op.like]: `%${searchQuery}%` } },
-                { celular: { [Op.like]: `%${searchQuery}%` } },
-                { ciudad: { [Op.like]: `%${searchQuery}%` } },
-                { tipoAsesor: { [Op.like]: `%${searchQuery}%` } },
-                { nombreEmpresa: { [Op.like]: `%${searchQuery}%` } }
+                { marca: { [Op.iLike]: `%${searchQuery}%` } },
+                { categoria: { [Op.iLike]: `%${searchQuery}%` } },
+                { nombre: { [Op.iLike]: `%${searchQuery}%` } },
+                { celular: { [Op.iLike]: `%${searchQuery}%` } },
+                { ciudad: { [Op.iLike]: `%${searchQuery}%` } },
+                sequelize.where(
+                    sequelize.cast(sequelize.col('tipoAsesor'), 'TEXT'),
+                    { [Op.iLike]: `%${searchQuery}%` }
+                ),
+                { nombreEmpresa: { [Op.iLike]: `%${searchQuery}%` } }
             ];
         }
 
@@ -84,13 +87,16 @@ exports.getAllSuppliersAPI = async (req, res) => {
         const whereClause = {};
         if (searchQuery) {
             whereClause[Op.or] = [
-                { marca: { [Op.like]: `%${searchQuery}%` } },
-                { categoria: { [Op.like]: `%${searchQuery}%` } },
-                { nombre: { [Op.like]: `%${searchQuery}%` } },
-                { celular: { [Op.like]: `%${searchQuery}%` } },
-                { ciudad: { [Op.like]: `%${searchQuery}%` } },
-                { tipoAsesor: { [Op.like]: `%${searchQuery}%` } },
-                { nombreEmpresa: { [Op.like]: `%${searchQuery}%` } }
+                { marca: { [Op.iLike]: `%${searchQuery}%` } },
+                { categoria: { [Op.iLike]: `%${searchQuery}%` } },
+                { nombre: { [Op.iLike]: `%${searchQuery}%` } },
+                { celular: { [Op.iLike]: `%${searchQuery}%` } },
+                { ciudad: { [Op.iLike]: `%${searchQuery}%` } },
+                sequelize.where(
+                    sequelize.cast(sequelize.col('tipoAsesor'), 'TEXT'),
+                    { [Op.iLike]: `%${searchQuery}%` }
+                ),
+                { nombreEmpresa: { [Op.iLike]: `%${searchQuery}%` } }
             ];
         }
 

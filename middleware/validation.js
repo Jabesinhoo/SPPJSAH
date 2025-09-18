@@ -17,7 +17,16 @@ const supplierValidation = [
     .trim()
     .escape()
     .notEmpty().withMessage('El nombre es requerido')
-    .isLength({ max: 200 }).withMessage('El nombre no puede tener más de 200 caracteres'),
+    .isLength({ max: 200 }).withMessage('El nombre no puede tener más de 200 caracteres')
+    .custom(async (value, { req }) => {
+      const Supplier = require('../models').Supplier;
+      const existingSupplier = await Supplier.findOne({ where: { nombre: value } });
+      if (existingSupplier && existingSupplier.id !== req.params?.id) {
+        throw new Error('Ya existe un proveedor con este nombre');
+      }
+      
+      return true;
+    }),
 
   body('celular')
     .trim()

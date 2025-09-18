@@ -36,45 +36,35 @@
                     <% } %>
 
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-                            <form action="/suppliers" method="GET"
-                                class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-center">
-                                <div class="relative w-full lg:col-span-2">
-                                    <input type="text" name="search" placeholder="Buscar por marca, nombre, etc."
-                                        value="<%= searchQuery %>"
-                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-search text-gray-400"></i>
-                                    </div>
-                                </div>
-                                <select name="category"
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
-                                    <option value="">Categoría</option>
-                                    <% categories.forEach(cat=> { %>
-                                        <option value="<%= cat %>" <%=categoryFilter===cat ? 'selected' : '' %>>
-                                            <%= cat %>
-                                        </option>
-                                        <% }); %>
-                                </select>
-                                <select name="city"
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
-                                    <option value="">Ciudad</option>
-                                    <% cities.forEach(city=> { %>
-                                        <option value="<%= city.name %>" <%=cityFilter===city.name ? 'selected' : '' %>>
-                                            <%= city.name %>
-                                        </option>
-                                        <% }); %>
-                                </select>
-                                <div class="flex w-full gap-2 lg:col-span-2">
-                                    <button type="submit"
-                                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors flex-grow flex items-center justify-center">
-                                        <i class="fas fa-filter mr-2"></i> Filtrar
-                                    </button>
-                                    <a href="/suppliers"
-                                        class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg transition-colors flex-grow flex items-center justify-center">
-                                        Limpiar
-                                    </a>
-                                </div>
-                            </form>
+                            <form class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-center">
+  <div class="relative w-full lg:col-span-2">
+    <input type="text" id="searchInput" placeholder="Buscar por marca, nombre, etc."
+      class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+             focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <i class="fas fa-search text-gray-400"></i>
+    </div>
+  </div>
+
+  <select id="categoryFilter"
+    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none 
+           focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+    <option value="">Categoría</option>
+    <% categories.forEach(cat=> { %>
+      <option value="<%= cat %>"><%= cat %></option>
+    <% }); %>
+  </select>
+
+  <select id="cityFilter"
+    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none 
+           focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+    <option value="">Ciudad</option>
+    <% cities.forEach(city=> { %>
+      <option value="<%= city.name %>"><%= city.name %></option>
+    <% }); %>
+  </select>
+</form>
+
                         </div>
 
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hidden md:block">

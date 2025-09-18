@@ -1,7 +1,8 @@
-// Funciones para modales
+// ================== MODALES ==================
 function openCreateModal() {
     document.getElementById('modalTitle').textContent = 'Crear Proveedor';
     document.getElementById('supplierForm').setAttribute('data-action', '/api/suppliers');
+    document.getElementById('supplierForm').removeAttribute('data-method');
     document.getElementById('supplierForm').reset();
     document.getElementById('imagePreview').classList.add('hidden');
     document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
@@ -9,7 +10,7 @@ function openCreateModal() {
     document.getElementById('supplierModal').classList.remove('hidden');
 }
 
-function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen,correo) {
+function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen, correo) {
     document.getElementById('modalTitle').textContent = 'Editar Proveedor';
     document.getElementById('supplierForm').setAttribute('data-action', `/api/suppliers/${id}`);
     document.getElementById('supplierForm').setAttribute('data-method', 'PUT');
@@ -21,7 +22,7 @@ function openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombre
     document.getElementById('nombreEmpresa').value = nombreEmpresa || '';
     document.getElementById('ciudad').value = ciudad;
     document.getElementById('nota').value = nota || '';
-    document.getElementById('correo').value = correo || ''; // ✅ nuevo campo
+    document.getElementById('correo').value = correo || '';
 
     document.getElementById('fileName').textContent = imagen ? 'Imagen actual' : 'Ningún archivo seleccionado';
     clearErrorMessages();
@@ -66,12 +67,12 @@ function clearErrorMessages() {
     });
 }
 
-// Función para mostrar notificaciones
+// ================== NOTIFICACIONES ==================
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-opacity ${type === 'success'
-            ? 'bg-green-500 text-white'
-            : 'bg-red-500 text-white'
+        ? 'bg-green-500 text-white'
+        : 'bg-red-500 text-white'
         }`;
     notification.textContent = message;
 
@@ -83,7 +84,7 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Función para manejar el envío del formulario
+// ================== FORMULARIO ==================
 async function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -96,7 +97,6 @@ async function handleFormSubmit(e) {
     const originalText = submitBtn.innerHTML;
 
     try {
-        // Mostrar loading
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
         submitBtn.disabled = true;
 
@@ -112,28 +112,10 @@ async function handleFormSubmit(e) {
             showNotification(result.message, 'success');
             closeModal();
 
-            // 🚀 Procesar menciones en el campo nota si existen
-            const noteField = form.querySelector('#nota');
-            if (noteField && noteField.value.includes('@') && result.data?.id) {
-                try {
-                    await MentionHelpers.processMentions(noteField.value, {
-                        section: 'suppliers',
-                        redirectUrl: `/suppliers#supplier-${result.data.id}`,
-                        metadata: {
-                            supplierId: result.data.id,
-                            supplierName: result.data.nombre
-                        }
-                    });
-                } catch (err) {
-                }
-            }
-
-            // Esperar un momento antes de recargar para que se vea la notificación
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
         } else {
-            // Mostrar errores de validación
             if (result.errors) {
                 result.errors.forEach(error => {
                     const field = error.path;
@@ -153,15 +135,12 @@ async function handleFormSubmit(e) {
         console.error('Error:', error);
         showNotification('Error de conexión. Intenta nuevamente.', 'error');
     } finally {
-        // Restaurar botón
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     }
 }
 
-
-
-// Función para manejar la eliminación
+// ================== ELIMINAR ==================
 async function handleDelete(e) {
     e.preventDefault();
 
@@ -200,26 +179,84 @@ async function handleDelete(e) {
     }
 }
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Abrir modal de crear
-    document.getElementById('openCreateBtn').addEventListener('click', openCreateModal);
+// ================== BÚSQUEDA AJAX ==================
+async function fetchSuppliers(query = '', category = '', city = '') {
+  const tableBody = document.querySelector('tbody');
+  try {
+    const url = new URL('/api/suppliers', window.location.origin);
+    if (query) url.searchParams.append('search', query);
+    if (category) url.searchParams.append('category', category);
+    if (city) url.searchParams.append('city', city);
 
-    // Cerrar modal de crear/editar
+    const res = await fetch(url, { credentials: 'include' });
+    const result = await res.json();
+
+    if (result.success) {
+      tableBody.innerHTML = '';
+
+      if (result.data.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="10" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+              No se encontraron asesores de marca.
+            </td>
+          </tr>`;
+      } else {
+        result.data.forEach(s => {
+          tableBody.innerHTML += `
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                ${s.imagen
+                  ? `<img src="${s.imagen}" class="h-10 w-10 rounded-full object-cover shadow">`
+                  : `<div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center shadow">
+                       <i class="fas fa-image text-gray-600 dark:text-gray-400"></i>
+                     </div>`}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.marca || ''}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.categoria}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nombre}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.celular}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.correo || ''}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.tipoAsesor}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nombreEmpresa || 'N/A'}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.ciudad}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nota || ''}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button class="edit-btn text-blue-600 hover:text-blue-900 transition-colors flex items-center" 
+                  data-id="${s.id}" data-nombre="${s.nombre}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="delete-btn text-red-600 hover:text-red-900 transition-colors" 
+                  data-id="${s.id}" data-nombre="${s.nombre}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>`;
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error en búsqueda dinámica:', err);
+  }
+}
+
+
+// ================== EVENTOS ==================
+// ================== EVENTOS ==================
+document.addEventListener('DOMContentLoaded', () => {
+    // Crear
+    document.getElementById('openCreateBtn').addEventListener('click', openCreateModal);
+    // Cerrar modales
     document.getElementById('closeModalIconBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-
-    // Cerrar modal de eliminar
     document.getElementById('closeDeleteModalIconBtn').addEventListener('click', closeDeleteModal);
     document.getElementById('cancelDeleteModalBtn').addEventListener('click', closeDeleteModal);
 
-    // Manejar envío de formulario
+    // Formulario
     document.getElementById('supplierForm').addEventListener('submit', handleFormSubmit);
-
-    // Manejar eliminación
     document.getElementById('deleteForm').addEventListener('submit', handleDelete);
 
-    // Delegación de eventos para los botones de editar y eliminar
+    // Delegación de eventos editar/eliminar
     document.body.addEventListener('click', (e) => {
         const editBtn = e.target.closest('.edit-btn');
         const deleteBtn = e.target.closest('.delete-btn');
@@ -228,8 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const { id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen, correo } = editBtn.dataset;
             openEditModal(id, marca, categoria, nombre, celular, tipoAsesor, nombreEmpresa, ciudad, nota, imagen, correo);
         }
-
-
         if (deleteBtn) {
             const { id, nombre } = deleteBtn.dataset;
             openDeleteModal(id, nombre);
@@ -256,20 +291,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Validación en tiempo real para el campo celular
+    // Validación en tiempo real celular
     document.getElementById('celular').addEventListener('input', function (e) {
         const value = e.target.value;
         const errorElement = document.getElementById('celularError');
 
-        // Solo permitir números
         e.target.value = value.replace(/\D/g, '');
+        if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10);
 
-        // Validar longitud
-        if (e.target.value.length > 10) {
-            e.target.value = e.target.value.slice(0, 10);
-        }
-
-        // Mostrar error si no tiene 10 dígitos
         if (e.target.value.length === 10 || e.target.value.length === 0) {
             errorElement.classList.add('hidden');
             e.target.classList.remove('input-error');
@@ -280,13 +309,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ================== Búsqueda y Filtros dinámicos ==================
+    const searchInput = document.getElementById('searchInput');   // 👈 cambia el selector a id
+    const categoryFilter = document.getElementById('categoryFilter');
+    const cityFilter = document.getElementById('cityFilter');
+
+    function applyFilters() {
+        fetchSuppliers(searchInput.value, categoryFilter.value, cityFilter.value);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+    }
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', applyFilters);
+    }
+    if (cityFilter) {
+        cityFilter.addEventListener('change', applyFilters);
+    }
+
     // Cerrar modales al hacer clic fuera
     window.addEventListener('click', function (e) {
         if (e.target.id === 'supplierModal') closeModal();
         if (e.target.id === 'deleteModal') closeDeleteModal();
     });
 
-    // Cerrar modales con la tecla Escape
+    // Escape
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeModal();
@@ -294,3 +342,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
