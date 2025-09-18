@@ -1,4 +1,3 @@
-// ================== MODALES ==================
 function openCreateModal() {
     document.getElementById('modalTitle').textContent = 'Crear Proveedor';
     document.getElementById('supplierForm').setAttribute('data-action', '/api/suppliers');
@@ -183,7 +182,8 @@ async function handleDelete(e) {
 async function fetchSuppliers(query = '', category = '', city = '') {
     // Buscar tanto en tabla desktop como móvil
     const desktopTableBody = document.querySelector('table tbody');
-    const mobileContainer = document.querySelector('.md\\:hidden');
+    const mobileContainer = document.querySelector('.bg-white.dark\\:bg-gray-800.rounded-lg.shadow.md\\:hidden');
+    
     
     try {
         const url = new URL('/api/suppliers', window.location.origin);
@@ -191,8 +191,10 @@ async function fetchSuppliers(query = '', category = '', city = '') {
         if (category) url.searchParams.append('category', category);
         if (city) url.searchParams.append('city', city);
 
+
         const res = await fetch(url, { credentials: 'include' });
         const result = await res.json();
+
 
         if (result.success) {
             // Actualizar tabla desktop
@@ -208,70 +210,70 @@ async function fetchSuppliers(query = '', category = '', city = '') {
                         </tr>`;
                 } else {
                     result.data.forEach(s => {
-                        desktopTableBody.innerHTML += `
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    ${s.imagen
-                                        ? `<img src="${s.imagen}" class="h-10 w-10 rounded-full object-cover shadow">`
-                                        : `<div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center shadow">
-                                             <i class="fas fa-image text-gray-600 dark:text-gray-400"></i>
-                                           </div>`}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.marca || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.categoria}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nombre}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.celular}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.correo || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.tipoAsesor}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nombreEmpresa || 'N/A'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.ciudad}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nota || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="edit-btn text-blue-600 hover:text-blue-900 transition-colors flex items-center" 
-                                        data-id="${s.id}" 
-                                        data-marca="${s.marca || ''}"
-                                        data-categoria="${s.categoria}"
-                                        data-nombre="${s.nombre}"
-                                        data-celular="${s.celular}"
-                                        data-tipo-asesor="${s.tipoAsesor}"
-                                        data-nombre-empresa="${s.nombreEmpresa || ''}"
-                                        data-ciudad="${s.ciudad}"
-                                        data-nota="${s.nota || ''}"
-                                        data-imagen="${s.imagen || ''}"
-                                        data-correo="${s.correo || ''}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="delete-btn text-red-600 hover:text-red-900 transition-colors ml-2" 
-                                        data-id="${s.id}" data-nombre="${s.nombre}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>`;
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${s.imagen
+                                    ? `<img src="${s.imagen}" class="h-10 w-10 rounded-full object-cover shadow">`
+                                    : `<div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center shadow">
+                                         <i class="fas fa-image text-gray-600 dark:text-gray-400"></i>
+                                       </div>`}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.marca || ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.categoria}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nombre}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.celular}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.correo || ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.tipoAsesor}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nombreEmpresa || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.ciudad}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${s.nota || ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button class="edit-btn text-blue-600 hover:text-blue-900 transition-colors flex items-center" 
+                                    data-id="${s.id}" 
+                                    data-marca="${s.marca || ''}"
+                                    data-categoria="${s.categoria}"
+                                    data-nombre="${s.nombre}"
+                                    data-celular="${s.celular}"
+                                    data-tipo-asesor="${s.tipoAsesor}"
+                                    data-nombre-empresa="${s.nombreEmpresa || ''}"
+                                    data-ciudad="${s.ciudad}"
+                                    data-nota="${s.nota || ''}"
+                                    data-imagen="${s.imagen || ''}"
+                                    data-correo="${s.correo || ''}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-btn text-red-600 hover:text-red-900 transition-colors ml-2" 
+                                    data-id="${s.id}" data-nombre="${s.nombre}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        desktopTableBody.appendChild(row);
                     });
                 }
             }
 
-            // Actualizar vista móvil - buscar el contenedor correcto
+            // Actualizar vista móvil - método más robusto
             if (mobileContainer) {
-                // Buscar el contenedor de contenido móvil más específicamente
-                let mobileContent = mobileContainer;
-                
-                // Si tiene hijos con clase p-4, reemplazar todo el contenido
-                const existingContent = mobileContainer.querySelectorAll('.p-4, div[class*="p-4"]');
-                if (existingContent.length > 0) {
-                    // Limpiar contenido existente
-                    existingContent.forEach(el => el.remove());
-                }
+                // Limpiar todo el contenido del contenedor móvil
+                mobileContainer.innerHTML = '';
                 
                 if (result.data.length === 0) {
+                    console.log('Sin resultados, mostrando mensaje vacío');
                     const emptyDiv = document.createElement('div');
                     emptyDiv.className = 'p-4';
                     emptyDiv.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400">No se encontraron asesores de marca.</p>`;
-                    mobileContent.appendChild(emptyDiv);
+                    mobileContainer.appendChild(emptyDiv);
                 } else {
-                    result.data.forEach(s => {
+                    result.data.forEach((s, index) => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = 'p-4 border-b border-gray-200 dark:border-gray-700';
+                        // Añadir divider excepto para el último elemento
+                        itemDiv.className = index < result.data.length - 1 
+                            ? 'p-4 border-b border-gray-200 dark:border-gray-700'
+                            : 'p-4';
+                            
                         itemDiv.innerHTML = `
                             <div class="flex items-center mb-2">
                                 ${s.imagen
@@ -314,33 +316,24 @@ async function fetchSuppliers(query = '', category = '', city = '') {
                                 </button>
                             </div>
                         `;
-                        mobileContent.appendChild(itemDiv);
+                        mobileContainer.appendChild(itemDiv);
                     });
                 }
+            } else {
             }
+        } else {
+            console.error('Error en la respuesta:', result);
         }
     } catch (err) {
         console.error('Error en búsqueda dinámica:', err);
         showNotification('Error al realizar la búsqueda', 'error');
     }
 }
-
-// ================== DEBOUNCE FUNCTION ==================
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+// ================== VARIABLES GLOBALES ==================
+let searchTimeout;
 
 // ================== EVENTOS ==================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, inicializando...');
     
     // Crear
     const openCreateBtn = document.getElementById('openCreateBtn');
@@ -451,97 +444,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================== Búsqueda y Filtros dinámicos con debounce ==================
+    // ================== Búsqueda y Filtros dinámicos (patrón de products.js) ==================
     const searchInput = document.getElementById('searchInput');
     const categoryFilter = document.getElementById('categoryFilter');
     const cityFilter = document.getElementById('cityFilter');
 
-    console.log('Elementos encontrados:', {
-        searchInput: !!searchInput,
-        categoryFilter: !!categoryFilter,
-        cityFilter: !!cityFilter
-    });
 
-    // Función debounced para búsqueda
-    const debouncedSearch = debounce(() => {
-        const query = searchInput ? searchInput.value.trim() : '';
-        const category = categoryFilter ? categoryFilter.value : '';
-        const city = cityFilter ? cityFilter.value : '';
-        
-        console.log('Aplicando filtros:', { query, category, city });
-        fetchSuppliers(query, category, city);
-    }, 300);
-
-    // Función de aplicar filtros inmediata para selects
-    const applyFiltersImmediate = () => {
-        const query = searchInput ? searchInput.value.trim() : '';
-        const category = categoryFilter ? categoryFilter.value : '';
-        const city = cityFilter ? cityFilter.value : '';
-        
-        console.log('Aplicando filtros inmediatos:', { query, category, city });
-        fetchSuppliers(query, category, city);
-    };
-
-    // Event listeners para búsqueda con múltiples eventos para móvil
+    // Búsqueda con debounce usando el patrón de products.js
     if (searchInput) {
-        // Eventos para desktop
-        searchInput.addEventListener('input', debouncedSearch);
-        searchInput.addEventListener('keyup', debouncedSearch);
-        
-        // Eventos adicionales para móvil
-        searchInput.addEventListener('change', debouncedSearch);
-        searchInput.addEventListener('blur', debouncedSearch);
-        
-        // Evento táctil específico para móvil
-        searchInput.addEventListener('touchend', () => {
-            setTimeout(debouncedSearch, 100);
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = searchInput.value.trim();
+                const category = categoryFilter ? categoryFilter.value : '';
+                const city = cityFilter ? cityFilter.value : '';
+                
+                console.log('Aplicando filtros desde búsqueda:', { query, category, city });
+                fetchSuppliers(query, category, city);
+            }, 300);
         });
         
-        console.log('Search input listeners added (desktop + mobile)');
+        // Eventos adicionales para móvil
+        searchInput.addEventListener('change', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = searchInput.value.trim();
+                const category = categoryFilter ? categoryFilter.value : '';
+                const city = cityFilter ? cityFilter.value : '';
+                
+                console.log('Aplicando filtros desde change:', { query, category, city });
+                fetchSuppliers(query, category, city);
+            }, 100);
+        });
+        
     } else {
         console.error('searchInput no encontrado');
     }
 
-    // Event listeners para filtros con múltiples eventos para móvil
+    // Filtros inmediatos para selects
     if (categoryFilter) {
-        categoryFilter.addEventListener('change', applyFiltersImmediate);
-        categoryFilter.addEventListener('touchend', () => {
-            setTimeout(applyFiltersImmediate, 100);
+        categoryFilter.addEventListener('change', () => {
+            const query = searchInput ? searchInput.value.trim() : '';
+            const category = categoryFilter.value;
+            const city = cityFilter ? cityFilter.value : '';
+            
+            fetchSuppliers(query, category, city);
         });
-        
-        // Forzar trigger en móvil
-        categoryFilter.addEventListener('click', () => {
-            setTimeout(applyFiltersImmediate, 200);
-        });
-        
-        console.log('Category filter listeners added (desktop + mobile)');
     } else {
-        console.error('categoryFilter no encontrado');
     }
 
     if (cityFilter) {
-        cityFilter.addEventListener('change', applyFiltersImmediate);
-        cityFilter.addEventListener('touchend', () => {
-            setTimeout(applyFiltersImmediate, 100);
+        cityFilter.addEventListener('change', () => {
+            const query = searchInput ? searchInput.value.trim() : '';
+            const category = categoryFilter ? categoryFilter.value : '';
+            const city = cityFilter.value;
+            
+            console.log('Aplicando filtros desde ciudad:', { query, category, city });
+            fetchSuppliers(query, category, city);
         });
-        
-        // Forzar trigger en móvil
-        cityFilter.addEventListener('click', () => {
-            setTimeout(applyFiltersImmediate, 200);
-        });
-        
-        console.log('City filter listeners added (desktop + mobile)');
     } else {
         console.error('cityFilter no encontrado');
     }
-
-    // Listener adicional para detectar cambios en móvil
-    document.addEventListener('touchend', (e) => {
-        if (e.target === categoryFilter || e.target === cityFilter) {
-            console.log('Touch detected on filter, applying...');
-            setTimeout(applyFiltersImmediate, 150);
-        }
-    });
 
     // Cerrar modales al hacer clic fuera
     window.addEventListener('click', function (e) {
@@ -557,5 +520,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    console.log('Inicialización completa');
 });
