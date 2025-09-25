@@ -79,7 +79,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     precio_compra: {
-      type: DataTypes.DECIMAL(13, 2),
+      type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: 0,
       validate: {
