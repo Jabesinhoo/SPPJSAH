@@ -491,67 +491,70 @@ exports.getTimeStats = async (req, res) => {
 
 // Estadísticas generales (categorías, importancia, etc.)
 exports.getGeneralStats = async (req, res) => {
-    try {
-        const stats = await Product.getStatsByCategory(); // definido en el modelo:contentReference[oaicite:1]{index=1}
-        res.json(stats);
-    } catch (err) {
-        logger.error('Error al obtener estadísticas generales:', err);
-        res.status(500).json({ error: 'Error al obtener estadísticas generales' });
-    }
+  try {
+    const stats = await Product.getStatsByCategory();
+    res.json(stats);
+  } catch (err) {
+    logger.error('Error al obtener estadísticas generales:', err);
+    res.status(500).json({ error: 'Error al obtener estadísticas generales' });
+  }
 };
 
-// controllers/productController.js - Método getBrandStats corregido
-// controllers/productController.js - Método getBrandStats corregido con logs
+
+
+// Estadísticas por marca
 exports.getBrandStats = async (req, res) => {
-    try {
-        const userRole = req.session.userRole;
+  try {
+    const userRole = req.session.userRole;
 
-        if (userRole !== 'admin') {
-            return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden ver estadísticas de marcas.' });
-        }
-
-        logger.info('📊 Iniciando consulta de estadísticas de marcas...');
-
-        const brandStats = await Product.findAll({
-            attributes: [
-                'brand',
-                [Product.sequelize.fn('COUNT', Product.sequelize.col('id')), 'count'],
-                [Product.sequelize.fn('AVG', Product.sequelize.col('importancia')), 'avgImportance'],
-                [Product.sequelize.fn('SUM', Product.sequelize.col('cantidad')), 'totalQuantity'],
-                [Product.sequelize.fn('AVG', Product.sequelize.col('precio_compra')), 'avgPrice']
-            ],
-            where: {
-                brand: {
-                    [Op.and]: [
-                        { [Op.ne]: null },
-                        { [Op.ne]: '' }
-                    ]
-                }
-            },
-            group: ['brand'],
-            order: [[Product.sequelize.literal('count'), 'DESC']],
-            limit: 10,
-            raw: true
-        });
-
-        logger.info('🟢 Resultado crudo desde Sequelize:', brandStats);
-
-        // 🔧 Normalizar para frontend (campo "marca")
-        const formattedStats = brandStats.map(stat => ({
-            marca: stat.brand || 'Sin marca',
-            count: parseInt(stat.count || 0),
-            avgImportance: parseFloat(stat.avgImportance || 0).toFixed(1),
-            totalQuantity: parseInt(stat.totalQuantity || 0),
-            avgPrice: parseFloat(stat.avgPrice || 0).toFixed(2)
-        }));
-
-        logger.info('🟢 Estadísticas formateadas que se envían al frontend:', formattedStats);
-
-        res.status(200).json(formattedStats);
-    } catch (err) {
-        logger.error('❌ Error al obtener estadísticas de marcas:', err);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+    if (userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden ver estadísticas de marcas.' });
     }
+
+    logger.info('📊 Iniciando consulta de estadísticas de marcas...');
+
+    const brandStats = await Product.findAll({
+      attributes: [
+        'brand',
+        [Product.sequelize.fn('COUNT', Product.sequelize.col('id')), 'count'],
+        [Product.sequelize.cast(Product.sequelize.fn('AVG', Product.sequelize.col('importancia')), 'FLOAT'), 'avgImportance'],
+        [Product.sequelize.fn('SUM', Product.sequelize.col('cantidad')), 'totalQuantity'],
+        [Product.sequelize.cast(Product.sequelize.fn('AVG', Product.sequelize.col('precio_compra')), 'FLOAT'), 'avgPrice'], // promedio
+        [Product.sequelize.fn('SUM', Product.sequelize.literal('"precio_compra" * "cantidad"')), 'totalValue']            // acumulado
+      ],
+      where: {
+        brand: {
+          [Op.and]: [
+            { [Op.ne]: null },
+            { [Op.ne]: '' }
+          ]
+        }
+      },
+      group: ['brand'],
+      order: [[Product.sequelize.literal('count'), 'DESC']],
+      limit: 10,
+      raw: true
+    });
+
+    logger.info('🟢 Resultado crudo desde Sequelize:', brandStats);
+
+    // 🔧 Normalizar para frontend
+    const formattedStats = brandStats.map(stat => ({
+      marca: stat.brand || 'Sin marca',
+      count: parseInt(stat.count || 0),
+      avgImportance: parseFloat(stat.avgImportance || 0).toFixed(1),
+      totalQuantity: parseInt(stat.totalQuantity || 0),
+      avgPrice: parseFloat(stat.avgPrice || 0).toFixed(2),
+      totalValue: stat.totalValue ? Number(stat.totalValue).toFixed(2) : "0.00"
+    }));
+
+    logger.info('🟢 Estadísticas formateadas que se envían al frontend:', formattedStats);
+
+    res.status(200).json(formattedStats);
+  } catch (err) {
+    logger.error('❌ Error al obtener estadísticas de marcas:', err);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
 };
 
 

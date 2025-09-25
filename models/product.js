@@ -240,34 +240,35 @@ brand: {
 
   // Método estático para obtener estadísticas por categoría
   Product.getStatsByCategory = async function () {
-    try {
-      const stats = await this.findAll({
-        attributes: [
-          'categoria',
-          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-          [sequelize.fn('AVG', sequelize.col('importancia')), 'avgImportance'],
-          [sequelize.fn('SUM', sequelize.col('cantidad')), 'totalQuantity'],
-          [sequelize.fn('AVG', sequelize.col('precio_compra')), 'avgPrice']
-        ],
-        group: ['categoria'],
-        raw: true
-      });
+  try {
+    const stats = await this.findAll({
+      attributes: [
+        'categoria',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+        [sequelize.cast(sequelize.fn('AVG', sequelize.col('importancia')), 'FLOAT'), 'avgImportance'],
+        [sequelize.fn('SUM', sequelize.col('cantidad')), 'totalQuantity'],
+        [sequelize.cast(sequelize.fn('AVG', sequelize.col('precio_compra')), 'FLOAT'), 'avgPrice'], // precio promedio
+        [sequelize.fn('SUM', sequelize.literal('"precio_compra" * "cantidad"')), 'totalValue']     // 💰 valor total generado
+      ],
+      group: ['categoria'],
+      raw: true
+    });
 
-      console.log("📊 Stats generales:", stats); // <-- ver en producción
+    console.log("📊 Stats generales:", stats); // Debug en producción
 
-
-      return stats.map(stat => ({
-        categoria: stat.categoria,
-        count: Number(stat.count) || 0,
-        avgImportance: stat.avgImportance ? Number(stat.avgImportance).toFixed(2) : "0.00",
-        totalQuantity: Number(stat.totalQuantity) || 0,
-        avgPrice: stat.avgPrice ? Number(stat.avgPrice).toFixed(2) : "0.00"
-      }));
-
-    } catch (error) {
-      throw new Error('Error al obtener estadísticas: ' + error.message);
-    }
+    return stats.map(stat => ({
+      categoria: stat.categoria,
+      count: Number(stat.count) || 0,
+      avgImportance: stat.avgImportance ? Number(stat.avgImportance).toFixed(2) : "0.00",
+      totalQuantity: Number(stat.totalQuantity) || 0,
+      avgPrice: stat.avgPrice ? Number(stat.avgPrice).toFixed(2) : "0.00",
+      totalValue: stat.totalValue ? Number(stat.totalValue).toFixed(2) : "0.00"
+    }));
+  } catch (error) {
+    throw new Error('Error al obtener estadísticas: ' + error.message);
+  }
   };
+
 
   // Método estático para buscar productos por texto
   Product.search = async function (searchTerm, userRole = 'user') {

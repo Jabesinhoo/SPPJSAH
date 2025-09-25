@@ -60,15 +60,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         tableBody.innerHTML = '';
 
         generalStats.forEach(stat => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${stat.categoria}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.count}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.avgImportance} ⭐</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.totalQuantity}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">$${stat.avgPrice}</td>
-    `;
-    tableBody.appendChild(row);
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${stat.categoria}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.count}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.avgImportance} ⭐</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.totalQuantity}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm">$${stat.avgPrice}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">$${stat.totalValue}</td>
+  `;
+  tableBody.appendChild(row);
 });
 
 
@@ -99,12 +100,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         topBrands.forEach(brand => {
     const row = document.createElement('tr');
     row.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${brand.marca || 'Sin marca'}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.count}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.avgImportance} ⭐</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.totalQuantity}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">$${brand.avgPrice}</td>
-    `;
+  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${brand.marca || 'Sin marca'}</td>
+  <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.count}</td>
+  <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.avgImportance} ⭐</td>
+  <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.totalQuantity}</td>
+  <td class="px-6 py-4 whitespace-nowrap text-sm">$${brand.avgPrice}</td>
+  <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">$${brand.totalValue}</td>
+`;
+
     brandsTableBody.appendChild(row);
 });
 
