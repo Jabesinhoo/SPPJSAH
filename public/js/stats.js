@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Colores para los gráficos que funcionan bien en modo claro y oscuro
+    function formatCurrency(value) {
+        if (!value) return "$0.00";
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
+    }
+
     const chartColors = {
         blue: { light: '#3B82F6', dark: '#60A5FA' },
         green: { light: '#10B981', dark: '#34D399' },
@@ -60,18 +69,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         tableBody.innerHTML = '';
 
         generalStats.forEach(stat => {
-  const row = document.createElement('tr');
-  row.innerHTML = `
-    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${stat.categoria}</td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.count}</td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.avgImportance} ⭐</td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.totalQuantity}</td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm">$${stat.avgPrice}</td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">$${stat.totalValue}</td>
-  `;
-  tableBody.appendChild(row);
-});
-
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${stat.categoria}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.count}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.avgImportance} ⭐</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${stat.totalQuantity}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${formatCurrency(stat.avgPrice)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">${formatCurrency(stat.totalValue)}</td>
+            `;
+            tableBody.appendChild(row);
+        });
 
 
         // Tabla de top productos
@@ -97,19 +105,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Tomar solo las top 10 marcas
         const topBrands = brandStats.slice(0, 10);
 
-        topBrands.forEach(brand => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${brand.marca || 'Sin marca'}</td>
-  <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.count}</td>
-  <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.avgImportance} ⭐</td>
-  <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.totalQuantity}</td>
-  <td class="px-6 py-4 whitespace-nowrap text-sm">$${brand.avgPrice}</td>
-  <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">$${brand.totalValue}</td>
-`;
-
-    brandsTableBody.appendChild(row);
-});
+        brandStats.forEach(brand => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${brand.marca || 'Sin marca'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.count}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.avgImportance} ⭐</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${brand.totalQuantity}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">${formatCurrency(brand.avgPrice)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">${formatCurrency(brand.totalValue)}</td>
+            `;
+            brandsTableBody.appendChild(row);
+        });
 
 
         // 🆕 GRÁFICO DE DISTRIBUCIÓN POR MARCA 🆕

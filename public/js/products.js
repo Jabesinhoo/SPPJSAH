@@ -1,6 +1,5 @@
 // products.js - Completamente modificado con sistema de menciones
 document.addEventListener('DOMContentLoaded', () => {
-    // Obteniendo elementos del DOM
     const form = document.getElementById('product-form');
     const productsTableBodyUser = document.getElementById('products-table-body-user');
     const productsTableBodyAdmin = document.getElementById('products-table-body-admin');
@@ -35,6 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentNotes = [];
     let searchTimeout;
     let availableUsers = [];
+
+    function formatCurrency(value) {
+        if (!value) return "$0.00";
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
+        }
 
     // ==================== FUNCIÓN PARA PROCESAR MENCIONES ====================
     const processMentionsInNotes = async (notes, productId, productName) => {
@@ -538,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.precio_compra ? `${parseFloat(product.precio_compra).toFixed(2)}` : '-'}
+                            ${product.precio_compra ? formatCurrency(product.precio_compra) : '-'}
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             ${product.proveedor || '-'}
