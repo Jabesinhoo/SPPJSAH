@@ -253,13 +253,17 @@ brand: {
         raw: true
       });
 
+      console.log("📊 Stats generales:", stats); // <-- ver en producción
+
+
       return stats.map(stat => ({
         categoria: stat.categoria,
-        count: parseInt(stat.count),
-        avgImportance: parseFloat(stat.avgImportance || 0).toFixed(2),
-        totalQuantity: parseInt(stat.totalQuantity || 0),
-        avgPrice: parseFloat(stat.avgPrice || 0).toFixed(2)
+        count: Number(stat.count) || 0,
+        avgImportance: stat.avgImportance ? Number(stat.avgImportance).toFixed(2) : "0.00",
+        totalQuantity: Number(stat.totalQuantity) || 0,
+        avgPrice: stat.avgPrice ? Number(stat.avgPrice).toFixed(2) : "0.00"
       }));
+
     } catch (error) {
       throw new Error('Error al obtener estadísticas: ' + error.message);
     }
