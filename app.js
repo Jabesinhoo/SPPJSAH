@@ -440,9 +440,12 @@ const seedRoles = async () => {
 app.use(errorHandler);
 
 // ✅ Siempre iniciar el servidor, sin depender de require.main
+const excelService = require('./services/excelService');
+
 (async () => {
   try {
     await sequelize.sync({ force: false });
+    excelService.init(); // <-- Carga Excel una vez al arrancar, sin bloquear el proceso
     app.listen(PORT, '0.0.0.0', () => {
       logger.info(`🚀 Servidor corriendo en http://localhost:${PORT}`);
       seedRoles();

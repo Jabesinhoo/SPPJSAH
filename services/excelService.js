@@ -7,15 +7,20 @@ class ExcelService {
     constructor() {
         this.excelData = null;
         this.filePath = path.join(__dirname, '../Excel/actualizada.xlsx');
+    }
+
+    // Cargar los datos de Excel manualmente
+    async init() {
         this.loadExcelData();
     }
+
 
     loadExcelData() {
         try {
             const workbook = XLSX.readFile(this.filePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            
+
             // Convertir a JSON
             this.excelData = XLSX.utils.sheet_to_json(worksheet);
             logger.info('Datos de Excel cargados correctamente. Total de productos:', this.excelData.length);
@@ -32,7 +37,7 @@ class ExcelService {
 
         // Buscar el SKU (case insensitive y sin espacios)
         const cleanSKU = sku.toString().trim().toLowerCase();
-        
+
         const product = this.excelData.find(item => {
             if (!item.CódigoInventario) return false;
             const productSKU = item.CódigoInventario.toString().trim().toLowerCase();
@@ -48,7 +53,7 @@ class ExcelService {
         }
 
         const cleanSKU = sku.toString().trim().toLowerCase();
-        
+
         return this.excelData.filter(item => {
             if (!item.CódigoInventario) return false;
             const productSKU = item.CódigoInventario.toString().trim().toLowerCase();
