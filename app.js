@@ -439,16 +439,18 @@ const seedRoles = async () => {
 // ✅ Error handler debe ser el último middleware
 app.use(errorHandler);
 
-if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', async () => {
-    try {
-      await sequelize.sync({ force: false });
+// ✅ Siempre iniciar el servidor, sin depender de require.main
+(async () => {
+  try {
+    await sequelize.sync({ force: false });
+    app.listen(PORT, '0.0.0.0', () => {
       logger.info(`🚀 Servidor corriendo en http://localhost:${PORT}`);
       seedRoles();
-    } catch (err) {
-      logger.error('❌ Error al sincronizar con la base de datos:', err);
-    }
-  });
-}
+    });
+  } catch (err) {
+    logger.error('❌ Error al sincronizar con la base de datos:', err);
+  }
+})();
+
 
 module.exports = app;
