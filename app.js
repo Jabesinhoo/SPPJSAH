@@ -444,16 +444,32 @@ const excelService = require('./services/excelService');
 
 (async () => {
   try {
+    // Sincroniza la base de datos sin borrar datos existentes
     await sequelize.sync({ force: false });
-    excelService.init(); // <-- Carga Excel una vez al arrancar, sin bloquear el proceso
+
+    // ✅ Carga inicial del archivo Excel
+    excelService.loadExcelData();
+
+    // Inicia el servidor Express
     app.listen(PORT, '0.0.0.0', () => {
       logger.info(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-      seedRoles();
+      seedRoles(); // Crea roles si no existen
     });
+
   } catch (err) {
+    // Captura y registra cualquier error crítico durante el arranque
     logger.error('❌ Error al sincronizar con la base de datos:', err);
   }
 })();
+
+// 🧯 Captura errores no manejados para evitar reinicios silenciosos
+process.on('uncaughtException', (err) => {
+  logger.error('❌ Excepción no capturada:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('❌ Promesa rechazada sin capturar:', reason);
+});
 
 
 module.exports = app;
