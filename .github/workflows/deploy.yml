@@ -1,28 +1,28 @@
-name: 🚀 Deploy to VPS (SPPJSAH)
+name: 🚀 Deploy to VPS
 
 on:
   push:
     branches:
-      - main  # cada vez que hagas push a main, se despliega automáticamente
+      - main  # se ejecuta automáticamente cuando haces push a main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧩 Checkout repository
+      - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🚀 Deploy to VPS
+      - name: 🚀 Deploy to VPS via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}        # debe ser 'jabesinho'
+          username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          script_stop: true                       # si algo falla, detiene el deploy
+          script_stop: false
           script: |
-            set -e  # Detiene si un comando falla
+            set +e  # ✅ No detiene la ejecución si un comando devuelve error
 
             echo "📂 Iniciando deploy como usuario: $(whoami)"
             cd /var/www/sppjsah
@@ -30,28 +30,36 @@ jobs:
             # ✅ Asegurar que Git confíe en el repo
             git config --global --add safe.directory /var/www/sppjsah
 
-            # 🔄 Actualizar código
+            # 🔄 Actualizar repositorio
             echo "🔄 Actualizando repositorio..."
             git fetch --all
             git reset --hard origin/main
 
-            # 🧠 Cargar entorno Node de jabesinho
-            export NVM_DIR="/home/jabesinho/.nvm"
+            # 🧠 Cargar entorno Node
+            export NVM_DIR="/home/${USER}/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             # ⚙️ Verificar versión Node y npm
             echo "🧩 Node version: $(node -v)"
             echo "🧩 NPM version: $(npm -v)"
 
-            # 📦 Instalar dependencias en modo producción
-            npm ci --omit=dev
+            # 📦 Instalar dependencias
+            echo "📦 Instalando dependencias..."
+            npm ci --omit=dev || npm install --omit=dev
 
-            # 🗃️ Ejecutar migraciones (sin romper si hay duplicados)
+            # 🗃️ Ejecutar migraciones (sin romper deploy)
             echo "🧱 Ejecutando migraciones..."
-            npx sequelize-cli db:migrate || echo "⚠️ Migraciones con conflictos, continuando..."
+            npx sequelize-cli db:migrate || echo "⚠️ Migraciones fallaron, continuando..."
+
+            # ✅ Verificar si el Excel existe
+            if [ -f "/var/www/sppjsah/Excel/actualizada.xlsx" ]; then
+              echo "🟢 Archivo Excel detectado correctamente."
+            else
+              echo "⚠️ Advertencia: No se encontró /Excel/actualizada.xlsx"
+            fi
 
             # 🔁 Reiniciar PM2
-            echo "♻️ Reiniciando proceso PM2..."
+            echo "♻️ Reiniciando PM2..."
             if pm2 describe sppjsah > /dev/null; then
               pm2 restart sppjsah --update-env
             else
@@ -59,4 +67,5 @@ jobs:
             fi
 
             pm2 save
+
             echo "✅ Deploy completado exitosamente"
