@@ -457,7 +457,6 @@ const excelService = require('./services/excelService');
     });
 
   } catch (err) {
-    // Captura y registra cualquier error crítico durante el arranque
     logger.error('❌ Error al sincronizar con la base de datos:', err);
   }
 })();
