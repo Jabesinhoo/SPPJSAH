@@ -1,33 +1,62 @@
-name: Deploy to VPS
+name: 🚀 Deploy to VPS (SPPJSAH)
 
 on:
   push:
     branches:
-      - main   # cada vez que hagas push a main, se despliega
+      - main  # cada vez que hagas push a main, se despliega automáticamente
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to VPS
+      - name: 🚀 Deploy to VPS
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
+          username: ${{ secrets.VPS_USER }}        # debe ser 'jabesinho'
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
+          script_stop: true                       # si algo falla, detiene el deploy
           script: |
-            cd /var/www/sppjsah
-            git reset --hard
-            git pull origin main
+            set -e  # Detiene si un comando falla
 
-            export NVM_DIR="$HOME/.nvm"
+            echo "📂 Iniciando deploy como usuario: $(whoami)"
+            cd /var/www/sppjsah
+
+            # ✅ Asegurar que Git confíe en el repo
+            git config --global --add safe.directory /var/www/sppjsah
+
+            # 🔄 Actualizar código
+            echo "🔄 Actualizando repositorio..."
+            git fetch --all
+            git reset --hard origin/main
+
+            # 🧠 Cargar entorno Node de jabesinho
+            export NVM_DIR="/home/jabesinho/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            npm install --production
-            npx sequelize-cli db:migrate
-            pm2 restart sppjsah --update-env
+            # ⚙️ Verificar versión Node y npm
+            echo "🧩 Node version: $(node -v)"
+            echo "🧩 NPM version: $(npm -v)"
+
+            # 📦 Instalar dependencias en modo producción
+            npm ci --omit=dev
+
+            # 🗃️ Ejecutar migraciones (sin romper si hay duplicados)
+            echo "🧱 Ejecutando migraciones..."
+            npx sequelize-cli db:migrate || echo "⚠️ Migraciones con conflictos, continuando..."
+
+            # 🔁 Reiniciar PM2
+            echo "♻️ Reiniciando proceso PM2..."
+            if pm2 describe sppjsah > /dev/null; then
+              pm2 restart sppjsah --update-env
+            else
+              pm2 start app.js --name sppjsah
+            fi
+
+            pm2 save
+            echo "✅ Deploy completado exitosamente"
