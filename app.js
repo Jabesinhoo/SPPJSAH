@@ -461,7 +461,7 @@ const excelService = require('./services/excelService');
   }
 })();
 
-// 🧯 Captura errores no manejados para evitar reinicios silenciosos
+
 process.on('uncaughtException', (err) => {
   logger.error('❌ Excepción no capturada:', err);
 });
