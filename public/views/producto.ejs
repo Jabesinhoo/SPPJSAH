@@ -83,7 +83,22 @@
             Añadir Producto
         </button>
     </div>
-    <!-- Agregar después de los filtros existentes -->
+
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de Productos</h2>
+        <% if (userRole && userRole==='admin' ) { %>
+
+            <a href="/products/stats"
+                class="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 transition-colors duration-200 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20V10"></path>
+                    <path d="M18 20V4"></path>
+                    <path d="M6 20v-4"></path>
+                </svg>
+                Ver Estadísticas
+            </a>
+                <!-- Agregar después de los filtros existentes -->
     <div
         class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
         <div class="flex items-center">
@@ -146,20 +161,6 @@
             </div>
         </div>
     </div>
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de Productos</h2>
-        <% if (userRole && userRole==='admin' ) { %>
-
-            <a href="/products/stats"
-                class="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 transition-colors duration-200 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20V10"></path>
-                    <path d="M18 20V4"></path>
-                    <path d="M6 20v-4"></path>
-                </svg>
-                Ver Estadísticas
-            </a>
             <% } %>
     </div>
 
