@@ -245,74 +245,109 @@ exports.updateProduct = async (req, res) => {
         const userRole = req.session.userRole;
         const username = req.session.username;
 
+        console.log('🔧 Update Product Request:', { id, body: req.body, userRole });
+
         // Buscar el producto
         const productToUpdate = await Product.findByPk(id);
         if (!productToUpdate) {
+            console.log('❌ Producto no encontrado:', id);
             return res.status(404).json({ error: 'Producto no encontrado.' });
         }
 
         let dataToUpdate = {};
 
         // Campos que todos pueden editar
-        if (SKU !== undefined) dataToUpdate.SKU = SKU.trim();
-        if (name !== undefined) dataToUpdate.nombre = name.trim();
-
-        // 🔥 Nuevo: actualización de marca
-        if (brand !== undefined) {
-            if (userRole === 'admin') {
-                dataToUpdate.brand = brand.trim() || 'N/A';
+        if (SKU !== undefined) {
+            const trimmedSKU = SKU.trim();
+            if (trimmedSKU.length === 0) {
+                return res.status(400).json({ error: 'El SKU no puede estar vacío.' });
             }
+            dataToUpdate.SKU = trimmedSKU;
+        }
+
+        if (name !== undefined) {
+            const trimmedName = name.trim();
+            if (trimmedName.length === 0) {
+                return res.status(400).json({ error: 'El nombre no puede estar vacío.' });
+            }
+            dataToUpdate.nombre = trimmedName;
+        }
+
+        // Actualización de marca - disponible para todos los roles
+        if (brand !== undefined) {
+            dataToUpdate.brand = brand.trim() || 'N/A';
         }
 
         // Validar y parsear cantidad
         if (quantity !== undefined) {
-            const parsedQuantity = parseInt(quantity) || 0;
-            if (parsedQuantity < 0) {
-                return res.status(400).json({ error: 'La cantidad no puede ser negativa.' });
+            const parsedQuantity = parseInt(quantity);
+            if (isNaN(parsedQuantity) || parsedQuantity < 0) {
+                return res.status(400).json({ error: 'La cantidad debe ser un número válido mayor o igual a 0.' });
             }
             dataToUpdate.cantidad = parsedQuantity;
         }
 
-        if (importance !== undefined) dataToUpdate.importancia = parseInt(importance);
+        // Validar importancia
+        if (importance !== undefined) {
+            const parsedImportance = parseInt(importance);
+            if (isNaN(parsedImportance) || parsedImportance < 1 || parsedImportance > 5) {
+                return res.status(400).json({ error: 'La importancia debe ser un número entre 1 y 5.' });
+            }
+            dataToUpdate.importancia = parsedImportance;
+        }
 
         // Validar y parsear precio de compra para admin
         if (userRole === 'admin' && purchasePrice !== undefined) {
-            const parsedPurchasePrice = parseFloat(purchasePrice) || 0;
-            if (parsedPurchasePrice < 0) {
-                return res.status(400).json({ error: 'El precio de compra no puede ser negativo.' });
+            const parsedPurchasePrice = parseFloat(purchasePrice);
+            if (isNaN(parsedPurchasePrice) || parsedPurchasePrice < 0) {
+                return res.status(400).json({ error: 'El precio de compra debe ser un número válido mayor o igual a 0.' });
             }
             dataToUpdate.precio_compra = parsedPurchasePrice;
         }
 
+        // Manejo de notas
         if (notes !== undefined) {
             try {
+                // Si es un string, intentar parsear como JSON
                 if (typeof notes === 'string') {
-                    JSON.parse(notes);
-                    dataToUpdate.nota = notes;
+                    const parsedNotes = JSON.parse(notes);
+                    dataToUpdate.nota = JSON.stringify(parsedNotes);
                 } else {
+                    // Si ya es un objeto, stringificarlo
                     dataToUpdate.nota = JSON.stringify(notes);
                 }
             } catch (e) {
-                dataToUpdate.nota = notes.toString();
+                // Si falla el parseo, crear una nueva estructura de nota
+                const noteObject = [{
+                    text: notes.toString(),
+                    user: username,
+                    date: new Date().toISOString(),
+                    mentions: []
+                }];
+                dataToUpdate.nota = JSON.stringify(noteObject);
             }
         }
 
-        // Lógica corregida para "Listo" y categorías
+        // Lógica para "Listo" y categorías
         if (userRole === 'admin') {
+            // Admin puede cambiar el estado "Listo" directamente
             if (ready !== undefined) {
-                dataToUpdate.listo = ready === true || ready === 'true';
-                if (dataToUpdate.listo && category !== 'Realizado') {
-                    if (category !== undefined) {
-                        dataToUpdate.categoria = category;
-                    }
+                const isReady = ready === true || ready === 'true';
+                dataToUpdate.listo = isReady;
+                
+                // Si se marca como listo y no se especifica categoría, cambiar a "Realizado"
+                if (isReady && !category && productToUpdate.categoria !== 'Realizado') {
+                    dataToUpdate.categoria = 'Realizado';
                 }
             }
 
+            // Manejo de categorías para admin
             if (category !== undefined) {
                 const validCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado'];
                 if (validCategories.includes(category)) {
                     dataToUpdate.categoria = category;
 
+                    // Sincronizar estado "Listo" con categoría
                     if (category === 'Realizado') {
                         dataToUpdate.listo = true;
                     } else if (category === 'Faltantes') {
@@ -323,14 +358,17 @@ exports.updateProduct = async (req, res) => {
                 }
             }
 
+            // Proveedor solo para admin
             if (supplier !== undefined) {
-                dataToUpdate.proveedor = supplier || 'N/A';
+                dataToUpdate.proveedor = supplier.trim() || 'N/A';
             }
         } else {
+            // Usuarios normales
             if (category !== undefined) {
                 const userCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
                 if (userCategories.includes(category)) {
                     dataToUpdate.categoria = category;
+                    // Usuarios normales no pueden marcar como "Listo" productos en "Faltantes"
                     if (category === 'Faltantes') {
                         dataToUpdate.listo = false;
                     }
@@ -338,24 +376,70 @@ exports.updateProduct = async (req, res) => {
                     return res.status(400).json({ error: 'Categoría no válida para tu rol.' });
                 }
             }
+
+            // Usuarios normales no pueden cambiar el estado "Listo" directamente
+            // Pero si viene en el body, lo ignoramos silenciosamente en lugar de dar error
+            // para compatibilidad con selección múltiple
         }
 
+        // Validar que no se intente cambiar un producto a "Listo" si está en "Faltantes"
+        const finalCategory = dataToUpdate.categoria || productToUpdate.categoria;
+        const finalReady = dataToUpdate.listo !== undefined ? dataToUpdate.listo : productToUpdate.listo;
+        
+        if (finalReady && finalCategory === 'Faltantes') {
+            return res.status(400).json({ 
+                error: 'No se puede marcar como "Listo" un producto en categoría "Faltantes". Cambia primero la categoría.' 
+            });
+        }
+
+        // Actualizar fecha de modificación
         dataToUpdate.updatedAt = new Date();
 
-        const [updated] = await Product.update(dataToUpdate, { where: { id } });
+        // Verificar si hay campos para actualizar
+        if (Object.keys(dataToUpdate).length === 0) {
+            console.log('⚠️ No hay datos para actualizar');
+            return res.status(400).json({ error: 'No se proporcionaron datos para actualizar.' });
+        }
+
+        console.log('📝 Datos a actualizar:', dataToUpdate);
+
+        const [updated] = await Product.update(dataToUpdate, { 
+            where: { id } 
+        });
 
         if (updated) {
             const updatedProduct = await Product.findByPk(id);
+            
+            // Log de la actualización
+            logger.info(`✅ Producto actualizado: ${updatedProduct.nombre} (ID: ${id}) por usuario: ${username}`);
+            console.log('✅ Producto actualizado exitosamente');
+            
             return res.status(200).json({
                 message: 'Producto actualizado con éxito.',
                 product: updatedProduct
             });
         }
 
+        console.log('❌ No se pudo actualizar el producto');
         res.status(404).json({ error: 'Producto no encontrado.' });
     } catch (err) {
+        console.error('❌ Error al actualizar el producto:', err);
         logger.error('Error al actualizar el producto:', err);
-        res.status(500).json({ error: 'Error interno del servidor.', details: err.message });
+        
+        // Manejar errores específicos de la base de datos
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ error: 'Ya existe un producto con este SKU.' });
+        }
+        
+        if (err.name === 'SequelizeValidationError') {
+            const validationErrors = err.errors.map(error => error.message);
+            return res.status(400).json({ error: 'Errores de validación: ' + validationErrors.join(', ') });
+        }
+
+        res.status(500).json({ 
+            error: 'Error interno del servidor.', 
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+        });
     }
 };
 

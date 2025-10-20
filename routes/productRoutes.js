@@ -4,7 +4,7 @@ const router = express.Router();
 const productController = require('../controllers/productController');
 const authMiddleware = require('../middleware/authMiddleware');
 const excelController = require('../controllers/excelController');
-const { productValidation } = require('../middleware/productValidation');
+const { createProductValidation, updateProductValidation } = require('../middleware/productValidation');
 const { validationResult } = require('express-validator');
 
 // Middleware global: todas las rutas requieren autenticación
@@ -51,15 +51,15 @@ router.get('/products/stats/brands', productController.getBrandStats);
 router.get('/products', productController.getAllProducts);
 router.get('/products/:id', productController.getProductById);
 
-// Crear producto
+// Crear producto - usa validaciones estrictas
 router.post('/products',
-  validate(productValidation),
+  validate(createProductValidation),
   productController.createProduct
 );
 
-// Actualizar producto
+// Actualizar producto - usa validaciones flexibles
 router.put('/products/:id',
-  validate(productValidation),
+  validate(updateProductValidation),
   productController.updateProduct
 );
 

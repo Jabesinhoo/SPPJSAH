@@ -1,10 +1,10 @@
-
 <script>
     const userRole = '<%= userRole %>';
     const currentUsername = '<%= username %>';
 </script>
 
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full p-4 sm:p-6 md:p-8 relative transition-colors duration-500">
+<div
+    class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full p-4 sm:p-6 md:p-8 relative transition-colors duration-500">
     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Gestión de Productos
     </h1>
 
@@ -13,11 +13,11 @@
             <div class="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
                 <p class="text-sm font-medium"></p>
             </div>
-        <% } else { %>
-            <div class="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">
-                <p class="text-sm font-medium"></p>
-            </div>
-        <% } %>
+            <% } else { %>
+                <div class="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">
+                    <p class="text-sm font-medium"></p>
+                </div>
+                <% } %>
     </div>
 
     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -35,7 +35,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="flex-grow w-full sm:w-auto">
             <label for="filter-ready" class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado:</label>
             <select id="filter-ready"
@@ -83,7 +83,69 @@
             Añadir Producto
         </button>
     </div>
+    <!-- Agregar después de los filtros existentes -->
+    <div
+        class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <div class="flex items-center">
+            <input type="checkbox" id="select-all"
+                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+            <label for="select-all" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Seleccionar todos (<span id="selected-count">0</span> seleccionados)
+            </label>
+        </div>
 
+        <div class="flex flex-wrap gap-2">
+            <select id="bulk-action"
+                class="block w-full sm:w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-600 dark:border-gray-500 dark:text-gray-200">
+                <option value="">Acción en lote...</option>
+                <option value="change-category">Cambiar categoría</option>
+                <option value="change-ready">Cambiar estado "Listo"</option>
+                <option value="change-quantity">Cambiar cantidad</option>
+                <option value="change-importance">Cambiar importancia</option>
+                <% if (userRole==='admin' ) { %>
+                    <option value="change-supplier">Cambiar proveedor</option>
+                    <option value="change-brand">Cambiar marca</option>
+                    <% } %>
+                        <option value="delete">Eliminar productos</option>
+            </select>
+
+            <button id="apply-bulk-action"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+                Aplicar
+            </button>
+
+            <button id="clear-selection"
+                class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                Limpiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal para acciones en lote -->
+    <div id="bulk-action-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 id="bulk-modal-title" class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100"></h3>
+
+                <div id="bulk-action-content">
+                    <!-- Contenido dinámico según la acción -->
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="cancel-bulk-action"
+                        class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button id="confirm-bulk-action"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700">
+                        Aplicar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de Productos</h2>
         <% if (userRole && userRole==='admin' ) { %>
@@ -98,317 +160,325 @@
                 </svg>
                 Ver Estadísticas
             </a>
-        <% } %>
+            <% } %>
     </div>
 
     <% if (userRole !=='admin' ) { %>
-        <div class="overflow-x-auto">
-            <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            SKU</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Nombre</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Usuario</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Cantidad</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Categoría</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Importancia</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Fecha
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Listo</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Notas</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="products-table-body-user"
-                    class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                </tbody>
-            </table>
-        </div>
-    <% } else { %>
-        <div class="overflow-x-auto">
-            <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            SKU</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Nombre</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Usuario</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Cantidad</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Categoría</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Importancia</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Precio Compra</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Proveedor</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Marca</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Fecha
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Listo</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Notas</th>
-                        <th scope="col"
-                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="products-table-body-admin"
-                    class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+    <div class="overflow-x-auto">
+        <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-8">
+                        <input type="checkbox" id="select-all-user" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    </th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        SKU</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Nombre</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Usuario</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Cantidad</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Categoría</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Importancia</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Fecha
+                    </th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Listo</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Notas</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="products-table-body-user"
+                class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <!-- Las filas se generarán dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+<% } else { %>
+    <div class="overflow-x-auto">
+        <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-8">
+                        <input type="checkbox" id="select-all-admin" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    </th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        SKU</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Nombre</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Usuario</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Cantidad</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Categoría</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Importancia</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Precio Compra</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Proveedor</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Marca</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Fecha
+                    </th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Listo</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Notas</th>
+                    <th scope="col"
+                        class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="products-table-body-admin"
+                class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <!-- Las filas se generarán dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+<% } %>
 
-    <div id="product-modal"
-        class="modal-overlay fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center p-4 transition-all duration-500 hidden">
-        <div
-            class="modal-content bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg overflow-y-auto max-h-screen relative">
-            <button id="close-modal"
-                class="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="p-6 sm:p-8">
-                <h2 id="modal-title"
-                    class="text-xl sm:text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100">Añadir
-                    Nuevo Producto</h2>
-                <form id="product-form">
-                    <input type="hidden" id="product-id">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+                <div id="product-modal"
+                    class="modal-overlay fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center p-4 transition-all duration-500 hidden">
+                    <div
+                        class="modal-content bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg overflow-y-auto max-h-screen relative">
+                        <button id="close-modal"
+                            class="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div class="p-6 sm:p-8">
+                            <h2 id="modal-title"
+                                class="text-xl sm:text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100">Añadir
+                                Nuevo Producto</h2>
+                            <form id="product-form">
+                                <input type="hidden" id="product-id">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
 
-                        <div>
-                            <label for="sku"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">SKU
-                                *</label>
-                            <input type="text" id="sku" name="sku" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                        </div>
-
-                        <div>
-                            <label for="name"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre
-                                del Producto *</label>
-                            <input type="text" id="name" name="name" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                        </div>
-
-                        <div>
-                            <label for="quantity"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cantidad
-                                *</label>
-                            <input type="number" id="quantity" name="quantity" required min="0"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                        </div>
-
-                        <div>
-                            <label for="importance"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Importancia
-                                (1-5 estrellas) *</label>
-                            <div id="importance-stars" class="mt-1 flex items-center">
-                                <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
-                                    data-value="1">&#9733;</span>
-                                <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
-                                    data-value="2">&#9733;</span>
-                                <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
-                                    data-value="3">&#9733;</span>
-                                <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
-                                    data-value="4">&#9733;</span>
-                                <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
-                                    data-value="5">&#9733;</span>
-                            </div>
-                            <input type="hidden" id="importance" name="importance" value="1" required>
-                        </div>
-
-                        <div>
-                            <label for="category"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
-                            <% if (userRole==='admin' ) { %>
-                                <select id="category" name="category"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                                    <option value="Faltantes">Faltantes</option>
-                                    <option value="Bajo Pedido">Bajo Pedido</option>
-                                    <option value="Agotados con el Proveedor">Agotados con el Proveedor
-                                    </option>
-                                    <option value="Demasiadas Existencias">Demasiadas Existencias</option>
-                                    <option value="Realizado">Realizado</option>
-                                </select>
-                            <% } else { %>
-                                <select id="category" name="category"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                                    <option value="Faltantes">Faltantes</option>
-                                    <option value="Bajo Pedido">Bajo Pedido</option>
-                                    <option value="Agotados con el Proveedor">Agotados con el Proveedor
-                                    </option>
-                                    <option value="Demasiadas Existencias">Demasiadas Existencias
-                                    </option>
-                                </select>
-                            <% } %>
-                        </div>
-                        <% if (userRole==='admin' ) { %>
-                            <div>
-                                <label for="purchase-price"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio
-                                    de Compra</label>
-                                <input type="number" id="purchase-price" name="purchasePrice" step="0.01"
-                                    min="0"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                            </div>
-
-                            <div>
-                                <label for="supplier"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Proveedor</label>
-                                <input type="text" id="supplier" name="supplier"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                            </div>
-
-                            <div class="col-span-full">
-                                <label for="ready"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">¿Producto
-                                    Listo?</label>
-                                <label class="relative inline-flex items-center cursor-pointer mt-2">
-                                    <input type="checkbox" id="ready" name="ready" class="sr-only peer">
-                                    <div
-                                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600">
+                                    <div>
+                                        <label for="sku"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">SKU
+                                            *</label>
+                                        <input type="text" id="sku" name="sku" required
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     </div>
-                                    <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">Marcar como
-                                        listo</span>
-                                </label>
-                            </div>
-                         
-                        <% } %>
-                               <div>
-                                <label for="brand"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
-                                <input type="text" id="brand" name="brand"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                            </div>
-                        <div class="col-span-full">
-                            <label for="notes"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas
-                                del Producto</label>
 
-                            <div id="notes-container"
-                                class="mt-2 border border-gray-300 dark:border-gray-600 rounded-md p-3 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-700">
-                                <p id="no-notes-message"
-                                    class="text-gray-500 dark:text-gray-400 text-sm italic">No hay
-                                    notas para este producto.</p>
-                            </div>
-
-                            <div class="mt-3">
-                                <div class="relative">
-                                    <textarea id="note-new"
-                                        placeholder="Escribe una nueva nota... (Usa @ para etiquetar usuarios)"
-                                        rows="3"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 resize-none"></textarea>
-
-                                    <div id="user-suggestions"
-                                        class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg hidden max-h-40 overflow-y-auto mt-1">
-                                        <div
-                                            class="p-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                            Usuarios disponibles para etiquetar:
-                                        </div>
-                                        <div id="suggestions-list" class="max-h-32 overflow-y-auto">
-                                        </div>
+                                    <div>
+                                        <label for="name"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre
+                                            del Producto *</label>
+                                        <input type="text" id="name" name="name" required
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     </div>
+
+                                    <div>
+                                        <label for="quantity"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cantidad
+                                            *</label>
+                                        <input type="number" id="quantity" name="quantity" required min="0"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                    </div>
+
+                                    <div>
+                                        <label for="importance"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Importancia
+                                            (1-5 estrellas) *</label>
+                                        <div id="importance-stars" class="mt-1 flex items-center">
+                                            <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
+                                                data-value="1">&#9733;</span>
+                                            <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
+                                                data-value="2">&#9733;</span>
+                                            <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
+                                                data-value="3">&#9733;</span>
+                                            <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
+                                                data-value="4">&#9733;</span>
+                                            <span class="text-2xl cursor-pointer text-gray-400 hover:text-yellow-400"
+                                                data-value="5">&#9733;</span>
+                                        </div>
+                                        <input type="hidden" id="importance" name="importance" value="1" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="category"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
+                                        <% if (userRole==='admin' ) { %>
+                                            <select id="category" name="category"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                                <option value="Faltantes">Faltantes</option>
+                                                <option value="Bajo Pedido">Bajo Pedido</option>
+                                                <option value="Agotados con el Proveedor">Agotados con el Proveedor
+                                                </option>
+                                                <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+                                                <option value="Realizado">Realizado</option>
+                                            </select>
+                                            <% } else { %>
+                                                <select id="category" name="category"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                                    <option value="Faltantes">Faltantes</option>
+                                                    <option value="Bajo Pedido">Bajo Pedido</option>
+                                                    <option value="Agotados con el Proveedor">Agotados con el Proveedor
+                                                    </option>
+                                                    <option value="Demasiadas Existencias">Demasiadas Existencias
+                                                    </option>
+                                                </select>
+                                                <% } %>
+                                    </div>
+                                    <% if (userRole==='admin' ) { %>
+                                        <div>
+                                            <label for="purchase-price"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio
+                                                de Compra</label>
+                                            <input type="number" id="purchase-price" name="purchasePrice" step="0.01"
+                                                min="0"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                        </div>
+
+                                        <div>
+                                            <label for="supplier"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Proveedor</label>
+                                            <input type="text" id="supplier" name="supplier"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                        </div>
+
+                                        <div class="col-span-full">
+                                            <label for="ready"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">¿Producto
+                                                Listo?</label>
+                                            <label class="relative inline-flex items-center cursor-pointer mt-2">
+                                                <input type="checkbox" id="ready" name="ready" class="sr-only peer">
+                                                <div
+                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600">
+                                                </div>
+                                                <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">Marcar como
+                                                    listo</span>
+                                            </label>
+                                        </div>
+
+                                        <% } %>
+                                            <div>
+                                                <label for="brand"
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
+                                                <input type="text" id="brand" name="brand"
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                            </div>
+                                            <div class="col-span-full">
+                                                <label for="notes"
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notas
+                                                    del Producto</label>
+
+                                                <div id="notes-container"
+                                                    class="mt-2 border border-gray-300 dark:border-gray-600 rounded-md p-3 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-700">
+                                                    <p id="no-notes-message"
+                                                        class="text-gray-500 dark:text-gray-400 text-sm italic">No hay
+                                                        notas para este producto.</p>
+                                                </div>
+
+                                                <div class="mt-3">
+                                                    <div class="relative">
+                                                        <textarea id="note-new"
+                                                            placeholder="Escribe una nueva nota... (Usa @ para etiquetar usuarios)"
+                                                            rows="3"
+                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 resize-none"></textarea>
+
+                                                        <div id="user-suggestions"
+                                                            class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg hidden max-h-40 overflow-y-auto mt-1">
+                                                            <div
+                                                                class="p-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                                Usuarios disponibles para etiquetar:
+                                                            </div>
+                                                            <div id="suggestions-list" class="max-h-32 overflow-y-auto">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-2 flex justify-between items-center">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">Tip: Escribe
+                                                            @ seguido del nombre de usuario para etiquetarlo</p>
+                                                        <button type="button" id="add-note-btn"
+                                                            class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                            Añadir Nota
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                 </div>
 
-                                <div class="mt-2 flex justify-between items-center">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Tip: Escribe
-                                        @ seguido del nombre de usuario para etiquetarlo</p>
-                                    <button type="button" id="add-note-btn"
-                                        class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        Añadir Nota
+                                <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+                                    <button type="button" id="cancel-add-modal"
+                                        class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" id="submit-btn"
+                                        class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Añadir Producto
                                     </button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
-                        <button type="button" id="cancel-add-modal"
-                            class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Cancelar
+                <div id="delete-modal"
+                    class="modal-overlay fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center p-4 transition-all duration-500 hidden">
+                    <div
+                        class="modal-content bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 relative">
+                        <button id="close-delete-modal"
+                            class="absolute top-3 right-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                         </button>
-                        <button type="submit" id="submit-btn"
-                            class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Añadir Producto
-                        </button>
+
+                        <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Eliminación
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas eliminar este
+                            producto? Esta acción no se puede deshacer.</p>
+
+                        <div class="flex justify-end gap-3">
+                            <button id="cancel-delete-btn"
+                                class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                                Cancelar
+                            </button>
+                            <button id="confirm-delete-btn"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div id="delete-modal"
-        class="modal-overlay fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center p-4 transition-all duration-500 hidden">
-        <div
-            class="modal-content bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 relative">
-            <button id="close-delete-modal"
-                class="absolute top-3 right-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-
-            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Eliminación
-            </h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas eliminar este
-                producto? Esta acción no se puede deshacer.</p>
-
-            <div class="flex justify-end gap-3">
-                <button id="cancel-delete-btn"
-                    class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
-                    Cancelar
-                </button>
-                <button id="confirm-delete-btn"
-                    class="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    Eliminar
-                </button>
-            </div>
-        </div>
-    </div>
+                </div>
 </div>
 
 <script src="/js/products.js"></script>

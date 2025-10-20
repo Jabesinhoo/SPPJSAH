@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }).format(value);
-        }
+    }
 
     // ==================== FUNCIÓN PARA PROCESAR MENCIONES ====================
     const processMentionsInNotes = async (notes, productId, productName) => {
@@ -481,104 +481,110 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (userRole !== 'admin' && productsTableBodyUser) {
                     // Tabla para usuarios normales
                     row.innerHTML = `
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            <span class="font-mono">${product.SKU}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.usuario}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
-                                ${product.cantidad}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
-                                ${product.categoria}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
-                            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="text-xs">${formattedDate}</span><br>
-                            <span class="text-xs">${formattedTime}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                            ${readySwitch}
-                        </td>
-                        ${notesHtml}
-                        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </td>
-                    `;
+        <td class="px-3 py-4 whitespace-nowrap">
+            <input type="checkbox" class="product-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="${product.id}">
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span class="font-mono">${product.SKU}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.usuario}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
+                ${product.cantidad}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
+                ${product.categoria}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
+            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="text-xs">${formattedDate}</span><br>
+            <span class="text-xs">${formattedTime}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+            ${readySwitch}
+        </td>
+        ${notesHtml}
+        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </td>
+    `;
                     productsTableBodyUser.appendChild(row);
                 } else if (productsTableBodyAdmin) {
                     // Tabla para administradores
                     row.innerHTML = `
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            <span class="font-mono">${product.SKU}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.usuario}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
-                                ${product.cantidad}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
-                                ${product.categoria}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
-                            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.precio_compra ? formatCurrency(product.precio_compra) : '-'}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.proveedor || '-'}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.brand || '-'}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="text-xs">${formattedDate}</span><br>
-                            <span class="text-xs">${formattedTime}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                            ${readySwitch}
-                        </td>
-                        ${notesHtml}
-                        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end space-x-2">
-                                <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
-                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                                <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200" title="Eliminar producto">
-                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    `;
+        <td class="px-3 py-4 whitespace-nowrap">
+            <input type="checkbox" class="product-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="${product.id}">
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span class="font-mono">${product.SKU}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.usuario}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
+                ${product.cantidad}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
+                ${product.categoria}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
+            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.precio_compra ? formatCurrency(product.precio_compra) : '-'}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.proveedor || '-'}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.brand || '-'}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="text-xs">${formattedDate}</span><br>
+            <span class="text-xs">${formattedTime}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+            ${readySwitch}
+        </td>
+        ${notesHtml}
+        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div class="flex justify-end space-x-2">
+                <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200" title="Eliminar producto">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </td>
+    `;
                     productsTableBodyAdmin.appendChild(row);
                 }
             });
@@ -1115,7 +1121,296 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteModal.classList.add('hidden');
         }
     });
+    // ==================== FUNCIONALIDAD DE SELECCIÓN MÚLTIPLE ====================
 
+    let selectedProducts = new Set();
+
+    // Función para actualizar el contador de seleccionados
+    const updateSelectedCount = () => {
+        const count = selectedProducts.size;
+        document.getElementById('selected-count').textContent = count;
+        document.getElementById('apply-bulk-action').disabled = count === 0;
+    };
+
+    // Seleccionar/deseleccionar todos
+    document.getElementById('select-all')?.addEventListener('change', function (e) {
+        const checkboxes = document.querySelectorAll('.product-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+            if (e.target.checked) {
+                selectedProducts.add(checkbox.value);
+            } else {
+                selectedProducts.delete(checkbox.value);
+            }
+        });
+        updateSelectedCount();
+    });
+
+    // Manejar selección individual
+    document.addEventListener('change', (e) => {
+        if (e.target.classList.contains('product-checkbox')) {
+            if (e.target.checked) {
+                selectedProducts.add(e.target.value);
+            } else {
+                selectedProducts.delete(e.target.value);
+                document.getElementById('select-all').checked = false;
+            }
+            updateSelectedCount();
+        }
+    });
+
+    // Limpiar selección
+    document.getElementById('clear-selection')?.addEventListener('click', () => {
+        selectedProducts.clear();
+        document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('select-all').checked = false;
+        updateSelectedCount();
+    });
+
+    // Aplicar acción en lote
+    document.getElementById('apply-bulk-action')?.addEventListener('click', () => {
+        const action = document.getElementById('bulk-action').value;
+        if (!action) return;
+
+        showBulkActionModal(action);
+    });
+
+    // Mostrar modal de acción en lote
+    const showBulkActionModal = (action) => {
+        const modal = document.getElementById('bulk-action-modal');
+        const title = document.getElementById('bulk-modal-title');
+        const content = document.getElementById('bulk-action-content');
+
+        let modalContent = '';
+
+        switch (action) {
+            case 'change-category':
+                title.textContent = 'Cambiar Categoría';
+                modalContent = `
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
+                <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="Faltantes">Faltantes</option>
+                    <option value="Bajo Pedido">Bajo Pedido</option>
+                    <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+                    <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+                    ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
+                </select>
+            `;
+                break;
+
+            case 'change-ready':
+                title.textContent = 'Cambiar Estado "Listo"';
+                modalContent = `
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo estado:</label>
+                <select id="bulk-ready" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="true">Marcar como Listo</option>
+                    <option value="false">Marcar como No Listo</option>
+                </select>
+            `;
+                break;
+
+            case 'change-quantity':
+                title.textContent = 'Cambiar Cantidad';
+                modalContent = `
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva cantidad:</label>
+                <input type="number" id="bulk-quantity" min="0" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
+                break;
+
+            case 'change-importance':
+                title.textContent = 'Cambiar Importancia';
+                modalContent = `
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva importancia (1-5):</label>
+                <input type="number" id="bulk-importance" min="1" max="5" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
+                break;
+
+            case 'change-supplier':
+                title.textContent = 'Cambiar Proveedor';
+                modalContent = `
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo proveedor:</label>
+                <input type="text" id="bulk-supplier" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
+                break;
+
+            case 'change-brand':
+                title.textContent = 'Cambiar Marca';
+                modalContent = `
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva marca:</label>
+                <input type="text" id="bulk-brand" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
+                break;
+
+            case 'delete':
+                title.textContent = 'Eliminar Productos';
+                modalContent = `
+                <p class="text-red-600 dark:text-red-400 font-medium">¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto(s)?</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Esta acción no se puede deshacer.</p>
+            `;
+                break;
+        }
+
+        content.innerHTML = modalContent;
+        modal.classList.remove('hidden');
+    };
+
+    // Confirmar acción en lote
+    // Confirmar acción en lote
+// En la función de confirmación de acciones en lote, modifica:
+document.getElementById('confirm-bulk-action')?.addEventListener('click', async () => {
+    const action = document.getElementById('bulk-action').value;
+    const productIds = Array.from(selectedProducts);
+    
+    if (productIds.length === 0) {
+        showMessage('No hay productos seleccionados', 'error');
+        return;
+    }
+
+    try {
+        let updateData = {};
+        let isValid = true;
+        let errorMessage = '';
+        
+        switch (action) {
+            case 'change-category':
+                const newCategory = document.getElementById('bulk-category').value;
+                if (!newCategory) {
+                    isValid = false;
+                    errorMessage = 'Debes seleccionar una categoría';
+                } else {
+                    updateData.category = newCategory;
+                }
+                break;
+                
+            case 'change-ready':
+                const readyValue = document.getElementById('bulk-ready').value;
+                updateData.ready = readyValue === 'true';
+                break;
+                
+            case 'change-quantity':
+                const quantityValue = document.getElementById('bulk-quantity').value;
+                const parsedQuantity = parseInt(quantityValue);
+                if (isNaN(parsedQuantity) || parsedQuantity < 0) {
+                    isValid = false;
+                    errorMessage = 'La cantidad debe ser un número válido mayor o igual a 0';
+                } else {
+                    updateData.quantity = parsedQuantity;
+                }
+                break;
+                
+            case 'change-importance':
+                const importanceValue = document.getElementById('bulk-importance').value;
+                const parsedImportance = parseInt(importanceValue);
+                if (isNaN(parsedImportance) || parsedImportance < 1 || parsedImportance > 5) {
+                    isValid = false;
+                    errorMessage = 'La importancia debe ser un número entre 1 y 5';
+                } else {
+                    updateData.importance = parsedImportance;
+                }
+                break;
+                
+            case 'change-supplier':
+                updateData.supplier = document.getElementById('bulk-supplier').value || 'N/A';
+                break;
+                
+            case 'change-brand':
+                updateData.brand = document.getElementById('bulk-brand').value || 'N/A';
+                break;
+        }
+        
+        if (!isValid) {
+            showMessage(errorMessage, 'error');
+            return;
+        }
+
+        console.log('🔄 Enviando datos de actualización:', updateData); // Debug
+
+        if (action === 'delete') {
+            // Eliminar múltiples productos
+            const deletePromises = productIds.map(id => 
+                fetch(`/api/products/${id}`, { method: 'DELETE' })
+            );
+            
+            const results = await Promise.allSettled(deletePromises);
+            const successfulDeletes = results.filter(result => result.status === 'fulfilled' && result.value.ok).length;
+            
+            showMessage(`${successfulDeletes} producto(s) eliminado(s) correctamente`, 'success');
+        } else {
+            // Actualizar múltiples productos - SOLO enviar los campos que se están actualizando
+            const updatePromises = productIds.map(id =>
+                fetch(`/api/products/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                })
+            );
+            
+            const results = await Promise.allSettled(updatePromises);
+            
+            // Procesar resultados
+            const updateResults = await Promise.all(
+                results.map(async (result, index) => {
+                    if (result.status === 'fulfilled') {
+                        const response = result.value;
+                        if (response.ok) {
+                            return { success: true, id: productIds[index] };
+                        } else {
+                            const errorData = await response.json();
+                            return { 
+                                success: false, 
+                                id: productIds[index], 
+                                error: errorData.errors || errorData.error 
+                            };
+                        }
+                    } else {
+                        return { 
+                            success: false, 
+                            id: productIds[index], 
+                            error: result.reason.message 
+                        };
+                    }
+                })
+            );
+            
+            const successfulUpdates = updateResults.filter(r => r.success).length;
+            const failedUpdates = updateResults.filter(r => !r.success);
+            
+            if (successfulUpdates > 0) {
+                showMessage(`${successfulUpdates} producto(s) actualizado(s) correctamente`, 'success');
+            }
+            
+            if (failedUpdates.length > 0) {
+                console.error('❌ Errores en actualizaciones:', failedUpdates);
+                const errorMessages = failedUpdates.map(f => f.error).filter(e => e);
+                if (errorMessages.length > 0) {
+                    showMessage(`Algunas actualizaciones fallaron: ${errorMessages.join(', ')}`, 'error');
+                }
+            }
+        }
+        
+        // Cerrar modal y limpiar
+        document.getElementById('bulk-action-modal').classList.add('hidden');
+        document.getElementById('bulk-action').value = '';
+        selectedProducts.clear();
+        document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('select-all').checked = false;
+        updateSelectedCount();
+        
+        // Recargar productos
+        fetchProducts();
+        
+    } catch (error) {
+        console.error('Error en acción en lote:', error);
+        showMessage('Error al procesar la acción en lote', 'error');
+    }
+});
+
+    // Cancelar acción en lote
+    document.getElementById('cancel-bulk-action')?.addEventListener('click', () => {
+        document.getElementById('bulk-action-modal').classList.add('hidden');
+    });
     // Inicialización
     const init = async () => {
         setupSKUautocomplete();
