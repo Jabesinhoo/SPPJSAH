@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmPasswordInput.required = true;
             submitButton.textContent = 'Registrar';
             toggleLink.textContent = 'Inicia Sesión';
-            document.title = 'SPJSAH | Registrarse';
+            document.title = 'SPPJSAH | Registrarse';
         } else {
             formTitle.textContent = 'Iniciar Sesión';
             confirmPasswordGroup.style.display = 'none';
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmPasswordInput.disabled = true;
             submitButton.textContent = 'Entrar';
             toggleLink.textContent = 'Regístrate';
-            document.title = 'SPJSAH | Iniciar Sesión';
+            document.title = 'SPPJSAH | Iniciar Sesión';
         }
 
         messageElement.textContent = '';

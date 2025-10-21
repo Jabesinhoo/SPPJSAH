@@ -1,8 +1,9 @@
-// controllers/productController.js
+// controllers/productController.js - Actualizado con sistema de historial
 
-const { Product, User } = require('../models');
+const { Product, User, ProductHistory } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
+const HistoryService = require('../services/historyService');
 
 // Función para obtener todos los usuarios (para la funcionalidad de etiquetado)
 exports.getAllUsers = async (req, res) => {
@@ -16,7 +17,6 @@ exports.getAllUsers = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
-
 
 exports.getAllProducts = async (req, res) => {
     try {
@@ -82,11 +82,18 @@ const getOrderClause = (sort, order) => {
     return orderClause;
 };
 
-
-// controllers/productController.js - Actualizar getProductById
+// controllers/productController.js - Actualizar getProductById con historial
 exports.getProductById = async (req, res) => {
     try {
-        const product = await Product.findByPk(req.params.id);
+        const product = await Product.findByPk(req.params.id, {
+            include: [{
+                model: ProductHistory,
+                as: 'history',
+                limit: 10,
+                order: [['createdAt', 'DESC']]
+            }]
+        });
+        
         if (!product) {
             return res.status(404).json({ error: 'Producto no encontrado.' });
         }
@@ -98,7 +105,6 @@ exports.getProductById = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
-
 
 exports.createProduct = async (req, res) => {
     try {
@@ -149,7 +155,7 @@ exports.createProduct = async (req, res) => {
             categoria: 'Faltantes',
             precio_compra: 0,
             proveedor: 'N/A',
-            brand: 'N/A', // ✅ cambiado a brand
+            brand: 'N/A',
             listo: false,
             usuario: username,
             nota: notes || null
@@ -217,6 +223,8 @@ exports.createProduct = async (req, res) => {
         logger.info('🟢 Datos que se van a guardar en DB:', productData);
         logger.info('🟢 Producto creado en DB:', newProduct.toJSON());
 
+        // El historial se registra automáticamente en el hook afterCreate del modelo
+
         res.status(201).json({
             message: 'Producto creado con éxito.',
             product: newProduct
@@ -237,219 +245,238 @@ exports.createProduct = async (req, res) => {
     }
 };
 
-
 exports.updateProduct = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { SKU, name, quantity, category, importance, purchasePrice, supplier, notes, ready, brand } = req.body;
-        const userRole = req.session.userRole;
-        const username = req.session.username;
+  try {
+    const { id } = req.params;
+    const { SKU, name, quantity, category, importance, purchasePrice, supplier, notes, ready, brand, bulkOperationId } = req.body;
+    const userRole = req.session.userRole;
+    const username = req.session.username;
 
-        console.log('🔧 Update Product Request:', { id, body: req.body, userRole });
+    console.log('🔧 Update Product Request:', { id, body: req.body, userRole });
 
-        // Buscar el producto
-        const productToUpdate = await Product.findByPk(id);
-        if (!productToUpdate) {
-            console.log('❌ Producto no encontrado:', id);
-            return res.status(404).json({ error: 'Producto no encontrado.' });
-        }
-
-        let dataToUpdate = {};
-
-        // Campos que todos pueden editar
-        if (SKU !== undefined) {
-            const trimmedSKU = SKU.trim();
-            if (trimmedSKU.length === 0) {
-                return res.status(400).json({ error: 'El SKU no puede estar vacío.' });
-            }
-            dataToUpdate.SKU = trimmedSKU;
-        }
-
-        if (name !== undefined) {
-            const trimmedName = name.trim();
-            if (trimmedName.length === 0) {
-                return res.status(400).json({ error: 'El nombre no puede estar vacío.' });
-            }
-            dataToUpdate.nombre = trimmedName;
-        }
-
-        // Actualización de marca - disponible para todos los roles
-        if (brand !== undefined) {
-            dataToUpdate.brand = brand.trim() || 'N/A';
-        }
-
-        // Validar y parsear cantidad
-        if (quantity !== undefined) {
-            const parsedQuantity = parseInt(quantity);
-            if (isNaN(parsedQuantity) || parsedQuantity < 0) {
-                return res.status(400).json({ error: 'La cantidad debe ser un número válido mayor o igual a 0.' });
-            }
-            dataToUpdate.cantidad = parsedQuantity;
-        }
-
-        // Validar importancia
-        if (importance !== undefined) {
-            const parsedImportance = parseInt(importance);
-            if (isNaN(parsedImportance) || parsedImportance < 1 || parsedImportance > 5) {
-                return res.status(400).json({ error: 'La importancia debe ser un número entre 1 y 5.' });
-            }
-            dataToUpdate.importancia = parsedImportance;
-        }
-
-        // Validar y parsear precio de compra para admin
-        if (userRole === 'admin' && purchasePrice !== undefined) {
-            const parsedPurchasePrice = parseFloat(purchasePrice);
-            if (isNaN(parsedPurchasePrice) || parsedPurchasePrice < 0) {
-                return res.status(400).json({ error: 'El precio de compra debe ser un número válido mayor o igual a 0.' });
-            }
-            dataToUpdate.precio_compra = parsedPurchasePrice;
-        }
-
-        // Manejo de notas
-        if (notes !== undefined) {
-            try {
-                // Si es un string, intentar parsear como JSON
-                if (typeof notes === 'string') {
-                    const parsedNotes = JSON.parse(notes);
-                    dataToUpdate.nota = JSON.stringify(parsedNotes);
-                } else {
-                    // Si ya es un objeto, stringificarlo
-                    dataToUpdate.nota = JSON.stringify(notes);
-                }
-            } catch (e) {
-                // Si falla el parseo, crear una nueva estructura de nota
-                const noteObject = [{
-                    text: notes.toString(),
-                    user: username,
-                    date: new Date().toISOString(),
-                    mentions: []
-                }];
-                dataToUpdate.nota = JSON.stringify(noteObject);
-            }
-        }
-
-        // Lógica para "Listo" y categorías
-        if (userRole === 'admin') {
-            // Admin puede cambiar el estado "Listo" directamente
-            if (ready !== undefined) {
-                const isReady = ready === true || ready === 'true';
-                dataToUpdate.listo = isReady;
-                
-                // Si se marca como listo y no se especifica categoría, cambiar a "Realizado"
-                if (isReady && !category && productToUpdate.categoria !== 'Realizado') {
-                    dataToUpdate.categoria = 'Realizado';
-                }
-            }
-
-            // Manejo de categorías para admin
-            if (category !== undefined) {
-                const validCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado'];
-                if (validCategories.includes(category)) {
-                    dataToUpdate.categoria = category;
-
-                    // Sincronizar estado "Listo" con categoría
-                    if (category === 'Realizado') {
-                        dataToUpdate.listo = true;
-                    } else if (category === 'Faltantes') {
-                        dataToUpdate.listo = false;
-                    }
-                } else {
-                    return res.status(400).json({ error: 'Categoría no válida.' });
-                }
-            }
-
-            // Proveedor solo para admin
-            if (supplier !== undefined) {
-                dataToUpdate.proveedor = supplier.trim() || 'N/A';
-            }
-        } else {
-            // Usuarios normales
-            if (category !== undefined) {
-                const userCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
-                if (userCategories.includes(category)) {
-                    dataToUpdate.categoria = category;
-                    // Usuarios normales no pueden marcar como "Listo" productos en "Faltantes"
-                    if (category === 'Faltantes') {
-                        dataToUpdate.listo = false;
-                    }
-                } else {
-                    return res.status(400).json({ error: 'Categoría no válida para tu rol.' });
-                }
-            }
-
-            // Usuarios normales no pueden cambiar el estado "Listo" directamente
-            // Pero si viene en el body, lo ignoramos silenciosamente en lugar de dar error
-            // para compatibilidad con selección múltiple
-        }
-
-        // Validar que no se intente cambiar un producto a "Listo" si está en "Faltantes"
-        const finalCategory = dataToUpdate.categoria || productToUpdate.categoria;
-        const finalReady = dataToUpdate.listo !== undefined ? dataToUpdate.listo : productToUpdate.listo;
-        
-        if (finalReady && finalCategory === 'Faltantes') {
-            return res.status(400).json({ 
-                error: 'No se puede marcar como "Listo" un producto en categoría "Faltantes". Cambia primero la categoría.' 
-            });
-        }
-
-        // Actualizar fecha de modificación
-        dataToUpdate.updatedAt = new Date();
-
-        // Verificar si hay campos para actualizar
-        if (Object.keys(dataToUpdate).length === 0) {
-            console.log('⚠️ No hay datos para actualizar');
-            return res.status(400).json({ error: 'No se proporcionaron datos para actualizar.' });
-        }
-
-        console.log('📝 Datos a actualizar:', dataToUpdate);
-
-        const [updated] = await Product.update(dataToUpdate, { 
-            where: { id } 
-        });
-
-        if (updated) {
-            const updatedProduct = await Product.findByPk(id);
-            
-            // Log de la actualización
-            logger.info(`✅ Producto actualizado: ${updatedProduct.nombre} (ID: ${id}) por usuario: ${username}`);
-            console.log('✅ Producto actualizado exitosamente');
-            
-            return res.status(200).json({
-                message: 'Producto actualizado con éxito.',
-                product: updatedProduct
-            });
-        }
-
-        console.log('❌ No se pudo actualizar el producto');
-        res.status(404).json({ error: 'Producto no encontrado.' });
-    } catch (err) {
-        console.error('❌ Error al actualizar el producto:', err);
-        logger.error('Error al actualizar el producto:', err);
-        
-        // Manejar errores específicos de la base de datos
-        if (err.name === 'SequelizeUniqueConstraintError') {
-            return res.status(409).json({ error: 'Ya existe un producto con este SKU.' });
-        }
-        
-        if (err.name === 'SequelizeValidationError') {
-            const validationErrors = err.errors.map(error => error.message);
-            return res.status(400).json({ error: 'Errores de validación: ' + validationErrors.join(', ') });
-        }
-
-        res.status(500).json({ 
-            error: 'Error interno del servidor.', 
-            details: process.env.NODE_ENV === 'development' ? err.message : undefined 
-        });
+    // 🧩 Mapeo automático: quantity → cantidad
+    if (req.body.quantity !== undefined && req.body.cantidad === undefined) {
+      req.body.cantidad = req.body.quantity;
     }
+
+    // Buscar el producto
+    const productToUpdate = await Product.findByPk(id);
+    if (!productToUpdate) {
+      console.log('❌ Producto no encontrado:', id);
+      return res.status(404).json({ error: 'Producto no encontrado.' });
+    }
+
+    // Guardar snapshot antiguo para el historial
+    const oldSnapshot = productToUpdate.toJSON();
+    const dataToUpdate = {};
+
+    // SKU
+    if (SKU !== undefined) {
+      const trimmedSKU = SKU.trim();
+      if (trimmedSKU.length === 0) {
+        return res.status(400).json({ error: 'El SKU no puede estar vacío.' });
+      }
+      dataToUpdate.SKU = trimmedSKU;
+    }
+
+    // Nombre
+    if (name !== undefined) {
+      const trimmedName = name.trim();
+      if (trimmedName.length === 0) {
+        return res.status(400).json({ error: 'El nombre no puede estar vacío.' });
+      }
+      dataToUpdate.nombre = trimmedName;
+    }
+
+    // Marca
+    if (brand !== undefined) {
+      dataToUpdate.brand = brand.trim() || 'N/A';
+    }
+
+    // Cantidad
+    if (quantity !== undefined) {
+      const parsedQuantity = parseInt(quantity);
+      if (isNaN(parsedQuantity) || parsedQuantity < 0) {
+        return res.status(400).json({ error: 'La cantidad debe ser un número válido mayor o igual a 0.' });
+      }
+      dataToUpdate.cantidad = parsedQuantity;
+    }
+
+    // Importancia
+    if (importance !== undefined) {
+      const parsedImportance = parseInt(importance);
+      if (isNaN(parsedImportance) || parsedImportance < 1 || parsedImportance > 5) {
+        return res.status(400).json({ error: 'La importancia debe ser un número entre 1 y 5.' });
+      }
+      dataToUpdate.importancia = parsedImportance;
+    }
+
+    // Precio de compra (solo admin)
+    if (userRole === 'admin' && purchasePrice !== undefined) {
+      const parsedPurchasePrice = parseFloat(purchasePrice);
+      if (isNaN(parsedPurchasePrice) || parsedPurchasePrice < 0) {
+        return res.status(400).json({ error: 'El precio de compra debe ser un número válido mayor o igual a 0.' });
+      }
+      dataToUpdate.precio_compra = parsedPurchasePrice;
+    }
+
+    // Notas
+    if (notes !== undefined) {
+      try {
+        if (typeof notes === 'string') {
+          const parsedNotes = JSON.parse(notes);
+          dataToUpdate.nota = JSON.stringify(parsedNotes);
+        } else {
+          dataToUpdate.nota = JSON.stringify(notes);
+        }
+      } catch (e) {
+        const noteObject = [{
+          text: notes.toString(),
+          user: username,
+          date: new Date().toISOString(),
+          mentions: []
+        }];
+        dataToUpdate.nota = JSON.stringify(noteObject);
+      }
+    }
+
+    // Lógica de categoría y “listo”
+    if (userRole === 'admin') {
+      if (ready !== undefined) {
+        const isReady = ready === true || ready === 'true';
+        dataToUpdate.listo = isReady;
+        if (isReady && !category && productToUpdate.categoria !== 'Realizado') {
+          dataToUpdate.categoria = 'Realizado';
+        }
+      }
+
+      if (category !== undefined) {
+        const validCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado'];
+        if (validCategories.includes(category)) {
+          dataToUpdate.categoria = category;
+          dataToUpdate.listo = category === 'Realizado';
+        } else {
+          return res.status(400).json({ error: 'Categoría no válida.' });
+        }
+      }
+
+      if (supplier !== undefined) {
+        dataToUpdate.proveedor = supplier.trim() || 'N/A';
+      }
+    } else {
+      // Usuarios normales
+      if (category !== undefined) {
+        const userCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
+        if (userCategories.includes(category)) {
+          dataToUpdate.categoria = category;
+          if (category === 'Faltantes') dataToUpdate.listo = false;
+        } else {
+          return res.status(400).json({ error: 'Categoría no válida para tu rol.' });
+        }
+      }
+    }
+
+    // Validar categoría/listo
+    const finalCategory = dataToUpdate.categoria || productToUpdate.categoria;
+    const finalReady = dataToUpdate.listo !== undefined ? dataToUpdate.listo : productToUpdate.listo;
+    if (finalReady && finalCategory === 'Faltantes') {
+      return res.status(400).json({
+        error: 'No se puede marcar como "Listo" un producto en categoría "Faltantes". Cambia primero la categoría.'
+      });
+    }
+
+    // Actualizar fecha
+    dataToUpdate.updatedAt = new Date();
+
+    // Sin datos
+    if (Object.keys(dataToUpdate).length === 0) {
+      console.log('⚠️ No hay datos para actualizar');
+      return res.status(400).json({ error: 'No se proporcionaron datos para actualizar.' });
+    }
+
+    console.log('📝 Datos a actualizar:', dataToUpdate);
+
+    // 🧠 Actualizar usando save() (ejecuta hooks y no falla si no hay cambios)
+    Object.assign(productToUpdate, dataToUpdate);
+    const updatedProduct = await productToUpdate.save();
+
+    // 🧾 Registrar historial manual como respaldo
+    try {
+      await HistoryService.recordChange(
+        id,
+        'UPDATE',
+        oldSnapshot,
+        updatedProduct.toJSON(),
+        { username },
+        bulkOperationId
+      );
+    } catch (historyError) {
+      console.error('⚠️ Error al registrar en historial:', historyError);
+    }
+
+    // Logs y respuesta
+    if (JSON.stringify(oldSnapshot) === JSON.stringify(updatedProduct.toJSON())) {
+      logger.info(`⚠️ Producto ${id} no tuvo cambios (valores iguales).`);
+      return res.status(200).json({
+        message: 'Producto sin cambios (ya estaba actualizado).',
+        product: updatedProduct
+      });
+    }
+
+    logger.info(`✅ Producto actualizado: ${updatedProduct.nombre} (ID: ${id}) por usuario: ${username}`);
+    console.log('✅ Producto actualizado exitosamente');
+
+    return res.status(200).json({
+      message: 'Producto actualizado con éxito.',
+      product: updatedProduct
+    });
+  } catch (err) {
+    console.error('❌ Error al actualizar el producto:', err);
+    logger.error('Error al actualizar el producto:', err);
+
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ error: 'Ya existe un producto con este SKU.' });
+    }
+
+    if (err.name === 'SequelizeValidationError') {
+      const validationErrors = err.errors.map(error => error.message);
+      return res.status(400).json({ error: 'Errores de validación: ' + validationErrors.join(', ') });
+    }
+
+    res.status(500).json({
+      error: 'Error interno del servidor.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
+exports.getHistory = async (req, res) => {
+  try {
+    const { ProductHistory, Product } = require('../models');
+    const history = await ProductHistory.findAll({
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['id', 'SKU', 'nombre']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 50
+    });
 
-
+    res.status(200).json(history);
+  } catch (error) {
+    console.error('❌ Error al obtener historial:', error);
+    res.status(500).json({ error: 'Error al obtener el historial' });
+  }
+};
 // Función para eliminar un producto
 exports.deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const userRole = req.session.userRole;
+        const username = req.session.username;
 
         // Buscar el producto antes de eliminarlo
         const productToDelete = await Product.findByPk(id);
@@ -462,11 +489,29 @@ exports.deleteProduct = async (req, res) => {
             return res.status(403).json({ error: 'No tienes permisos para eliminar productos. Solo los administradores pueden realizar esta acción.' });
         }
 
+        // Guardar snapshot para el historial
+        const oldSnapshot = productToDelete.toJSON();
+
         const deleted = await Product.destroy({
-            where: { id: id }
+            where: { id: id },
+            individualHooks: true // Para que se ejecute el hook afterDestroy
         });
 
         if (deleted) {
+            // Registrar eliminación manualmente (como backup del hook automático)
+            try {
+                await HistoryService.recordChange(
+                    id,
+                    'DELETE',
+                    oldSnapshot,
+                    null,
+                    { username }
+                );
+            } catch (historyError) {
+                console.error('⚠️ Error al registrar eliminación en historial:', historyError);
+                // No fallar la operación principal por error en historial
+            }
+
             return res.status(200).json({
                 message: `Producto "${productToDelete.nombre}" eliminado con éxito.`
             });
@@ -479,38 +524,152 @@ exports.deleteProduct = async (req, res) => {
     }
 };
 
-// ---
-
-// Función para obtener estadísticas de productos (solo admin)
-exports.getProductStats = async (req, res) => {
+exports.getProductHistory = async (req, res) => {
     try {
-        const userRole = req.session.userRole;
+        const { id } = req.params;
+        const { limit = 20 } = req.query;
 
-        if (userRole !== 'admin') {
-            return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden ver estadísticas.' });
-        }
-
-        const stats = await Product.findAll({
-            attributes: [
-                'categoria',
-                [Product.sequelize.fn('COUNT', Product.sequelize.col('id')), 'count'],
-                [Product.sequelize.fn('AVG', Product.sequelize.col('importancia')), 'avgImportance'],
-                [Product.sequelize.fn('SUM', Product.sequelize.col('cantidad')), 'totalQuantity']
-            ],
-            group: ['categoria']
-        });
-
-        const totalProducts = await Product.count();
-
-        res.status(200).json({
-            totalProducts,
-            byCategory: stats
-        });
+        const history = await HistoryService.getProductHistory(id, parseInt(limit));
+        res.status(200).json(history);
     } catch (err) {
-        logger.error('Error al obtener estadísticas:', err);
+        logger.error('Error al obtener historial del producto:', err);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
+
+// Obtener cambios recientes
+exports.getRecentChanges = async (req, res) => {
+    try {
+        const { limit = 10 } = req.query;
+        const changes = await HistoryService.getLastChanges(parseInt(limit));
+        res.status(200).json(changes);
+    } catch (err) {
+        logger.error('Error al obtener cambios recientes:', err);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+// Revertir un cambio específico
+// controllers/productController.js
+exports.revertChange = async (req, res) => {
+    try {
+        const { historyId } = req.params;
+        const username = req.session.username || 'Sistema';
+
+        // Buscar el registro de historial a revertir
+        const historyRecord = await ProductHistory.findByPk(historyId, {
+            include: [
+                {
+                    model: Product,
+                    as: 'product',
+                    attributes: ['id', 'SKU', 'nombre']
+                }
+            ]
+        });
+
+        if (!historyRecord) {
+            return res.status(404).json({ error: 'Registro de historial no encontrado.' });
+        }
+
+        // Si es una operación masiva (bulk)
+        if (historyRecord.bulkOperationId) {
+            const relatedRecords = await ProductHistory.findAll({
+                where: { bulkOperationId: historyRecord.bulkOperationId }
+            });
+
+            if (!relatedRecords || relatedRecords.length === 0) {
+                return res.status(404).json({ error: 'No se encontraron registros relacionados para revertir.' });
+            }
+
+            const revertedProducts = [];
+
+            for (const record of relatedRecords) {
+                if (record.oldData) {
+                    const product = await Product.findByPk(record.productId);
+                    if (product) {
+                        const currentSnapshot = product.toJSON();
+
+                        await Product.update(record.oldData, { where: { id: record.productId } });
+
+                        // Registrar reversión individual
+                        await HistoryService.recordChange(
+                            record.productId,
+                            'REVERT',
+                            currentSnapshot,
+                            record.oldData,
+                            { username },
+                            `revert-${historyRecord.bulkOperationId}`
+                        );
+
+                        revertedProducts.push({
+                            id: product.id,
+                            SKU: product.SKU,
+                            nombre: product.nombre
+                        });
+                    }
+                }
+            }
+
+            return res.status(200).json({
+                message: `Operación masiva revertida (${revertedProducts.length} productos restaurados).`,
+                revertedProducts
+            });
+        }
+
+        // Si es un cambio individual
+        if (historyRecord.oldData) {
+            const product = await Product.findByPk(historyRecord.productId);
+            if (!product) {
+                return res.status(404).json({ error: 'Producto no encontrado para revertir.' });
+            }
+
+            const currentSnapshot = product.toJSON();
+
+            // Aplicar reversión
+            await Product.update(historyRecord.oldData, {
+                where: { id: historyRecord.productId }
+            });
+
+            // Registrar el evento de reversión
+            await HistoryService.recordChange(
+                historyRecord.productId,
+                'REVERT',
+                currentSnapshot,
+                historyRecord.oldData,
+                { username },
+                `revert-${historyId}`
+            );
+
+            const revertedProduct = await Product.findByPk(historyRecord.productId);
+            return res.status(200).json({
+                message: 'Cambio revertido con éxito.',
+                product: revertedProduct,
+                revertedFrom: historyRecord
+            });
+        }
+
+        return res.status(400).json({ error: 'No hay datos previos para revertir.' });
+    } catch (err) {
+        logger.error('Error al revertir cambio:', err);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+
+// Obtener historial de una operación en lote
+exports.getBulkOperationHistory = async (req, res) => {
+    try {
+        const { operationId } = req.params;
+        const history = await HistoryService.getBulkOperationHistory(operationId);
+        res.status(200).json(history);
+    } catch (err) {
+        logger.error('Error al obtener historial de operación en lote:', err);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+// --- Resto de tus funciones existentes (estadísticas, etc.) ---
+
 // Top 10 productos más agregados
 exports.getTopProducts = async (req, res) => {
     try {
@@ -584,8 +743,6 @@ exports.getGeneralStats = async (req, res) => {
   }
 };
 
-
-
 // Estadísticas por marca
 exports.getBrandStats = async (req, res) => {
   try {
@@ -603,8 +760,8 @@ exports.getBrandStats = async (req, res) => {
         [Product.sequelize.fn('COUNT', Product.sequelize.col('id')), 'count'],
         [Product.sequelize.cast(Product.sequelize.fn('AVG', Product.sequelize.col('importancia')), 'FLOAT'), 'avgImportance'],
         [Product.sequelize.fn('SUM', Product.sequelize.col('cantidad')), 'totalQuantity'],
-        [Product.sequelize.cast(Product.sequelize.fn('AVG', Product.sequelize.col('precio_compra')), 'FLOAT'), 'avgPrice'], // promedio
-        [Product.sequelize.fn('SUM', Product.sequelize.literal('"precio_compra" * "cantidad"')), 'totalValue']            // acumulado
+        [Product.sequelize.cast(Product.sequelize.fn('AVG', Product.sequelize.col('precio_compra')), 'FLOAT'), 'avgPrice'],
+        [Product.sequelize.fn('SUM', Product.sequelize.literal('"precio_compra" * "cantidad"')), 'totalValue']
       ],
       where: {
         brand: {
@@ -640,7 +797,6 @@ exports.getBrandStats = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor.' });
   }
 };
-
 
 exports.renderProductStats = (req, res) => {
     res.render('product-stats', { title: 'Estadísticas' });

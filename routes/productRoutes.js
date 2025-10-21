@@ -1,4 +1,4 @@
-// routes/productRoutes.js
+// routes/productRoutes.js - Rutas del historial corregidas
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
@@ -35,6 +35,14 @@ router.get('/stats', (req, res) => {
     username: req.session.username
   });
 });
+
+// ==============================
+//   RUTAS DE HISTORIAL - CORREGIDAS
+// ==============================
+router.get('/history/recent', productController.getRecentChanges); // ✅ Cambiado de /products/history/recent
+router.get('/history/bulk/:operationId', productController.getBulkOperationHistory);
+router.post('/history/revert/:historyId', productController.revertChange);
+router.get('/products/:id/history', productController.getProductHistory);
 
 // ==============================
 //   RUTAS DE ESTADÍSTICAS
