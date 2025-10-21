@@ -1,4 +1,4 @@
-// products.js - Completamente modificado con sistema de menciones y selección múltiple
+// products.js - Completamente modificado con sistema de menciones
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('product-form');
     const productsTableBodyUser = document.getElementById('products-table-body-user');
@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+
             // Enviar menciones al servidor para procesar
             const response = await fetch('/api/notifications/process-mentions', {
                 method: 'POST',
@@ -89,12 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             if (result.success) {
-                console.log('Menciones procesadas correctamente');
             } else {
-                console.error('Error al procesar menciones:', result.error);
             }
         } catch (error) {
-            console.error('Error en procesamiento de menciones:', error);
         }
     };
 
@@ -107,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 availableUsers = data.users || [];
             }
         } catch (error) {
-            console.error('Error al cargar usuarios disponibles:', error);
         }
     };
 
@@ -225,14 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
             moonIcon.classList.remove('hidden');
         }
     };
-
-    // Aplicar tema guardado
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    }
-    updateIcons();
-
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
             if (isDarkMode()) {
@@ -245,6 +234,26 @@ document.addEventListener('DOMContentLoaded', () => {
             updateIcons();
         });
     }
+
+    updateIcons();
+
+    // Aplicar tema guardado
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    }
+    updateIcons();
+
+    themeToggle.addEventListener('click', () => {
+        if (isDarkMode()) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+        updateIcons();
+    });
 
     /**
      * Muestra un mensaje al usuario.
@@ -355,32 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
-     * Obtiene el color de la categoría
-     */
-    const getCategoryColor = (category) => {
-        switch (category) {
-            case 'Faltantes':
-                return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
-            case 'Bajo Pedido':
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
-            case 'Agotados con el Proveedor':
-                return 'bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-100';
-            case 'Demasiadas Existencias':
-                return 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100';
-            case 'Realizado':
-                return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100';
-            default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
-        }
-    };
-
-    // Función auxiliar para truncar texto
-    const truncateText = (text, maxLength) => {
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength) + '...';
-    };
-
-    /**
      * Obtiene y muestra todos los productos desde el backend, con filtros y ordenamiento.
      */
     const fetchProducts = async () => {
@@ -407,8 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(url);
             if (!res.ok) {
                 showMessage('Error al cargar los productos.', 'error');
-                if (productsTableBodyUser) productsTableBodyUser.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500 dark:text-gray-400">No se pudo cargar la lista de productos.</td></tr>';
-                if (productsTableBodyAdmin) productsTableBodyAdmin.innerHTML = '<tr><td colspan="14" class="text-center py-4 text-gray-500 dark:text-gray-400">No se pudo cargar la lista de productos.</td></tr>';
+                if (productsTableBodyUser) productsTableBodyUser.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500 dark:text-gray-400">No se pudo cargar la lista de productos.</td></tr>';
+                if (productsTableBodyAdmin) productsTableBodyAdmin.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500 dark:text-gray-400">No se pudo cargar la lista de productos.</td></tr>';
                 return;
             }
 
@@ -498,115 +481,135 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (userRole !== 'admin' && productsTableBodyUser) {
                     // Tabla para usuarios normales
                     row.innerHTML = `
-                        <td class="px-3 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="product-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="${product.id}">
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            <span class="font-mono">${product.SKU}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.usuario}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
-                                ${product.cantidad}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
-                                ${product.categoria}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
-                            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="text-xs">${formattedDate}</span><br>
-                            <span class="text-xs">${formattedTime}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                            ${readySwitch}
-                        </td>
-                        ${notesHtml}
-                        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </td>
-                    `;
+        <td class="px-3 py-4 whitespace-nowrap">
+            <input type="checkbox" class="product-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="${product.id}">
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span class="font-mono">${product.SKU}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.usuario}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
+                ${product.cantidad}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
+                ${product.categoria}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
+            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="text-xs">${formattedDate}</span><br>
+            <span class="text-xs">${formattedTime}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+            ${readySwitch}
+        </td>
+        ${notesHtml}
+        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </td>
+    `;
                     productsTableBodyUser.appendChild(row);
                 } else if (productsTableBodyAdmin) {
                     // Tabla para administradores
                     row.innerHTML = `
-                        <td class="px-3 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="product-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="${product.id}">
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            <span class="font-mono">${product.SKU}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.usuario}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
-                                ${product.cantidad}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
-                                ${product.categoria}
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
-                            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.precio_compra ? formatCurrency(product.precio_compra) : '-'}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.proveedor || '-'}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            ${product.brand || '-'}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                            <span class="text-xs">${formattedDate}</span><br>
-                            <span class="text-xs">${formattedTime}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                            ${readySwitch}
-                        </td>
-                        ${notesHtml}
-                        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end space-x-2">
-                                <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
-                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                                <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200" title="Eliminar producto">
-                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    `;
+        <td class="px-3 py-4 whitespace-nowrap">
+            <input type="checkbox" class="product-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="${product.id}">
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span class="font-mono">${product.SKU}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+            <span title="${product.nombre}">${truncateText(product.nombre, 30)}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.usuario}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.cantidad > 0 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'}">
+                ${product.cantidad}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(product.categoria)}">
+                ${product.categoria}
+            </span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-yellow-400">
+            <span title="Importancia: ${product.importancia}/5">${starsHtml}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.precio_compra ? formatCurrency(product.precio_compra) : '-'}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.proveedor || '-'}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            ${product.brand || '-'}
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <span class="text-xs">${formattedDate}</span><br>
+            <span class="text-xs">${formattedTime}</span>
+        </td>
+        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+            ${readySwitch}
+        </td>
+        ${notesHtml}
+        <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div class="flex justify-end space-x-2">
+                <button onclick="editProduct('${product.id}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200" title="Editar producto">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200" title="Eliminar producto">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </td>
+    `;
                     productsTableBodyAdmin.appendChild(row);
                 }
             });
         } catch (err) {
             showMessage('Error de conexión. Inténtalo de nuevo.', 'error');
+        }
+    };
+
+    /**
+     * Obtiene el color de la categoría
+     */
+    const getCategoryColor = (category) => {
+        switch (category) {
+            case 'Faltantes':
+                return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+            case 'Bajo Pedido':
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
+            case 'Agotados con el Proveedor':
+                return 'bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-100';
+            case 'Demasiadas Existencias':
+                return 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100';
+            case 'Realizado':
+                return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100';
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
         }
     };
 
@@ -640,6 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
             productData.supplier = 'N/A';
             productData.ready = false;
         }
+
 
         // Manejar notas
         const newNoteText = newNoteTextarea.value.trim();
@@ -759,6 +763,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+
     /**
      * Muestra el modal de confirmación de eliminación.
      */
@@ -794,35 +799,40 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Función para toggle de "Listo"
      */
-    window.handleReadyToggle = async (checkbox) => {
-        const productId = checkbox.dataset.id;
-        const isReady = checkbox.checked;
-        const currentCategory = checkbox.dataset.categoria;
-
-        // Si está en Faltantes, no permitir marcar como listo
-        if (currentCategory === 'Faltantes' && isReady) {
-            showMessage('No se puede marcar como listo un producto en categoría "Faltantes"', 'error');
-            checkbox.checked = false;
-            return;
-        }
-
+    window.toggleReady = async (productId, isReady) => {
         try {
-            const updateData = {
-                ready: isReady
-            };
+            // Primero obtener el producto actual para verificar la categoría
+            const resGet = await fetch(`/api/products/${productId}`);
+            const product = await resGet.json();
 
-            // Si se marca como listo y no está en Realizado, cambiar a Realizado
-            if (isReady && currentCategory !== 'Realizado') {
-                updateData.category = 'Realizado';
-            } else if (!isReady && currentCategory === 'Realizado') {
-                // Si se desmarca y estaba en Realizado, cambiar a Bajo Pedido
-                updateData.category = 'Bajo Pedido';
+            if (!resGet.ok) {
+                throw new Error('Error al obtener el producto');
+            }
+
+            // Verificar si se puede cambiar a "Listo"
+            if (isReady && product.categoria === 'Faltantes') {
+                showMessage('No se puede marcar como listo un producto en categoría "Faltantes"', 'error');
+                // Recargar para revertir el cambio visual
+                fetchProducts();
+                return;
+            }
+
+            // Si está desmarcando "Listo", volver a la categoría anterior o por defecto
+            let newCategory = product.categoria;
+            if (isReady) {
+                newCategory = 'Realizado';
+            } else {
+                // Al desmarcar, volver a la categoría por defecto
+                newCategory = 'Bajo Pedido';
             }
 
             const res = await fetch(`/api/products/${productId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updateData),
+                body: JSON.stringify({
+                    ready: isReady,
+                    category: newCategory
+                }),
             });
 
             if (res.ok) {
@@ -831,11 +841,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const errorData = await res.json();
                 showMessage(errorData.error || 'Error al actualizar el producto', 'error');
-                fetchProducts(); // Recargar para revertir cambio visual
+                fetchProducts();
             }
         } catch (error) {
             showMessage('Error de conexión. Inténtalo de nuevo.', 'error');
-            fetchProducts(); // Recargar para revertir cambio visual
+            fetchProducts();
         }
     };
 
@@ -894,6 +904,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showMessage('Error al cargar las notas', 'error');
         }
+    };
+
+    // Función auxiliar para truncar texto
+    const truncateText = (text, maxLength) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
     };
 
     // Configuración de autocompletado para SKU
@@ -992,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
         skuInput.addEventListener('blur', () => {
             const sku = skuInput.value.trim();
             if (sku) {
-                window.buscarProductoPorSKU();
+                buscarProductoPorSKU();
             }
             // Pequeño delay para permitir el click en sugerencias
             setTimeout(hideSuggestions, 200);
@@ -1027,6 +1043,84 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('Error al buscar el producto', 'error');
         }
     };
+
+    // Event Listeners
+    form.addEventListener('submit', handleSubmit);
+
+    openAddModalBtn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        resetForm();
+    });
+
+    closeModalBtn.addEventListener('click', closeModal);
+    document.getElementById('cancel-add-modal').addEventListener('click', closeModal);
+
+    confirmDeleteBtn.addEventListener('click', handleDelete);
+    cancelDeleteBtn.addEventListener('click', () => deleteModal.classList.add('hidden'));
+    closeDeleteModalBtn.addEventListener('click', () => deleteModal.classList.add('hidden'));
+
+    // Eventos para las estrellas de importancia
+    importanceStars.addEventListener('mouseover', (e) => {
+        const value = e.target.dataset.value;
+        if (value) {
+            updateStarDisplay(parseInt(value));
+        }
+    });
+
+    importanceStars.addEventListener('mouseout', () => {
+        const currentValue = importanceInput.value || 1;
+        updateStarDisplay(parseInt(currentValue));
+    });
+
+    importanceStars.addEventListener('click', (e) => {
+        const value = e.target.dataset.value;
+        if (value) {
+            updateStarDisplay(parseInt(value));
+        }
+    });
+
+    // Evento para agregar nota
+    addNoteBtn.addEventListener('click', () => {
+        const newNoteText = newNoteTextarea.value.trim();
+        if (newNoteText) {
+            const newNote = {
+                text: newNoteText,
+                user: currentUsername,
+                date: new Date().toISOString()
+            };
+            currentNotes.push(newNote);
+            renderNotes(currentNotes);
+            newNoteTextarea.value = '';
+            hideUserSuggestions();
+        }
+    });
+
+    // Eventos para filtros y ordenamiento
+    filterCategorySelect.addEventListener('change', fetchProducts);
+    sortBySelect.addEventListener('change', fetchProducts);
+    sortOrderSelect.addEventListener('change', fetchProducts);
+    filterReadySelect.addEventListener('change', fetchProducts);
+
+    // Búsqueda con debounce
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetchProducts();
+        }, 300);
+    });
+
+    // Cerrar modal al hacer clic fuera
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+            deleteModal.classList.add('hidden');
+        }
+    });
 
     // ==================== FUNCIONALIDAD DE SELECCIÓN MÚLTIPLE ====================
 
@@ -1096,66 +1190,66 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'change-category':
                 title.textContent = 'Cambiar Categoría';
                 modalContent = `
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
-                    <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                        <option value="Faltantes">Faltantes</option>
-                        <option value="Bajo Pedido">Bajo Pedido</option>
-                        <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
-                        <option value="Demasiadas Existencias">Demasiadas Existencias</option>
-                        ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
-                    </select>
-                `;
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
+                <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="Faltantes">Faltantes</option>
+                    <option value="Bajo Pedido">Bajo Pedido</option>
+                    <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+                    <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+                    ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
+                </select>
+            `;
                 break;
 
             case 'change-ready':
                 title.textContent = 'Cambiar Estado "Listo"';
                 modalContent = `
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo estado:</label>
-                    <select id="bulk-ready" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                        <option value="true">Marcar como Listo</option>
-                        <option value="false">Marcar como No Listo</option>
-                    </select>
-                `;
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo estado:</label>
+                <select id="bulk-ready" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="true">Marcar como Listo</option>
+                    <option value="false">Marcar como No Listo</option>
+                </select>
+            `;
                 break;
 
             case 'change-quantity':
                 title.textContent = 'Cambiar Cantidad';
                 modalContent = `
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva cantidad:</label>
-                    <input type="number" id="bulk-quantity" min="0" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                `;
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva cantidad:</label>
+                <input type="number" id="bulk-quantity" min="0" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
                 break;
 
             case 'change-importance':
                 title.textContent = 'Cambiar Importancia';
                 modalContent = `
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva importancia (1-5):</label>
-                    <input type="number" id="bulk-importance" min="1" max="5" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                `;
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva importancia (1-5):</label>
+                <input type="number" id="bulk-importance" min="1" max="5" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
                 break;
 
             case 'change-supplier':
                 title.textContent = 'Cambiar Proveedor';
                 modalContent = `
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo proveedor:</label>
-                    <input type="text" id="bulk-supplier" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                `;
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo proveedor:</label>
+                <input type="text" id="bulk-supplier" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
                 break;
 
             case 'change-brand':
                 title.textContent = 'Cambiar Marca';
                 modalContent = `
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva marca:</label>
-                    <input type="text" id="bulk-brand" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                `;
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva marca:</label>
+                <input type="text" id="bulk-brand" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+            `;
                 break;
 
             case 'delete':
                 title.textContent = 'Eliminar Productos';
                 modalContent = `
-                    <p class="text-red-600 dark:text-red-400 font-medium">¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto(s)?</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Esta acción no se puede deshacer.</p>
-                `;
+                <p class="text-red-600 dark:text-red-400 font-medium">¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto(s)?</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Esta acción no se puede deshacer.</p>
+            `;
                 break;
         }
 
@@ -1163,7 +1257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('hidden');
     };
 
-    // Confirmar acción en lote
     document.getElementById('confirm-bulk-action')?.addEventListener('click', async () => {
         const action = document.getElementById('bulk-action').value;
         const productIds = Array.from(selectedProducts);
@@ -1229,6 +1322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showMessage(errorMessage, 'error');
                 return;
             }
+
 
             if (action === 'delete') {
                 // Eliminar múltiples productos
@@ -1314,9 +1408,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancel-bulk-action')?.addEventListener('click', () => {
         document.getElementById('bulk-action-modal').classList.add('hidden');
     });
-    // En la función initHistory() dentro de products.js - CORREGIDO
+    // =========================
+    // 📜 FUNCIÓN DE HISTORIAL (modal + revertir cambios)
+    // =========================
+
     const initHistory = () => {
-        console.log("🔧 Inicializando funcionalidad de historial...");
+        console.log("🧠 Inicializando historial...");
 
         const viewHistoryBtn = document.getElementById("view-history");
         const historyModal = document.getElementById("history-modal");
@@ -1324,191 +1421,202 @@ document.addEventListener('DOMContentLoaded', () => {
         const historyContent = document.getElementById("history-content");
 
         if (!viewHistoryBtn || !historyModal) {
-            console.warn("⚠️ Elementos de historial no encontrados");
+            console.warn("⚠️ Elementos del historial no encontrados");
             return;
         }
 
-        // ==============================
-        // 🔹 CLICK EN "VER HISTORIAL"
-        // ==============================
+        // ✅ Abrir modal al hacer clic en "Ver Historial"
         viewHistoryBtn.addEventListener("click", async (e) => {
             e.preventDefault();
-            console.log("🟢 Botón de historial clickeado");
+            console.log("🟢 Abriendo modal de historial...");
             historyModal.classList.remove("hidden");
 
-            if (historyContent) {
-                historyContent.innerHTML = `
-        <div class="flex justify-center items-center p-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <span class="ml-2 text-gray-600 dark:text-gray-400">Cargando historial...</span>
-        </div>
-      `;
-            }
+            // Loader
+            historyContent.innerHTML = `
+            <div class="flex justify-center items-center p-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <span class="ml-2 text-gray-600 dark:text-gray-400">Cargando historial...</span>
+            </div>
+        `;
 
             try {
-                const response = await fetch("/api/history/recent");
-                console.log("📡 Fetch → /api/history/recent");
+                // 🔥 Consulta al backend
+                const res = await fetch("/api/history/recent");
+                if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
 
-                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                const data = await response.json();
+                const data = await res.json();
                 console.log("📊 Historial recibido:", data);
 
                 if (!data || data.length === 0) {
                     historyContent.innerHTML = `
-          <div class="text-center p-8">
-            <p class="text-gray-500 dark:text-gray-400">No hay registros en el historial.</p>
-          </div>`;
+                    <div class="text-center p-8">
+                        <p class="text-gray-500 dark:text-gray-400">No hay registros en el historial.</p>
+                    </div>
+                `;
                     return;
                 }
 
-                // ==============================
-                // 🔹 TABLA DE HISTORIAL
-                // ==============================
+                // 🧱 Renderizar tabla
                 historyContent.innerHTML = `
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acción</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Producto(s)</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Usuario</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cambios</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              ${data.map((h) => {
-                    const fecha = new Date(h.createdAt);
-                    const fechaStr = fecha.toLocaleDateString("es-ES");
-                    const horaStr = fecha.toLocaleTimeString("es-ES");
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Fecha</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Acción</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Producto</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Usuario</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Cambios</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                            ${data.map(h => {
+                    const date = new Date(h.createdAt);
+                    const fecha = date.toLocaleDateString('es-ES');
+                    const hora = date.toLocaleTimeString('es-ES');
                     const cambios = h.changedFields
-                        ? Object.keys(h.changedFields).join(", ")
-                        : (h.action === "CREATE" ? "Producto creado" :
-                            h.action === "DELETE" ? "Producto eliminado" :
-                                "Cambios generales");
-
-                    const productos = h.products?.length
-                        ? `<details class="text-sm text-gray-700 dark:text-gray-300">
-                      <summary class="cursor-pointer font-medium">
-                        ${h.products.length} productos
-                      </summary>
-                      <ul class="ml-4 mt-1 text-xs list-disc">
-                        ${h.products.map(p => `<li>${p.nombre || p.SKU}</li>`).join("")}
-                      </ul>
-                    </details>`
-                        : (h.product?.nombre || h.product?.SKU || "N/A");
-
-                    const color = h.action === "CREATE" ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                        : h.action === "UPDATE" ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                            : h.action === "DELETE" ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                                : h.action === "REVERT" ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
-                                    : h.action === "BULK_UPDATE" ? "bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-100"
-                                        : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100";
+                        ? Object.keys(h.changedFields).join(', ')
+                        : (h.action === 'CREATE' ? 'Creación de producto' : h.action === 'DELETE' ? 'Eliminación' : 'Cambio general');
 
                     return `
-                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                      <div>${fechaStr}</div>
-                      <div class="text-xs text-gray-500">${horaStr}</div>
-                    </td>
-                    <td class="px-4 py-3">
-                      <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${color}">
-                        ${h.action}
-                      </span>
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                      ${productos}
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                      ${h.userName || "Sistema"}
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                      ${truncateText(cambios, 40)}
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                      ${h.action !== "REVERT" && h.oldData
-                            ? `<button onclick="revertChange('${h.id}')" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200">
-                            <i class="fa-solid fa-rotate-left mr-1"></i>Deshacer
-                          </button>`
-                            : `<span class="text-gray-400 italic text-xs">No reversible</span>`}
-                    </td>
-                  </tr>`;
-                }).join("")}
-            </tbody>
-          </table>
-        </div>
-      `;
-
-                console.log("✅ Historial renderizado correctamente");
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <td class="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
+                                            ${fecha}<br><span class="text-xs text-gray-500">${hora}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${h.action === 'CREATE' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                            h.action === 'UPDATE' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
+                                h.action === 'DELETE' ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' :
+                                    h.action === 'REVERT' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                                        h.action === 'BULK_UPDATE' ? 'bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-100' :
+                                            'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
+                        }">${h.action}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                            ${h.product?.nombre || h.product?.SKU || '—'}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                            ${h.userName || 'Sistema'}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${cambios}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            ${h.action !== 'REVERT' && h.oldData ? `
+                                                <button onclick="revertChange('${h.id}')" class="px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700">
+                                                    Revertir
+                                                </button>
+                                            ` : '-'}
+                                        </td>
+                                    </tr>
+                                `;
+                }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
             } catch (error) {
-                console.error("❌ Error cargando historial:", error);
-                historyContent.innerHTML = `<div class="p-6 text-center text-red-600">Error cargando historial<br>${error.message}</div>`;
+                console.error("❌ Error al cargar historial:", error);
+                historyContent.innerHTML = `
+                <div class="text-center p-8 text-red-600 dark:text-red-400">
+                    <p>Error al cargar el historial</p>
+                    <p class="text-sm">${error.message}</p>
+                </div>
+            `;
             }
         });
 
-        // ==============================
-        // 🔹 CERRAR MODAL
-        // ==============================
+        // ✅ Cerrar modal (botón)
         if (closeHistoryModal) {
             closeHistoryModal.addEventListener("click", () => {
                 historyModal.classList.add("hidden");
             });
         }
 
+        // ✅ Cerrar haciendo clic fuera del contenido
         historyModal.addEventListener("click", (e) => {
-            if (e.target === historyModal) historyModal.classList.add("hidden");
+            if (e.target === historyModal) {
+                historyModal.classList.add("hidden");
+            }
         });
 
+        // ✅ Cerrar con tecla ESC
         document.addEventListener("keydown", (e) => {
             if (e.key === "Escape" && !historyModal.classList.contains("hidden")) {
                 historyModal.classList.add("hidden");
             }
         });
 
-        console.log("✅ Funcionalidad de historial inicializada correctamente");
+        console.log("✅ Módulo de historial inicializado correctamente");
     };
 
-    // ==============================
-    // 🔹 REVERTIR CAMBIO
-    // ==============================
-    window.revertChange = async (historyId) => {
-        if (!confirm("¿Seguro que deseas revertir este cambio?")) return;
-        try {
-            const res = await fetch(`/api/history/revert/${historyId}`, { method: "POST" });
-            const data = await res.json();
-            if (res.ok) {
-                showMessage(data.message || "Cambio revertido con éxito", "success");
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showMessage(data.error || "Error al revertir cambio", "error");
-            }
-        } catch (error) {
-            console.error("Error revirtiendo cambio:", error);
-            showMessage("Error de conexión al revertir", "error");
+    // 🟣 Función global para revertir cambios
+    window.revertChange = (historyId) => {
+        const modal = document.getElementById("revert-modal");
+        const confirmBtn = document.getElementById("confirm-revert-btn");
+        const cancelBtn = document.getElementById("cancel-revert-btn");
+
+        if (!modal || !confirmBtn || !cancelBtn) {
+            console.error("❌ Modal de reversión no encontrado");
+            return;
         }
+
+        // Mostrar modal
+        modal.classList.remove("hidden");
+
+        // Limpiar handlers anteriores para evitar duplicados
+        const newConfirm = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+        const newCancel = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+        // Acción de confirmar
+        newConfirm.addEventListener("click", async () => {
+            newConfirm.disabled = true;
+            newConfirm.textContent = "Revirtiendo...";
+
+            try {
+                const res = await fetch(`/api/history/revert/${historyId}`, { method: "POST" });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showMessage(data.message || "Cambio revertido con éxito", "success");
+                    modal.classList.add("hidden");
+                    fetchProducts();
+                } else {
+                    showMessage(data.error || "No se pudo revertir el cambio", "error");
+                }
+            } catch (err) {
+                console.error("Error al revertir:", err);
+                showMessage("Error de conexión al revertir", "error");
+            } finally {
+                newConfirm.disabled = false;
+                newConfirm.textContent = "Revertir";
+                modal.classList.add("hidden");
+            }
+        });
+
+        // Acción de cancelar
+        newCancel.addEventListener("click", () => {
+            modal.classList.add("hidden");
+        });
+
+        // Cerrar modal con clic fuera
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                modal.classList.add("hidden");
+            }
+        });
     };
 
-    // ==============================
-    // 🔹 UTILIDAD: TRUNCAR TEXTO
-    // ==============================
-    function truncateHistoryText(text, length = 40) {
-  if (!text) return "";
-  return text.length > length ? text.substring(0, length) + "..." : text;
-}
-
-
-
-    // Inicialización
     const init = async () => {
         setupSKUautocomplete();
         fetchProducts();
         updateStarDisplay(1);
-        // Cargar usuarios disponibles para menciones
         await loadAvailableUsers();
-        // Inicializar funcionalidad de historial
-        initHistory();
+        initHistory(); // ✅ Agregamos inicialización del historial
     };
+
 
     // Iniciar la aplicación
     init();
