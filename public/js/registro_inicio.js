@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sunIcon = document.getElementById('sun-icon');
     const moonIcon = document.getElementById('moon-icon');
 
-    let isRegistering = true;
+    // CAMBIO: Iniciar con login en lugar de registro
+    let isRegistering = false;
 
     // Lógica para cargar el tema guardado al inicio
     const loadTheme = () => {
@@ -39,10 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadTheme();
 
-    toggleLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        isRegistering = !isRegistering;
-
+    // CAMBIO: Función para configurar el formulario según el estado
+    const setupForm = () => {
         if (isRegistering) {
             formTitle.textContent = 'Registrarse';
             confirmPasswordGroup.style.display = 'block';
@@ -61,8 +60,16 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleLink.textContent = 'Regístrate';
             document.title = 'SPPJSAH | Iniciar Sesión';
         }
-
         messageElement.textContent = '';
+    };
+
+    // CAMBIO: Ejecutar la configuración inicial al cargar
+    setupForm();
+
+    toggleLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        isRegistering = !isRegistering;
+        setupForm();
         authForm.reset();
     });
 
@@ -74,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('email')?.value || null;
 
         const endpoint = isRegistering ? '/api/register' : '/api/login';
-
 
         if (isRegistering && password !== confirmPasswordInput.value) {
             messageElement.textContent = 'Las contraseñas no coinciden.';
@@ -101,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(body),
             });
 
-
             const data = await response.json();
 
             if (response.ok) {
@@ -122,18 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-     const modal = document.getElementById("warningModal");
+    const modal = document.getElementById("warningModal");
     const message = document.getElementById("warningMessage");
     const closeModal = document.getElementById("closeModal");
 
     function showModal(msg) {
-      message.textContent = msg;
-      modal.classList.remove("hidden");
+        message.textContent = msg;
+        modal.classList.remove("hidden");
     }
 
     closeModal.addEventListener("click", () => {
-      modal.classList.add("hidden");
+        modal.classList.add("hidden");
     });
 
     showPasswordCheckbox.addEventListener('change', () => {
