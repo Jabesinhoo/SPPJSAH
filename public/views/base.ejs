@@ -104,16 +104,53 @@
                             <span>Productos</span>
                         </a>
 
-                        <a href="/suppliers" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
-                            <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <rect x="1" y="7" width="11" height="7" rx="1"></rect>
-                                <path d="M12 8h5l3 3v3h-8"></path>
-                                <circle cx="6" cy="18" r="2"></circle>
-                                <circle cx="17" cy="18" r="2"></circle>
-                            </svg>
-                            <span>Asesores de marca</span>
-                        </a>
+                        <div class="relative">
+  <!-- Botón principal -->
+  <button id="dropdownButton" 
+    class="flex items-center w-full p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+    <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 7h5l2 2h11v10H3z" />
+      <path d="M3 7V5h5l2 2h11v2" />
+    </svg>
+    <span>Directorio</span>
+    <svg class="w-4 h-4 ml-auto transition-transform duration-200" id="arrowIcon"
+         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  </button>
+
+  <!-- Dropdown -->
+  <div id="dropdownMenu" 
+    class="hidden absolute left-0 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-1 w-48 border border-gray-200 dark:border-gray-700 z-10">
+    
+    <a href="/suppliers" 
+       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-t-lg">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 12l2-2 4 4 8-8 4 4" />
+      </svg>
+      Proveedores
+    </a>
+
+    <a href="/transport" 
+       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 13h2l1-2h13l3 3v5h-3" />
+        <circle cx="7" cy="18" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </svg>
+      Transporte
+    </a>
+
+    <a href="/outsource" 
+       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-b-lg">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20 6H9l-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z" />
+      </svg>
+      Outsource
+    </a>
+  </div>
+</div>
 
                         <a href="/settings" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
                             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

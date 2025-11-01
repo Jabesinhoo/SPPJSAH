@@ -1,4 +1,3 @@
-// models/index.js
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
@@ -19,12 +18,16 @@ const User = require('./user')(sequelize, DataTypes);
 const Role = require('./role')(sequelize, DataTypes);
 const Supplier = require('./supplier')(sequelize, DataTypes);
 const Product = require('./product')(sequelize, DataTypes);
-const ProductHistory = require('./ProductHistory')(sequelize, DataTypes); // 👈 AÑADE ESTA LÍNEA
+const ProductHistory = require('./ProductHistory')(sequelize, DataTypes);
 const Notification = require('./notification')(sequelize, DataTypes);
 const SpreadsheetModels = require('./spreadsheet')(sequelize, DataTypes);
 const { Spreadsheet, SpreadsheetColumn, SpreadsheetRow, SpreadsheetCell } = SpreadsheetModels;
 
-// 🧠 Registrar asociaciones (esto es importante hacerlo DESPUÉS de cargar todos los modelos)
+// 🆕 Nuevos modelos
+const Transporte = require('./transporte')(sequelize, DataTypes);
+const Outsource = require('./outsource')(sequelize, DataTypes);
+
+// 🧠 Registrar asociaciones (solo si las hay)
 Object.values(sequelize.models)
   .filter(model => typeof model.associate === 'function')
   .forEach(model => model.associate(sequelize.models));
@@ -37,10 +40,12 @@ module.exports = {
   Role,
   Supplier,
   Product,
-  ProductHistory, // 👈 AGREGA AQUÍ TAMBIÉN
+  ProductHistory,
   Notification,
   Spreadsheet,
   SpreadsheetColumn,
   SpreadsheetRow,
-  SpreadsheetCell
+  SpreadsheetCell,
+  Transporte,   // 👈 Añadido
+  Outsource,    // 👈 Añadido
 };

@@ -1,0 +1,329 @@
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 transition-colors">
+  <div class="max-w-6xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-4 md:p-6">
+    <h1 class="text-2xl font-bold mb-6 text-center">Gestión de Transportes</h1>
+
+    <!-- Mensajes Flash -->
+    <% if (success) { %>
+      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <%= success %>
+      </div>
+    <% } %>
+    <% if (error) { %>
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Buscador -->
+      <div class="relative">
+        <input type="text" id="searchInput" placeholder="Buscar por placa, conductor, teléfono..."
+               class="w-full p-3 pl-10 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Filtro por tipo de vehículo y botón agregar -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <select id="filterTipoVehiculo" class="w-full p-3 pr-10 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer">
+            <option value="">Todos los tipos de vehículo</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+
+        <button onclick="openCreateModal()" 
+                class="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg transition-all duration-300 whitespace-nowrap">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Agregar
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loadingIndicator" class="hidden text-center py-8">
+      <div class="inline-flex items-center">
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-600 dark:text-gray-400">Cargando transportes...</span>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-200 dark:bg-gray-700">
+          <tr>
+            <th class="p-3 text-left">Placa</th>
+            <th class="p-3 text-left">Conductor</th>
+            <th class="p-3 text-left">Teléfono</th>
+            <th class="p-3 text-left">Tipo Vehículo</th>
+            <th class="p-3 text-left">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="transportTableBody">
+          <% if (transportes.length > 0) { %>
+            <% transportes.forEach(t => { %>
+              <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                <td class="p-3 font-mono"><%= t.placa %></td>
+                <td class="p-3"><%= t.nombre_conductor %></td>
+                <td class="p-3"><%= t.telefono %></td>
+                <td class="p-3">
+                  <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
+                    <%= t.tipo_vehiculo %>
+                  </span>
+                </td>
+                <td class="p-3">
+                  <div class="flex space-x-1">
+                    <button onclick="openEditModal('<%= t.placa %>', '<%= t.nombre_conductor %>', '<%= t.telefono %>', '<%= t.tipo_vehiculo %>')" 
+                            class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition-all duration-200"
+                            title="Editar transporte">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </button>
+                    <button onclick="openDeleteModal('<%= t.placa %>')" 
+                            class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-all duration-200"
+                            title="Eliminar transporte">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" class="text-center p-8 text-gray-500">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm-3-4a4 4 0 00-4 4m8-4a4 4 0 00-4-4m4 4h4m-8-4V9a2 2 0 00-2-2H7a2 2 0 00-2 2v1"></path>
+                </svg>
+                <p class="text-lg">No hay transportes registrados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Contador de resultados -->
+    <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+      <span id="resultCount"><%= transportes.length %> transportes encontrados</span>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Crear -->
+<div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold flex items-center">
+        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Agregar Transporte
+      </h2>
+      <button onclick="closeCreateModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <form id="createForm" action="/transport" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block mb-2 font-medium">Placa *</label>
+          <input type="text" name="placa" required maxlength="10"
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Ej: ABC123">
+        </div>
+
+        <div>
+          <label class="block mb-2 font-medium">Nombre del Conductor *</label>
+          <input type="text" name="nombre_conductor" required
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Ej: Juan Pérez">
+        </div>
+
+        <div>
+          <label class="block mb-2 font-medium">Teléfono *</label>
+          <input type="text" name="telefono" required
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Ej: 3001234567">
+        </div>
+
+        <div>
+          <label class="block mb-2 font-medium">Tipo de Vehículo *</label>
+          <input type="text" name="tipo_vehiculo" required
+                 list="tipoVehiculoOptions"
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Escriba o seleccione un tipo"
+                 id="createTipoVehiculo">
+          <datalist id="tipoVehiculoOptions">
+            <!-- Las opciones se cargarán dinámicamente -->
+          </datalist>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 mt-6">
+        <button type="button" onclick="closeCreateModal()" 
+                class="flex items-center px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg transition-all">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancelar
+        </button>
+        <button type="submit"
+                class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para Editar -->
+<!-- Modal para Editar -->
+<!-- Modal para Editar - CORREGIDO -->
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold flex items-center">
+        <svg class="w-5 h-5 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+        Editar Transporte
+      </h2>
+      <button type="button" onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- IMPORTANTE: action se establece dinámicamente, method DEBE ser POST -->
+    <form id="editForm" action="" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" id="originalPlaca" name="originalPlaca">
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block mb-2 font-medium">Placa *</label>
+          <input type="text" id="editPlaca" name="placa" required maxlength="10"
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all uppercase"
+                 placeholder="Ej: ABC123">
+        </div>
+
+        <div>
+          <label class="block mb-2 font-medium">Nombre del Conductor *</label>
+          <input type="text" id="editNombreConductor" name="nombre_conductor" required
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Ej: Juan Pérez">
+        </div>
+
+        <div>
+          <label class="block mb-2 font-medium">Teléfono *</label>
+          <input type="text" id="editTelefono" name="telefono" required
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Ej: 3001234567">
+        </div>
+
+        <div>
+          <label class="block mb-2 font-medium">Tipo de Vehículo *</label>
+          <input type="text" id="editTipoVehiculo" name="tipo_vehiculo" required
+                 list="tipoVehiculoOptions"
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                 placeholder="Escriba o seleccione un tipo">
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 mt-6">
+        <button type="button" onclick="closeEditModal()" 
+                class="flex items-center px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg transition-all">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancelar
+        </button>
+        <button type="submit"
+                class="flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para Eliminar (se mantiene igual) -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold flex items-center">
+        <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+        Eliminar Transporte
+      </h2>
+      <button onclick="closeDeleteModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="text-center mb-6">
+      <svg class="w-12 h-12 mx-auto mb-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      <p class="text-lg mb-2">¿Estás seguro de que deseas eliminar el transporte?</p>
+      <p class="text-gray-600 dark:text-gray-400">Placa: <span id="deletePlacaText" class="font-mono font-bold text-red-500"></span></p>
+      <p class="text-sm text-gray-500 mt-2">Esta acción no se puede deshacer.</p>
+    </div>
+    
+    <form id="deleteForm" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" id="deletePlaca" name="placa">
+      
+      <div class="flex justify-end space-x-3">
+        <button type="button" onclick="closeDeleteModal()" 
+                class="flex items-center px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg transition-all">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancelar
+        </button>
+        <button type="submit"
+                class="flex items-center bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Eliminar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/transport.js" defer></script>

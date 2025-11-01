@@ -11,6 +11,7 @@ const winston = require('winston');
 const logger = require('./utils/logger');
 const csrf = require('csurf');
 const rateLimit = require('express-rate-limit');
+const methodOverride = require('method-override');
 
 const errorHandler = require('./middleware/errorHandler');
 const { sequelize, User, Role } = require('./models');
@@ -24,7 +25,9 @@ const supplierRoutes = require('./routes/suppliersRoutes');
 const spreadsheetRoutes = require('./routes/spreadsheetRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const settingsPageRoutes = require('./routes/settingsPage');
-const notificationRoutes = require('./routes/notificationRoutes'); // <- singular, coincide con el archivo
+const notificationRoutes = require('./routes/notificationRoutes'); 
+const transportRoutes = require('./routes/transportRoutes');
+const outsourceRoutes = require('./routes/outsourceRoutes');// <- singular, coincide con el archivo
 
 const { authorize } = require('./middleware/authMiddleware');
 const checkApproval = require('./middleware/checkApproval');
@@ -169,6 +172,7 @@ app.use('/api', cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(methodOverride('_method')); // ← ESTA LÍNEA ES CRUCIAL
 app.use(express.static(path.join(__dirname, 'public')));
 
 const sessionStore = process.env.SESSION_STORE === 'postgres'
@@ -206,21 +210,28 @@ app.use((req, res, next) => {
 app.use(flash());
 
 // ✅ CSRF configurado
-const csrfProtection = csrf();
-
-// ✅ Hacer el token CSRF disponible para todas las vistas
-app.use((req, res, next) => {
-  res.locals.csrfToken = req.csrfToken ? req.csrfToken() : '';
-  next();
+// ✅ CSRF configurado - SOLO para rutas no-API
+const csrfProtection = csrf({ 
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+  cookie: false // Usamos session en lugar de cookie para CSRF
 });
 
-// ✅ Aplicar validación CSRF solo a rutas no-API
-app.use((req, res, next) => {
+// ✅ Middleware para excluir rutas API del CSRF
+const ignoreCsrfForApi = (req, res, next) => {
   if (req.originalUrl.startsWith('/api')) {
-    // 🔧 Saltamos CSRF para TODO lo que sea API
     return next();
   }
   csrfProtection(req, res, next);
+};
+
+app.use(ignoreCsrfForApi);
+
+// ✅ Hacer el token CSRF disponible para todas las vistas
+app.use((req, res, next) => {
+  if (!req.originalUrl.startsWith('/api')) {
+    res.locals.csrfToken = req.csrfToken ? req.csrfToken() : '';
+  }
+  next();
 });
 
 app.use((req, res, next) => {
@@ -383,6 +394,9 @@ app.get('/suppliers', async (req, res) => {
   }
 });
 
+
+
+
 app.get('/roles', authorize('admin'), (req, res) => {
   res.render('roles', {
     title: 'Gestión de Roles',
@@ -402,8 +416,40 @@ app.use('/api', roleRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/suppliers', supplierRoutes); // ← Nueva ruta API para suppliers
 app.use('/api/notifications', notificationRoutes);
+app.use('/', transportRoutes); // Esto montará las rutas en la raíz
+app.use('/', outsourceRoutes);
 
-// ✅ Manejo de rutas no encontradas (404)
+app.get('/transport', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/registro_inicio');
+
+  const { Transporte } = require('./models');
+  const transportes = await Transporte.findAll();
+
+  res.render('transport', {
+    title: 'Gestión de Transportes',
+    transportes,
+    username: req.session.username,
+    userRole: req.session.userRole,
+    csrfToken: req.csrfToken ? req.csrfToken() : ''
+  });
+});
+// ✅ Vista Outsource
+app.get('/outsource', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/registro_inicio');
+
+  const { Outsource } = require('./models');
+  const outsources = await Outsource.findAll();
+
+  res.render('outsource', {
+    title: 'Gestión de Outsource',
+    outsources,
+    username: req.session.username,
+    userRole: req.session.userRole,
+    csrfToken: req.csrfToken ? req.csrfToken() : ''
+  });
+});
+
+
 app.use((req, res) => {
   const wantsJson = req.xhr || req.get('Accept')?.includes('application/json') || req.path.startsWith('/api');
 

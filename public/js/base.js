@@ -112,6 +112,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 }
+const dropdownButton = document.getElementById('dropdownButton');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+  const arrowIcon = document.getElementById('arrowIcon');
 
+  dropdownButton.addEventListener('click', () => {
+    dropdownMenu.classList.toggle('hidden');
+    arrowIcon.classList.toggle('rotate-180');
+  });
+
+  // Cerrar dropdown al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if (!dropdownButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      dropdownMenu.classList.add('hidden');
+      arrowIcon.classList.remove('rotate-180');
+    }
+  });
 
 });
