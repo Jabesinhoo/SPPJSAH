@@ -152,20 +152,24 @@ exports.createSupplierAPI = async (req, res) => {
             logger.info('🖼️ [API] imagenPath:', imagenPath);
         }
 
+        // 👇 Sanitizar el correo - convertir vacío a null
+        const correo = req.body.correo && req.body.correo.trim() !== '' 
+            ? req.body.correo.trim() 
+            : null;
+
         logger.info('💾 [API] Creando proveedor...');
         const nuevoProveedor = await Supplier.create({
             marca: req.body.marca,
             categoria: req.body.categoria,
             nombre: req.body.nombre,
             celular: req.body.celular,
-            correo: req.body.correo,   // ✅ nuevo campo
+            correo: correo,   // 👈 Usar el valor sanitizado
             tipoAsesor: req.body.tipoAsesor,
             nombreEmpresa: req.body.nombreEmpresa,
             nota: req.body.nota,
             ciudad: req.body.ciudad,
             imagen: imagenPath
         });
-
 
         logger.info('✅ [API] Proveedor creado ID:', nuevoProveedor.id);
 

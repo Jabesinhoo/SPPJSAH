@@ -38,12 +38,15 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-correo: { 
+    correo: { 
       type: DataTypes.STRING,
       allowNull: true, // ✅ opcional
       validate: {
         isEmail: {
-          msg: 'Debe ser un correo electrónico válido'
+          msg: 'Debe ser un correo electrónico válido',
+          args: {
+            allow_empty: true // 👈 ESTA ES LA CLAVE - permitir vacío
+          }
         }
       }
     },
