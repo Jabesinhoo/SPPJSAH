@@ -24,41 +24,45 @@ exports.renderTransportView = async (req, res) => {
 
 exports.createTransport = async (req, res) => {
   try {
-    console.log('➕ POST /transport - INICIANDO...');
-    console.log('➕ Body recibido:', req.body);
-    console.log('➕ Headers:', req.headers);
-    console.log('➕ URL original:', req.originalUrl);
-    console.log('➕ Método:', req.method);
+    console.log('➕ POST /transport - PRODUCCIÓN - Body:', req.body);
     
     const { placa, nombre_conductor, telefono, tipo_vehiculo } = req.body;
     
-    // Validaciones básicas
+    // Debug adicional para producción
+    if (!req.body) {
+      console.log('❌ PRODUCCIÓN - No se recibió body');
+      req.flash('error', 'No se recibieron datos del formulario');
+      return res.redirect('/transport');
+    }
+    
     if (!placa || !nombre_conductor || !telefono || !tipo_vehiculo) {
-      console.log('❌ Campos faltantes');
+      console.log('❌ PRODUCCIÓN - Campos faltantes:', { placa, nombre_conductor, telefono, tipo_vehiculo });
       req.flash('error', 'Todos los campos son obligatorios');
       return res.redirect('/transport');
     }
     
-    console.log('📝 Creando transporte con datos:', { placa, nombre_conductor, telefono, tipo_vehiculo });
+    // Verificar CSRF token en producción
+    if (!req.body._csrf) {
+      console.log('❌ PRODUCCIÓN - CSRF token faltante');
+      req.flash('error', 'Error de seguridad. Intente recargar la página.');
+      return res.redirect('/transport');
+    }
     
-    // Verificar si ya existe
     const transporteExistente = await Transporte.findOne({ where: { placa } });
     if (transporteExistente) {
-      console.log('❌ Placa ya existe:', placa);
       req.flash('error', 'Ya existe un transporte con esta placa');
       return res.redirect('/transport');
     }
     
     await Transporte.create({ placa, nombre_conductor, telefono, tipo_vehiculo });
-    console.log('✅ Transporte creado exitosamente');
+    console.log('✅ PRODUCCIÓN - Transporte creado exitosamente');
     
     req.flash('success', 'Transporte creado correctamente');
     res.redirect('/transport');
     
   } catch (error) {
-    console.error('❌ CREATE - Error completo:', error);
-    console.error('❌ Stack:', error.stack);
-    req.flash('error', error.message);
+    console.error('❌ PRODUCCIÓN - CREATE Error:', error);
+    req.flash('error', 'Error del servidor: ' + error.message);
     res.redirect('/transport');
   }
 };
