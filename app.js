@@ -419,35 +419,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/', transportRoutes); // Esto montará las rutas en la raíz
 app.use('/', outsourceRoutes);
 
-app.get('/transport', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/registro_inicio');
 
-  const { Transporte } = require('./models');
-  const transportes = await Transporte.findAll();
-
-  res.render('transport', {
-    title: 'Gestión de Transportes',
-    transportes,
-    username: req.session.username,
-    userRole: req.session.userRole,
-    csrfToken: req.csrfToken ? req.csrfToken() : ''
-  });
-});
-// ✅ Vista Outsource
-app.get('/outsource', async (req, res) => {
-  if (!req.session.userId) return res.redirect('/registro_inicio');
-
-  const { Outsource } = require('./models');
-  const outsources = await Outsource.findAll();
-
-  res.render('outsource', {
-    title: 'Gestión de Outsource',
-    outsources,
-    username: req.session.username,
-    userRole: req.session.userRole,
-    csrfToken: req.csrfToken ? req.csrfToken() : ''
-  });
-});
 
 
 app.use((req, res) => {
