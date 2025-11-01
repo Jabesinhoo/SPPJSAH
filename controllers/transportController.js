@@ -24,38 +24,45 @@ exports.renderTransportView = async (req, res) => {
 
 exports.createTransport = async (req, res) => {
   try {
-    console.log('➕ POST /transport - Body recibido:', req.body);
+    console.log('➕ POST /transport - INICIANDO...');
+    console.log('➕ Body recibido:', req.body);
+    console.log('➕ Headers:', req.headers);
+    console.log('➕ URL original:', req.originalUrl);
+    console.log('➕ Método:', req.method);
+    
     const { placa, nombre_conductor, telefono, tipo_vehiculo } = req.body;
     
-    // Validar que todos los campos estén presentes
+    // Validaciones básicas
     if (!placa || !nombre_conductor || !telefono || !tipo_vehiculo) {
+      console.log('❌ Campos faltantes');
       req.flash('error', 'Todos los campos son obligatorios');
       return res.redirect('/transport');
     }
     
-    // Verificar si ya existe un transporte con esa placa
+    console.log('📝 Creando transporte con datos:', { placa, nombre_conductor, telefono, tipo_vehiculo });
+    
+    // Verificar si ya existe
     const transporteExistente = await Transporte.findOne({ where: { placa } });
     if (transporteExistente) {
+      console.log('❌ Placa ya existe:', placa);
       req.flash('error', 'Ya existe un transporte con esta placa');
       return res.redirect('/transport');
     }
     
-    await Transporte.create({ 
-      placa: placa.trim().toUpperCase(), 
-      nombre_conductor: nombre_conductor.trim(), 
-      telefono: telefono.trim(), 
-      tipo_vehiculo: tipo_vehiculo.trim() 
-    });
+    await Transporte.create({ placa, nombre_conductor, telefono, tipo_vehiculo });
     console.log('✅ Transporte creado exitosamente');
     
     req.flash('success', 'Transporte creado correctamente');
     res.redirect('/transport');
+    
   } catch (error) {
-    console.error('❌ CREATE - Error:', error);
-    req.flash('error', error.message || 'Error al crear el transporte');
+    console.error('❌ CREATE - Error completo:', error);
+    console.error('❌ Stack:', error.stack);
+    req.flash('error', error.message);
     res.redirect('/transport');
   }
 };
+
 
 exports.updateTransport = async (req, res) => {
   try {

@@ -31,20 +31,14 @@ function closeCreateModal() {
 function openEditModal(placa, nombreConductor, telefono, tipoVehiculo) {
   console.log('📝 Abriendo modal editar para placa:', placa);
   
-  // Guardar la placa original (la que está actualmente en la BD)
   document.getElementById('originalPlaca').value = placa;
-  
-  // Llenar el formulario con los valores actuales
   document.getElementById('editPlaca').value = placa;
   document.getElementById('editNombreConductor').value = nombreConductor;
   document.getElementById('editTelefono').value = telefono;
   document.getElementById('editTipoVehiculo').value = tipoVehiculo;
   
-  // Configurar la acción del formulario con la placa ORIGINAL
-  // IMPORTANTE: Usamos la placa original en la URL
-  document.getElementById('editForm').action = `/transport/${encodeURIComponent(placa)}/update`;
-  
-  console.log('✅ Form action configurado:', document.getElementById('editForm').action);
+  // RUTA ABSOLUTA DINÁMICA
+  document.getElementById('editForm').action = `/transport/${placa}/update`;
   
   document.getElementById('editModal').classList.remove('hidden');
   document.body.classList.add('overflow-hidden');
@@ -57,10 +51,14 @@ function closeEditModal() {
 
 // Funciones para el modal de Eliminar
 function openDeleteModal(placa) {
+  console.log('🗑️ Abriendo modal eliminar para placa:', placa);
+  
   document.getElementById('deletePlaca').value = placa;
   document.getElementById('deletePlacaText').textContent = placa;
   
-  document.getElementById('deleteForm').action = `/transport/${encodeURIComponent(placa)}/delete`;
+  // RUTA ABSOLUTA DINÁMICA
+  document.getElementById('deleteForm').action = `/transport/${placa}/delete`;
+  
   document.getElementById('deleteModal').classList.remove('hidden');
   document.body.classList.add('overflow-hidden');
 }

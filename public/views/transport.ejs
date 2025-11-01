@@ -126,7 +126,7 @@
   </div>
 </div>
 
-<!-- Modal para Crear -->
+<!-- Modal para Crear - CON RUTA ABSOLUTA -->
 <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
   <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
     <div class="flex items-center justify-between mb-4">
@@ -143,6 +143,7 @@
       </button>
     </div>
     
+    <!-- RUTA ABSOLUTA -->
     <form id="createForm" action="/transport" method="POST">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       
@@ -201,9 +202,7 @@
   </div>
 </div>
 
-<!-- Modal para Editar -->
-<!-- Modal para Editar -->
-<!-- Modal para Editar - CORREGIDO -->
+<!-- Modal para Editar - CON RUTA ABSOLUTA DINÁMICA -->
 <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
   <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
     <div class="flex items-center justify-between mb-4">
@@ -213,15 +212,14 @@
         </svg>
         Editar Transporte
       </h2>
-      <button type="button" onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+      <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
     </div>
     
-    <!-- IMPORTANTE: action se establece dinámicamente, method DEBE ser POST -->
-    <form id="editForm" action="" method="POST">
+    <form id="editForm" method="POST">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" id="originalPlaca" name="originalPlaca">
       
@@ -229,22 +227,19 @@
         <div>
           <label class="block mb-2 font-medium">Placa *</label>
           <input type="text" id="editPlaca" name="placa" required maxlength="10"
-                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all uppercase"
-                 placeholder="Ej: ABC123">
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </div>
 
         <div>
           <label class="block mb-2 font-medium">Nombre del Conductor *</label>
           <input type="text" id="editNombreConductor" name="nombre_conductor" required
-                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                 placeholder="Ej: Juan Pérez">
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </div>
 
         <div>
           <label class="block mb-2 font-medium">Teléfono *</label>
           <input type="text" id="editTelefono" name="telefono" required
-                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                 placeholder="Ej: 3001234567">
+                 class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </div>
 
         <div>
@@ -253,6 +248,9 @@
                  list="tipoVehiculoOptions"
                  class="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                  placeholder="Escriba o seleccione un tipo">
+          <datalist id="tipoVehiculoOptions">
+            <!-- Las opciones se cargarán dinámicamente -->
+          </datalist>
         </div>
       </div>
 
@@ -275,8 +273,6 @@
     </form>
   </div>
 </div>
-
-<!-- Modal para Eliminar (se mantiene igual) -->
 <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
   <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
     <div class="flex items-center justify-between mb-4">

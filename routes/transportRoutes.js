@@ -3,6 +3,12 @@ const router = express.Router();
 const transportController = require('../controllers/transportController');
 const { transportValidation } = require('../middleware/validationTransport');
 
+// Middleware de debug para todas las rutas
+router.use((req, res, next) => {
+  console.log(`🚀 ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Rutas para la vista EJS (con CSRF)
 router.get('/transport', transportController.renderTransportView);
 router.post('/transport', transportValidation, transportController.createTransport);
