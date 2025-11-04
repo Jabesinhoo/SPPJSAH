@@ -1,8 +1,9 @@
+<% title = "Gestión de Transportes" %>
+
 <div class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 transition-colors">
   <div class="max-w-6xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-4 md:p-6">
     <h1 class="text-2xl font-bold mb-6 text-center">Gestión de Transportes</h1>
 
-    <!-- Mensajes Flash -->
     <% if (success) { %>
       <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
         <%= success %>
@@ -14,9 +15,7 @@
       </div>
     <% } %>
 
-    <!-- Barra de búsqueda y filtros -->
     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Buscador -->
       <div class="relative">
         <input type="text" id="searchInput" placeholder="Buscar por placa, conductor, teléfono..."
                class="w-full p-3 pl-10 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
@@ -27,7 +26,6 @@
         </div>
       </div>
 
-      <!-- Filtro por tipo de vehículo y botón agregar -->
       <div class="flex flex-col sm:flex-row gap-3">
         <div class="relative flex-1">
           <select id="filterTipoVehiculo" class="w-full p-3 pr-10 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer">
@@ -50,7 +48,6 @@
       </div>
     </div>
 
-    <!-- Loading indicator -->
     <div id="loadingIndicator" class="hidden text-center py-8">
       <div class="inline-flex items-center">
         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -119,14 +116,12 @@
       </table>
     </div>
 
-    <!-- Contador de resultados -->
     <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
       <span id="resultCount"><%= transportes.length %> transportes encontrados</span>
     </div>
   </div>
 </div>
 
-<!-- Modal para Crear - CON RUTA ABSOLUTA -->
 <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
   <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
     <div class="flex items-center justify-between mb-4">
@@ -202,7 +197,6 @@
   </div>
 </div>
 
-<!-- Modal para Editar - CON RUTA ABSOLUTA DINÁMICA -->
 <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
   <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
     <div class="flex items-center justify-between mb-4">
