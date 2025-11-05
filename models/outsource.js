@@ -23,24 +23,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       unique: true,
-      defaultValue: 1, // se actualizará automáticamente en la migración o hook
+      // ELIMINAR el defaultValue ya que ahora será manual
     },
     tipo_servicio: {
-      type: DataTypes.ARRAY(DataTypes.STRING), // permite múltiples servicios
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
     }
   }, {
     tableName: 'outsources',
     timestamps: true,
-    hooks: {
-      // Generar SKU consecutivo
-      beforeCreate: async (outsource, options) => {
-        const lastOut = await sequelize.models.Outsource.findOne({
-          order: [['sku', 'DESC']]
-        });
-        outsource.sku = lastOut ? lastOut.sku + 1 : 1;
-      }
-    }
+    // ELIMINAR el hook completely
   });
 
   return Outsource;
