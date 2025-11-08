@@ -5,35 +5,85 @@ const logger = require('../utils/logger');
 class HistoryService {
     static async recordChange(productId, action, oldData, newData, user, bulkOperationId = null) {
         try {
+            // Validación adicional para evitar errores
+            if (!productId) {
+                logger.error('❌ Error: productId es requerido para registrar historial');
+                return;
+            }
+
             const changedFields = this.getChangedFields(oldData, newData);
 
             await ProductHistory.create({
                 productId,
                 action,
-                oldData,
-                newData,
+                oldData: oldData || null, // Asegurar que sea null si es undefined
+                newData: newData || null, // Asegurar que sea null si es undefined
                 changedFields,
                 userName: user?.username || user?.name || 'Sistema',
                 bulkOperationId
             });
 
-
-            logger.info(`Historial registrado: ${action} para producto ${productId}`);
+            logger.info(`✅ Historial registrado: ${action} para producto ${productId}`);
         } catch (error) {
-            logger.error('Error al registrar historial:', error);
+            logger.error('❌ Error al registrar historial:', error);
+            // No relanzar el error para no interrumpir la operación principal
         }
     }
-
+    // services/historyService.js
     static getChangedFields(oldData, newData) {
         const changed = {};
-        for (const key in newData) {
-            if (oldData[key] !== newData[key]) {
-                changed[key] = {
-                    old: oldData[key],
-                    new: newData[key]
-                };
+
+        // Caso 1: Creación de producto (oldData es null/undefined)
+        if (!oldData && newData) {
+            for (const key in newData) {
+                // Excluir campos del sistema
+                if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
+                    changed[key] = {
+                        old: null,
+                        new: newData[key]
+                    };
+                }
+            }
+            return changed;
+        }
+
+        // Caso 2: Eliminación de producto (newData es null/undefined)
+        if (oldData && !newData) {
+            for (const key in oldData) {
+                if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
+                    changed[key] = {
+                        old: oldData[key],
+                        new: null
+                    };
+                }
+            }
+            return changed;
+        }
+
+        // Caso 3: Actualización normal (ambos existen)
+        if (oldData && newData) {
+            const allKeys = new Set([...Object.keys(oldData || {}), ...Object.keys(newData || {})]);
+
+            for (const key of allKeys) {
+                // Excluir campos del sistema
+                if (key === 'id' || key === 'createdAt' || key === 'updatedAt') continue;
+
+                const oldValue = oldData[key];
+                const newValue = newData[key];
+
+                // Comparar valores de forma segura
+                const oldValStr = JSON.stringify(oldValue);
+                const newValStr = JSON.stringify(newValue);
+
+                if (oldValStr !== newValStr) {
+                    changed[key] = {
+                        old: oldValue,
+                        new: newValue
+                    };
+                }
             }
         }
+
         return changed;
     }
 
@@ -92,7 +142,6 @@ class HistoryService {
         try {
             const { Product, User } = require('../models');
 
-            // 🔹 Trae los últimos registros del historial
             const rawHistory = await ProductHistory.findAll({
                 include: [
                     { model: Product, as: 'product', attributes: ['id', 'SKU', 'nombre'] },
@@ -102,7 +151,6 @@ class HistoryService {
                 limit
             });
 
-            // 🔹 Agrupa por bulkOperationId (si existe)
             const grouped = {};
             for (const record of rawHistory) {
                 const key = record.bulkOperationId || record.id;
@@ -127,7 +175,6 @@ class HistoryService {
                 }
             }
 
-            // 🔹 Convierte a array y ordénalo por fecha descendente
             const groupedArray = Object.values(grouped).sort(
                 (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
             );
@@ -139,8 +186,9 @@ class HistoryService {
         }
     }
 
+    // ELIMINA esta versión duplicada:
     static async getLastChanges(limit = 3) {
-        const { Product } = require('../models'); // 👈 mejor importar dentro del método
+        const { Product } = require('../models');
         return await ProductHistory.findAll({
             order: [['createdAt', 'DESC']],
             limit,
@@ -153,6 +201,9 @@ class HistoryService {
             ]
         });
     }
+
+    // MANTÉN solo esta versión más completa:
+    
 }
 
 module.exports = HistoryService; // 👈 ESTA LÍNEA ES LA CLAVE

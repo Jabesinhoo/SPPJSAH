@@ -167,7 +167,7 @@ exports.createProduct = async (req, res) => {
         }
 
         // Definir categorías permitidas según rol
-        let allowedCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
+        let allowedCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Descontinuado'];
         if (userRole === 'admin') {
             allowedCategories = [...allowedCategories, 'Realizado'];
 
@@ -351,8 +351,8 @@ exports.updateProduct = async (req, res) => {
       }
 
       if (category !== undefined) {
-        const validCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado'];
-        if (validCategories.includes(category)) {
+          const validCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado'];        
+          if (validCategories.includes(category)) {
           dataToUpdate.categoria = category;
           dataToUpdate.listo = category === 'Realizado';
         } else {
@@ -366,7 +366,7 @@ exports.updateProduct = async (req, res) => {
     } else {
       // Usuarios normales
       if (category !== undefined) {
-        const userCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias'];
+        const userCategories = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Descontinuado'];
         if (userCategories.includes(category)) {
           dataToUpdate.categoria = category;
           if (category === 'Faltantes') dataToUpdate.listo = false;

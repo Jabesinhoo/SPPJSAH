@@ -1,3 +1,4 @@
+// stats.js - Completamente actualizado con categoría "Descontinuado"
 document.addEventListener('DOMContentLoaded', async () => {
     function formatCurrency(value) {
         if (!value) return "$0.00";
@@ -19,7 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         orange: { light: '#F97316', dark: '#FB923C' },
         pink: { light: '#EC4899', dark: '#F472B6' },
         cyan: { light: '#06B6D4', dark: '#22D3EE' },
-        lime: { light: '#84CC16', dark: '#A3E635' }
+        lime: { light: '#84CC16', dark: '#A3E635' },
+        gray: { light: '#6B7280', dark: '#9CA3AF' } // ← Nuevo color para Descontinuado
     };
 
     // Determinar si estamos en modo oscuro
@@ -40,13 +42,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             timeStats,
             topUsers,
             topProducts,
-            brandStats  // 🆕 NUEVA: Estadísticas de marcas
+            brandStats
         ] = await Promise.all([
             fetchData('/api/products/stats/general'),
             fetchData('/api/products/stats/time-faltantes-realizado'),
             fetchData('/api/products/stats/top-users'),
             fetchData('/api/products/stats/top-products'),
-            fetchData('/api/products/stats/brands')  // 🆕 NUEVO endpoint para marcas
+            fetchData('/api/products/stats/brands')
         ]);
 
         // Actualizar tarjetas de resumen
@@ -81,7 +83,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             tableBody.appendChild(row);
         });
 
-
         // Tabla de top productos
         document.getElementById('loadingTopProducts').style.display = 'none';
         const topProductsTableBody = document.getElementById('top-products-table-body');
@@ -97,12 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             topProductsTableBody.appendChild(row);
         });
 
-        // 🆕 NUEVA LÓGICA PARA ESTADÍSTICAS DE MARCAS 🆕
+        // Estadísticas de marcas
         document.getElementById('loadingBrands').style.display = 'none';
         document.getElementById('tableBrands').classList.remove('hidden');
 
         const brandsTableBody = document.getElementById('brands-table-body');
-        // Tomar solo las top 10 marcas
         const topBrands = brandStats.slice(0, 10);
 
         brandStats.forEach(brand => {
@@ -118,8 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             brandsTableBody.appendChild(row);
         });
 
-
-        // 🆕 GRÁFICO DE DISTRIBUCIÓN POR MARCA 🆕
+        // Gráfico de distribución por marca
         document.getElementById('loadingBrandsChart').style.display = 'none';
 
         // Preparar datos para el gráfico de marcas (top 8 marcas)
@@ -251,22 +250,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Categorías
+        // Gráfico de categorías - ACTUALIZADO CON DESCONTINUADO
         document.getElementById('loadingCategories').style.display = 'none';
+
+        // Definir colores específicos para cada categoría
+        const categoryColors = {
+            'Faltantes': getColor('red'),
+            'Bajo Pedido': getColor('yellow'),
+            'Agotados con el Proveedor': getColor('orange'),
+            'Demasiadas Existencias': getColor('purple'),
+            'Realizado': getColor('green'),
+            'Descontinuado': getColor('gray') // ← Color para la nueva categoría
+        };
+
+        // Ordenar las categorías para consistencia en el gráfico
+        const categoryOrder = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado'];
+        const sortedStats = generalStats.sort((a, b) => {
+            return categoryOrder.indexOf(a.categoria) - categoryOrder.indexOf(b.categoria);
+        });
 
         new Chart(document.getElementById('chartCategories'), {
             type: 'pie',
             data: {
-                labels: generalStats.map(c => c.categoria),
+                labels: sortedStats.map(c => c.categoria),
                 datasets: [{
-                    data: generalStats.map(c => c.count),
-                    backgroundColor: [
-                        getColor('red'),
-                        getColor('yellow'),
-                        getColor('green'),
-                        getColor('blue'),
-                        getColor('purple')
-                    ]
+                    data: sortedStats.map(c => c.count),
+                    backgroundColor: sortedStats.map(c => categoryColors[c.categoria] || getColor('blue'))
                 }]
             },
             options: {
@@ -274,8 +283,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
+                        position: 'right',
                         labels: {
-                            color: isDarkMode ? '#E5E7EB' : '#374151'
+                            color: isDarkMode ? '#E5E7EB' : '#374151',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
                         }
                     }
                 }
@@ -290,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         document.getElementById('stats-table-body').innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar los datos</td>
+                <td colspan="6" class="px-6 py-4 text-center text-red-500">Error al cargar los datos</td>
             </tr>
         `;
     }

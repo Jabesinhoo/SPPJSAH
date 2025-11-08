@@ -43,7 +43,8 @@ const createProductValidation = [
       'Bajo Pedido',
       'Agotados con el Proveedor',
       'Demasiadas Existencias',
-      'Realizado'
+      'Realizado',
+      'Descontinuado'
     ]).withMessage('Categoría no válida'),
 
   body('notes')
@@ -93,7 +94,8 @@ const updateProductValidation = [
       'Bajo Pedido',
       'Agotados con el Proveedor',
       'Demasiadas Existencias',
-      'Realizado'
+      'Realizado',
+      'Descontinuado'
     ]).withMessage('Categoría no válida'),
 
   body('notes')

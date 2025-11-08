@@ -608,6 +608,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100';
             case 'Realizado':
                 return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100';
+            case 'Descontinuado': // ← Nuevo caso
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
             default:
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
         }
@@ -1189,16 +1191,18 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (action) {
             case 'change-category':
                 title.textContent = 'Cambiar Categoría';
+                // En showBulkActionModal
                 modalContent = `
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
-                <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                    <option value="Faltantes">Faltantes</option>
-                    <option value="Bajo Pedido">Bajo Pedido</option>
-                    <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
-                    <option value="Demasiadas Existencias">Demasiadas Existencias</option>
-                    ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
-                </select>
-            `;
+  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
+  <select id="bulk-category" class="...">
+    <option value="Faltantes">Faltantes</option>
+    <option value="Bajo Pedido">Bajo Pedido</option>
+    <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+    <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+    <option value="Descontinuado">Descontinuado</option>
+    ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
+  </select>
+`;
                 break;
 
             case 'change-ready':
