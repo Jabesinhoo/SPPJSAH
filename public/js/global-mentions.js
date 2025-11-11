@@ -359,13 +359,21 @@ class GlobalMentionSystem {
 
   // Método público para procesar menciones en un texto específico
   async processMentions(text, context = {}) {
-    const mentionRegex = /@(\w+)/g;
-    const mentions = [];
-    let match;
+  console.log('🔄 Frontend - processMentions llamado con:', {
+    text: text?.substring(0, 100),
+    context: context,
+    currentUrl: window.location.href
+  });
 
-    while ((match = mentionRegex.exec(text)) !== null) {
-      mentions.push(match[1]);
-    }
+  const mentionRegex = /@(\w+)/g;
+  const mentions = [];
+  let match;
+
+  while ((match = mentionRegex.exec(text)) !== null) {
+    mentions.push(match[1]);
+  }
+
+  console.log('📝 Menciones extraídas en frontend:', mentions);
 
     if (mentions.length === 0) {
       return { success: true, notificationsCreated: 0 };
@@ -380,13 +388,18 @@ class GlobalMentionSystem {
         },
         body: JSON.stringify({
           text,
-          mentions,
+          mentions, // SOLO enviar menciones explícitas, NO extraer del texto
           context: {
             section: context.section || 'general',
             redirectUrl: context.redirectUrl || window.location.href,
             metadata: {
               currentUrl: window.location.href,
               timestamp: new Date().toISOString(),
+              targetElement: context.targetElement,
+              scrollTo: context.scrollTo,
+              highlight: context.highlight,
+              commentId: context.commentId,
+              postId: context.postId,
               ...context.metadata
             }
           }
@@ -430,6 +443,7 @@ class GlobalMentionSystem {
         if (text.includes('@')) {
           allText += ` ${text}`;
           
+          // SOLUCIÓN: Extraer menciones solo una vez
           const mentionRegex = /@(\w+)/g;
           let match;
           while ((match = mentionRegex.exec(text)) !== null) {
@@ -447,6 +461,11 @@ class GlobalMentionSystem {
         this.processMentions(allText.trim(), {
           section: context.section || 'formulario',
           redirectUrl: context.redirectUrl || window.location.href,
+          targetElement: context.targetElement,
+          scrollTo: context.scrollTo,
+          highlight: context.highlight,
+          commentId: context.commentId,
+          postId: context.postId,
           metadata: {
             formId: form.id,
             formClass: form.className,
@@ -486,25 +505,219 @@ class GlobalMentionSystem {
   }
 }
 
-// Crear instancia global
-window.globalMentionSystem = null;
+window.globalMentionSystem = new GlobalMentionSystem();
 
-// Inicializar cuando el DOM esté listo
+// En global-mentions.js - mejorar la función de búsqueda en notas
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.hash) {
-    const target = document.querySelector(window.location.hash);
-    if (target) {
-      target.classList.add('bg-yellow-100', 'dark:bg-yellow-800');
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      setTimeout(() => {
-        target.classList.remove('bg-yellow-100', 'dark:bg-yellow-800');
-      }, 4000);
+  console.log('📍 Iniciando detección de parámetros de URL...');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const hash = window.location.hash;
+  
+  console.log('🔍 Parámetros detectados:', {
+    queryParams: Object.fromEntries(urlParams.entries()),
+    hash: hash,
+    fullUrl: window.location.href
+  });
+  
+  // Función mejorada para buscar en notas dinámicas
+  const searchInDynamicNotes = (searchText, productId) => {
+    console.log('📝 Buscando en notas dinámicas del producto:', productId, 'Texto:', searchText);
+    
+    // Buscar el producto específico
+    const productElement = document.getElementById(`product-${productId}`);
+    if (!productElement) {
+      console.warn('❌ Producto no encontrado:', productId);
+      return false;
     }
-  }
+    
+    // Buscar TODOS los contenedores que puedan tener notas
+    const possibleNoteContainers = productElement.querySelectorAll(
+      '[class*="note"], [class*="Note"], [data-note], .notes-container, [id*="note"]'
+    );
+    
+    console.log('🔍 Contenedores potenciales de notas:', possibleNoteContainers.length);
+    
+    let found = false;
+    
+    possibleNoteContainers.forEach((container, index) => {
+      console.log(`📋 Revisando contenedor ${index + 1}:`, container);
+      
+      // Buscar texto en todo el contenedor
+      if (container.textContent && container.textContent.includes(searchText)) {
+        console.log('✅ Texto encontrado en contenedor:', container);
+        
+        // Resaltar el contenedor completo
+        container.classList.add(
+          'bg-yellow-100', 'dark:bg-yellow-800', 
+          'p-3', 'rounded-lg', 'border-2', 'border-yellow-400',
+          'shadow-lg', 'transition-all', 'duration-500'
+        );
+        
+        // Scroll al contenedor
+        setTimeout(() => {
+          container.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 800);
+        
+        found = true;
+        
+        // Intentar resaltar el texto específico dentro del contenedor
+        highlightSpecificText(container, searchText);
+      }
+    });
+    
+    // Si no se encontró en contenedores específicos, buscar en todo el producto
+    if (!found) {
+      console.log('🔍 Buscando en todo el producto...');
+      if (productElement.textContent && productElement.textContent.includes(searchText)) {
+        console.log('✅ Texto encontrado en el producto completo');
+        
+        productElement.classList.add(
+          'bg-yellow-100', 'dark:bg-yellow-800', 
+          'p-3', 'rounded-lg', 'border-2', 'border-yellow-400',
+          'shadow-lg', 'transition-all', 'duration-500'
+        );
+        
+        setTimeout(() => {
+          productElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 800);
+        
+        found = true;
+      }
+    }
+    
+    return found;
+  };
+  
+  // Función para resaltar texto específico
+  const highlightSpecificText = (container, searchText) => {
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+    
+    let node;
+    const textNodes = [];
+    
+    while (node = walker.nextNode()) {
+      if (node.textContent.includes(searchText)) {
+        textNodes.push(node);
+      }
+    }
+    
+    // Resaltar los nodos de texto encontrados
+    textNodes.forEach(textNode => {
+      if (textNode.parentNode && !textNode.parentNode.classList.contains('highlighted-mention')) {
+        const span = document.createElement('span');
+        span.className = 'highlighted-mention bg-yellow-300 dark:bg-yellow-600 px-1 rounded font-bold animate-pulse';
+        span.textContent = textNode.textContent;
+        
+        textNode.parentNode.replaceChild(span, textNode);
+        
+        console.log('🔦 Texto específico resaltado:', textNode.textContent);
+      }
+    });
+  };
+  
+  // Función principal mejorada
+  const handleMentionRedirection = () => {
+    const productId = urlParams.get('productId');
+    const targetElement = urlParams.get('target');
+    const mentionType = urlParams.get('mentionType');
+    const highlightText = urlParams.get('highlightText') ? decodeURIComponent(urlParams.get('highlightText')) : null;
+    const mentionText = urlParams.get('mentionText') ? decodeURIComponent(urlParams.get('mentionText')) : null;
+    
+    console.log('🎯 Parámetros de mención:', {
+      productId,
+      targetElement,
+      mentionType,
+      highlightText,
+      mentionText
+    });
+    
+    // Pequeño delay para asegurar que el JavaScript dinámico haya cargado
+    setTimeout(() => {
+      // ESTRATEGIA 1: Si tenemos texto específico para buscar
+      if (highlightText || mentionText) {
+        const searchText = highlightText || mentionText;
+        console.log('🔍 Buscando texto específico:', searchText);
+        
+        // Buscar en el producto específico si tenemos productId
+        if (productId) {
+          const foundInNotes = searchInDynamicNotes(searchText, productId);
+          if (foundInNotes) {
+            console.log('✅ Texto encontrado en notas del producto');
+            return;
+          }
+        }
+        
+        // Si no se encontró, buscar en toda la página después de un delay adicional
+        setTimeout(() => {
+          const foundInPage = searchInDynamicNotes(searchText, 'products-table-body-admin') || 
+                             searchInDynamicNotes(searchText, 'products-table-body-user');
+          if (foundInPage) {
+            console.log('✅ Texto encontrado en la página');
+          } else {
+            console.warn('❌ Texto no encontrado en la página');
+          }
+        }, 500);
+      }
+      
+      // ESTRATEGIA 2: Scroll al elemento target (fallback)
+      else if (targetElement) {
+        const element = document.getElementById(targetElement);
+        if (element) {
+          console.log('🎯 Haciendo scroll al elemento target:', targetElement);
+          setTimeout(() => {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+            
+            element.classList.add(
+              'bg-yellow-100', 'dark:bg-yellow-800', 
+              'p-2', 'rounded', 'border-2', 'border-yellow-400',
+              'transition-all', 'duration-500'
+            );
+          }, 500);
+          return;
+        }
+      }
+      
+      // ESTRATEGIA 3: Scroll al producto (último fallback)
+      else if (productId) {
+        const productElement = document.getElementById(`product-${productId}`);
+        if (productElement) {
+          console.log('📦 Haciendo scroll al producto:', productId);
+          setTimeout(() => {
+            productElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+          }, 500);
+          return;
+        }
+      }
+      
+      console.log('ℹ️  No se encontraron elementos específicos para resaltar');
+    }, 1000); // Delay inicial para contenido dinámico
+  };
+  
+  // Ejecutar la función principal
+  handleMentionRedirection();
 });
-
-
 // Limpiar al descargar la página
 window.addEventListener('beforeunload', () => {
   if (window.globalMentionSystem) {
@@ -512,9 +725,7 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
-// Exportar funciones auxiliares globales
 window.MentionHelpers = {
-  // Función para procesar menciones manualmente
   processMentions: (text, context = {}) => {
     if (window.globalMentionSystem) {
       return window.globalMentionSystem.processMentions(text, context);

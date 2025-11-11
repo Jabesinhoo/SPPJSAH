@@ -8,11 +8,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       field: 'uuid'
     },
-    // ✅ CORREGIDO: mapea a 'user_id' (nombre real en BD)
     recipientId: {
       type: DataTypes.UUID,
       allowNull: false,
-      field: 'user_id',          // ← NOMBRE REAL EN LA BD
+      field: 'user_id',
       references: {
         model: 'users',
         key: 'uuid'
@@ -36,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     message: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT, // ✅ Ya está bien como TEXT
       allowNull: false
     },
     isRead: {
@@ -46,9 +45,9 @@ module.exports = (sequelize, DataTypes) => {
       field: 'is_read'
     },
     redirectUrl: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT, // ✅ CAMBIAR de STRING a TEXT
       allowNull: true,
-      field: 'link'  // ← En tu BD la columna se llama 'link'
+      field: 'link'
     },
     sourceType: {
       type: DataTypes.STRING,
@@ -83,7 +82,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Notification.associate = (models) => {
     Notification.belongsTo(models.User, {
-      foreignKey: 'recipientId',   // ← nombre en el modelo
+      foreignKey: 'recipientId',
       targetKey: 'uuid',
       as: 'recipient'
     });

@@ -1,4 +1,4 @@
-// products.js - Completamente modificado con sistema de menciones
+// products.js - Completamente modificado con sistema de menciones mejorado
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('product-form');
     const productsTableBodyUser = document.getElementById('products-table-body-user');
@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-
             // Enviar menciones al servidor para procesar
             const response = await fetch('/api/notifications/process-mentions', {
                 method: 'POST',
@@ -82,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         metadata: {
                             productId: productId,
                             productName: productName,
-                            productSKU: document.getElementById('sku').value
+                            productSKU: document.getElementById('sku').value,
+                            targetElement: `product-${productId}`
                         }
                     }
                 })
@@ -90,9 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             if (result.success) {
+                console.log('✅ Menciones procesadas correctamente');
             } else {
+                console.error('❌ Error al procesar menciones:', result.error);
             }
         } catch (error) {
+            console.error('❌ Error en procesamiento de menciones:', error);
         }
     };
 
@@ -105,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 availableUsers = data.users || [];
             }
         } catch (error) {
+            console.error('❌ Error al cargar usuarios disponibles:', error);
         }
     };
 
@@ -210,6 +214,144 @@ document.addEventListener('DOMContentLoaded', () => {
             hideUserSuggestions();
         }
     });
+
+    // ==================== FUNCIÓN HELPER PARA ESCAPAR HTML ====================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ==================== RENDERIZADO MEJORADO DE NOTAS ====================
+    /**
+     * Renderiza las notas en el modal con estructura identificable para menciones.
+     */
+    const renderNotes = (notes, productId = null) => {
+        notesContainer.innerHTML = '';
+
+        if (notes && notes.length > 0) {
+            noNotesMessage.classList.add('hidden');
+            notes.forEach((note, index) => {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'p-3 my-2 rounded-md bg-gray-100 dark:bg-gray-600 border-l-4 border-indigo-500 relative group';
+                
+                // ✅ MEJORA: Agregar IDs únicos y data attributes para búsqueda
+                const noteUniqueId = productId ? `note-${productId}-${index}` : `note-${index}`;
+                noteDiv.id = noteUniqueId;
+                noteDiv.setAttribute('data-note', 'true');
+                noteDiv.setAttribute('data-product-id', productId || '');
+                noteDiv.setAttribute('data-note-index', index);
+                
+                // Formatear fecha y hora
+                const noteDate = new Date(note.date);
+                const formattedDate = noteDate.toLocaleDateString();
+                const formattedTime = noteDate.toLocaleTimeString();
+
+                // ✅ MEJORA: Procesar menciones manteniendo el texto original
+                let noteText = note.text;
+                const mentionRegex = /@(\w+)/g;
+                const processedNoteText = noteText.replace(mentionRegex, 
+                    '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded font-medium mention-tag">@$1</span>'
+                );
+
+                // Verificar si el usuario actual puede editar/eliminar esta nota
+                const canEditDelete = note.user === currentUsername || userRole === 'admin';
+
+                noteDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs text-gray-600 dark:text-gray-300 font-bold">${note.user}</p>
+                    <div class="text-right">
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${formattedDate}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
+                    </div>
+                </div>
+                
+                <!-- ✅ MEJORA: Contenedor de texto con data attribute para búsqueda -->
+                <div class="note-content" data-original-text="${escapeHtml(noteText)}">
+                    <p class="text-sm text-gray-800 dark:text-gray-200 mb-2" id="note-text-${index}">
+                        ${processedNoteText}
+                    </p>
+                </div>
+                
+                ${canEditDelete ? `
+                <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button type="button" onclick="editNote(${index})" 
+                            class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 flex items-center">
+                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Editar
+                    </button>
+                    <button type="button" onclick="deleteNote(${index})" 
+                            class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 flex items-center">
+                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Eliminar
+                    </button>
+                </div>
+                ` : ''}
+                
+                <!-- Formulario de edición (oculto inicialmente) -->
+                <div id="note-edit-form-${index}" class="hidden mt-2">
+                    <textarea id="note-edit-text-${index}" rows="3" 
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 resize-none">${note.text}</textarea>
+                    <div class="flex justify-end space-x-2 mt-2">
+                        <button type="button" onclick="cancelEditNote(${index})" 
+                                class="px-3 py-1 text-xs bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500">
+                            Cancelar
+                        </button>
+                        <button type="button" onclick="saveEditedNote(${index})" 
+                                class="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            `;
+                notesContainer.appendChild(noteDiv);
+            });
+        } else {
+            noNotesMessage.classList.remove('hidden');
+        }
+
+        notesContainer.scrollTop = notesContainer.scrollHeight;
+    };
+
+    /**
+     * Renderiza las notas en la tabla principal con estructura identificable
+     */
+    function renderNotesInTable(notes, productId) {
+        if (!notes || notes.length === 0) {
+            return '<div class="text-gray-500 dark:text-gray-400 text-sm italic">No hay notas</div>';
+        }
+
+        // Ordenar notas por fecha (más reciente primero)
+        const sortedNotes = [...notes].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        return sortedNotes.map((note, index) => {
+            const noteId = `table-note-${productId}-${index}`;
+            const date = new Date(note.date).toLocaleString('es-ES');
+            
+            // ✅ MEJORA: Procesar menciones y agregar estructura identificable
+            let noteText = note.text;
+            const mentionRegex = /@(\w+)/g;
+            const processedNoteText = noteText.replace(mentionRegex, 
+                '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded text-xs mention-tag">@$1</span>'
+            );
+            
+            return `
+                <div id="${noteId}" class="note-item mb-2 p-2 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700" 
+                     data-note="true" data-product-id="${productId}" data-original-text="${escapeHtml(noteText)}">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">${note.user || 'Usuario'}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${date}</span>
+                    </div>
+                    <p class="note-text text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">${processedNoteText}</p>
+                </div>
+            `;
+        }).join('');
+    }
 
     // Lógica del modo oscuro
     const isDarkMode = () => document.documentElement.classList.contains('dark');
@@ -320,86 +462,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userRole !== 'admin') {
             document.getElementById('category').value = 'Faltantes';
         }
-    };
-
-    /**
-     * Renderiza las notas en el modal.
-     */
-    const renderNotes = (notes) => {
-        notesContainer.innerHTML = '';
-
-        if (notes && notes.length > 0) {
-            noNotesMessage.classList.add('hidden');
-            notes.forEach((note, index) => {
-                const noteDiv = document.createElement('div');
-                noteDiv.className = 'p-3 my-2 rounded-md bg-gray-100 dark:bg-gray-600 border-l-4 border-indigo-500 relative group';
-                noteDiv.id = `note-${index}`;
-
-                // Formatear fecha y hora
-                const noteDate = new Date(note.date);
-                const formattedDate = noteDate.toLocaleDateString();
-                const formattedTime = noteDate.toLocaleTimeString();
-
-                // Procesar menciones en el texto
-                let noteText = note.text;
-                const mentionRegex = /@(\w+)/g;
-                noteText = noteText.replace(mentionRegex, '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded">@$1</span>');
-
-                // Verificar si el usuario actual puede editar/eliminar esta nota
-                const canEditDelete = note.user === currentUsername || userRole === 'admin';
-
-                noteDiv.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <p class="text-xs text-gray-600 dark:text-gray-300 font-bold">${note.user}</p>
-                    <div class="text-right">
-                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${formattedDate}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-800 dark:text-gray-200 mb-2" id="note-text-${index}">${noteText}</p>
-                
-                ${canEditDelete ? `
-                <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button type="button" onclick="editNote(${index})" 
-                            class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 flex items-center">
-                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        
-                    </button>
-                    <button type="button" onclick="deleteNote(${index})" 
-                            class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 flex items-center">
-                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        
-                    </button>
-                </div>
-                ` : ''}
-                
-                <!-- Formulario de edición (oculto inicialmente) -->
-                <div id="note-edit-form-${index}" class="hidden mt-2">
-                    <textarea id="note-edit-text-${index}" rows="3" 
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 resize-none">${note.text}</textarea>
-                    <div class="flex justify-end space-x-2 mt-2">
-                        <button type="button" onclick="cancelEditNote(${index})" 
-                                class="px-3 py-1 text-xs bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500">
-                            Cancelar
-                        </button>
-                        <button type="button" onclick="saveEditedNote(${index})" 
-                                class="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                            Guardar
-                        </button>
-                    </div>
-                </div>
-            `;
-                notesContainer.appendChild(noteDiv);
-            });
-        } else {
-            noNotesMessage.classList.remove('hidden');
-        }
-
-        notesContainer.scrollTop = notesContainer.scrollHeight;
     };
 
     /**
@@ -542,124 +604,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-
-    /**
-     * Editar una nota existente
-     */
-    window.editNote = (index) => {
-        // Ocultar el texto de la nota y mostrar el formulario de edición
-        document.getElementById(`note-text-${index}`).classList.add('hidden');
-        document.getElementById(`note-edit-form-${index}`).classList.remove('hidden');
-
-        // Ocultar botones de acción
-        const noteDiv = document.getElementById(`note-${index}`);
-        const actionButtons = noteDiv.querySelector('.flex.justify-end');
-        if (actionButtons) {
-            actionButtons.classList.add('hidden');
-        }
-    };
-
-    /**
-     * Cancelar la edición de una nota
-     */
-    window.cancelEditNote = (index) => {
-        // Mostrar el texto de la nota y ocultar el formulario de edición
-        document.getElementById(`note-text-${index}`).classList.remove('hidden');
-        document.getElementById(`note-edit-form-${index}`).classList.add('hidden');
-
-        // Mostrar botones de acción
-        const noteDiv = document.getElementById(`note-${index}`);
-        const actionButtons = noteDiv.querySelector('.flex.justify-end');
-        if (actionButtons) {
-            actionButtons.classList.remove('hidden');
-        }
-    };
-
-    /**
-     * Guardar una nota editada
-     */
-    window.saveEditedNote = async (index) => {
-        const editedText = document.getElementById(`note-edit-text-${index}`).value.trim();
-
-        if (!editedText) {
-            showMessage('La nota no puede estar vacía', 'error');
-            return;
-        }
-
-        try {
-            // Actualizar la nota en el array local
-            currentNotes[index].text = editedText;
-            currentNotes[index].date = new Date().toISOString();
-            currentNotes[index].edited = true;
-
-            // Re-renderizar las notas
-            renderNotes(currentNotes);
-
-            showMessage('Nota actualizada correctamente', 'success');
-
-        } catch (error) {
-            console.error('Error al guardar la nota editada:', error);
-            showMessage('Error al actualizar la nota', 'error');
-        }
-    };
-
-    /**
-     * Eliminar una nota
-     */
-    window.deleteNote = (index) => {
-        // Mostrar modal de confirmación para eliminar
-        const modalHtml = `
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6">
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Eliminación</h3>
-                <p class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas eliminar esta nota? Esta acción no se puede deshacer.</p>
-                
-                <div class="flex justify-end gap-3">
-                    <button id="cancel-delete-note" 
-                            class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500">
-                        Cancelar
-                    </button>
-                    <button id="confirm-delete-note" 
-                            class="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700">
-                        Eliminar
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-        // Agregar el modal al DOM
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = modalHtml;
-        document.body.appendChild(modalContainer);
-
-        // Configurar event listeners
-        document.getElementById('cancel-delete-note').addEventListener('click', () => {
-            modalContainer.remove();
-        });
-
-        document.getElementById('confirm-delete-note').addEventListener('click', () => {
-            // Eliminar la nota del array
-            currentNotes.splice(index, 1);
-
-            // Re-renderizar las notas
-            renderNotes(currentNotes);
-
-            // Remover el modal
-            modalContainer.remove();
-
-            showMessage('Nota eliminada correctamente', 'success');
-        });
-
-        // Cerrar modal al hacer clic fuera
-        modalContainer.querySelector('.fixed').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                modalContainer.remove();
-            }
-        });
-    };
-
-
     /**
      * Obtiene y muestra todos los productos desde el backend, con filtros y ordenamiento.
      */
@@ -743,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 `;
 
-                // Notas con modal
+                // Notas con modal - ✅ USAR NUEVA FUNCIÓN MEJORADA
                 let notesHtml = `<td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">-</td>`;
                 if (product.nota && product.nota.length > 0) {
                     try {
@@ -905,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100';
             case 'Realizado':
                 return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100';
-            case 'Descontinuado': // ← Nuevo caso
+            case 'Descontinuado':
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
             default:
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
@@ -1042,18 +986,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (product.nota) {
                     try {
                         currentNotes = JSON.parse(product.nota);
-                        renderNotes(currentNotes);
+                        renderNotes(currentNotes, id); // ✅ Pasar productId para mejor estructura
                     } catch (e) {
                         currentNotes = [{
                             text: product.nota,
                             user: 'Sistema',
                             date: new Date().toISOString()
                         }];
-                        renderNotes(currentNotes);
+                        renderNotes(currentNotes, id); // ✅ Pasar productId para mejor estructura
                     }
                 } else {
                     currentNotes = [];
-                    renderNotes([]);
+                    renderNotes([], id); // ✅ Pasar productId para mejor estructura
                 }
 
                 modal.classList.remove('hidden');
@@ -1065,7 +1009,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', err);
         }
     };
-
 
     /**
      * Muestra el modal de confirmación de eliminación.
@@ -1102,26 +1045,22 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Función para toggle de "Listo"
      */
-    window.toggleReady = async (productId, isReady) => {
+    window.handleReadyToggle = async (checkbox) => {
+        const productId = checkbox.dataset.id;
+        const isReady = checkbox.checked;
+        const categoria = checkbox.dataset.categoria;
+
+        // Verificar si se puede cambiar a "Listo"
+        if (isReady && categoria === 'Faltantes') {
+            showMessage('No se puede marcar como listo un producto en categoría "Faltantes"', 'error');
+            // Revertir el cambio visual
+            checkbox.checked = false;
+            return;
+        }
+
         try {
-            // Primero obtener el producto actual para verificar la categoría
-            const resGet = await fetch(`/api/products/${productId}`);
-            const product = await resGet.json();
-
-            if (!resGet.ok) {
-                throw new Error('Error al obtener el producto');
-            }
-
-            // Verificar si se puede cambiar a "Listo"
-            if (isReady && product.categoria === 'Faltantes') {
-                showMessage('No se puede marcar como listo un producto en categoría "Faltantes"', 'error');
-                // Recargar para revertir el cambio visual
-                fetchProducts();
-                return;
-            }
-
             // Si está desmarcando "Listo", volver a la categoría anterior o por defecto
-            let newCategory = product.categoria;
+            let newCategory = categoria;
             if (isReady) {
                 newCategory = 'Realizado';
             } else {
@@ -1144,16 +1083,20 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const errorData = await res.json();
                 showMessage(errorData.error || 'Error al actualizar el producto', 'error');
+                // Revertir en caso de error
+                checkbox.checked = !isReady;
                 fetchProducts();
             }
         } catch (error) {
             showMessage('Error de conexión. Inténtalo de nuevo.', 'error');
+            // Revertir en caso de error
+            checkbox.checked = !isReady;
             fetchProducts();
         }
     };
 
     /**
-     * Función para mostrar modal de notas
+     * Función para mostrar modal de notas MEJORADO
      */
     window.showNotesModal = async (productId) => {
         try {
@@ -1170,32 +1113,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Crear y mostrar modal con todas las notas
+                // ✅ MEJORA: Crear modal con estructura identificable
                 const modalHtml = `
                     <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-96 overflow-y-auto">
                             <div class="p-6">
                                 <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Notas del Producto: ${product.nombre}</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                        Notas del Producto: ${product.nombre}
+                                    </h3>
                                     <button onclick="this.closest('.fixed').remove()" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="space-y-3">
-                                    ${notes.length > 0 ? notes.map(note => `
-                                        <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
-                                            <div class="flex justify-between items-start mb-2">
-                                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">${note.user}</p>
-                                                <div class="text-right">
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400 block">${new Date(note.date).toLocaleDateString()}</span>
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(note.date).toLocaleTimeString()}</span>
+                                <div class="space-y-3" id="modal-notes-container" data-product-id="${productId}">
+                                    ${notes.length > 0 ? notes.map((note, index) => {
+                                        const noteId = `modal-note-${productId}-${index}`;
+                                        const noteDate = new Date(note.date);
+                                        const formattedDate = noteDate.toLocaleDateString();
+                                        const formattedTime = noteDate.toLocaleTimeString();
+                                        
+                                        // Procesar menciones
+                                        let noteText = note.text;
+                                        const mentionRegex = /@(\w+)/g;
+                                        const processedNoteText = noteText.replace(mentionRegex, 
+                                            '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded font-medium mention-tag">@$1</span>'
+                                        );
+                                        
+                                        return `
+                                            <div id="${noteId}" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-md note-item" 
+                                                 data-note="true" data-product-id="${productId}" data-original-text="${escapeHtml(noteText)}">
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">${note.user}</p>
+                                                    <div class="text-right">
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${formattedDate}</span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
+                                                    </div>
                                                 </div>
+                                                <p class="text-gray-800 dark:text-gray-200 note-content">${processedNoteText}</p>
                                             </div>
-                                            <p class="text-gray-800 dark:text-gray-200">${note.text}</p>
-                                        </div>
-                                    `).join('') : '<p class="text-gray-500 dark:text-gray-400 text-center">No hay notas para este producto.</p>'}
+                                        `;
+                                    }).join('') : '<p class="text-gray-500 dark:text-gray-400 text-center">No hay notas para este producto.</p>'}
                                 </div>
                             </div>
                         </div>
@@ -1395,12 +1355,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: new Date().toISOString()
             };
             currentNotes.push(newNote);
-            renderNotes(currentNotes);
+            renderNotes(currentNotes, editingProductId); // ✅ Pasar productId para mejor estructura
             newNoteTextarea.value = '';
             hideUserSuggestions();
         }
     });
-
 
     // Eventos para filtros y ordenamiento
     filterCategorySelect.addEventListener('change', fetchProducts);
@@ -1496,10 +1455,9 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (action) {
             case 'change-category':
                 title.textContent = 'Cambiar Categoría';
-                // En showBulkActionModal
                 modalContent = `
   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
-  <select id="bulk-category" class="...">
+  <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
     <option value="Faltantes">Faltantes</option>
     <option value="Bajo Pedido">Bajo Pedido</option>
     <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
@@ -1632,7 +1590,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-
             if (action === 'delete') {
                 // Eliminar múltiples productos
                 const deletePromises = productIds.map(id =>
@@ -1717,6 +1674,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancel-bulk-action')?.addEventListener('click', () => {
         document.getElementById('bulk-action-modal').classList.add('hidden');
     });
+
     // =========================
     // 📜 FUNCIÓN DE HISTORIAL (modal + revertir cambios)
     // =========================
@@ -1916,6 +1874,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.classList.add("hidden");
             }
         });
+        
         notesContainer.addEventListener('click', (e) => {
             e.stopPropagation();
         });
@@ -1940,7 +1899,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await loadAvailableUsers();
         initHistory(); // ✅ Agregamos inicialización del historial
     };
-
 
     // Iniciar la aplicación
     init();
