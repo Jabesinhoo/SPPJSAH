@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
 
         const username = document.getElementById('username').value;
         const password = passwordInput.value;

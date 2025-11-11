@@ -145,18 +145,6 @@
 
   <script src="/js/registro_inicio.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
-  <script>
-    const passwordInput = document.getElementById('password');
-    const strengthText = document.createElement('p');
-    strengthText.className = "text-sm mt-1";
-    passwordInput.parentNode.appendChild(strengthText);
-
-    passwordInput.addEventListener('input', () => {
-      const result = zxcvbn(passwordInput.value);
-      const messages = ["Muy suave esa contraseña", "Peor es nada", "Regularsona", "Joa cule peñon", "Joa cule ñamazo"];
-      strengthText.textContent = `Fuerza: ${messages[result.score]}`;
-    });
-  </script>
 
 </body>
 
