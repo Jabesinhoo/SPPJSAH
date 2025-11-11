@@ -330,9 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (notes && notes.length > 0) {
             noNotesMessage.classList.add('hidden');
-            notes.forEach(note => {
+            notes.forEach((note, index) => {
                 const noteDiv = document.createElement('div');
-                noteDiv.className = 'p-3 my-2 rounded-md bg-gray-100 dark:bg-gray-600 border-l-4 border-indigo-500';
+                noteDiv.className = 'p-3 my-2 rounded-md bg-gray-100 dark:bg-gray-600 border-l-4 border-indigo-500 relative group';
+                noteDiv.id = `note-${index}`;
 
                 // Formatear fecha y hora
                 const noteDate = new Date(note.date);
@@ -344,16 +345,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mentionRegex = /@(\w+)/g;
                 noteText = noteText.replace(mentionRegex, '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded">@$1</span>');
 
+                // Verificar si el usuario actual puede editar/eliminar esta nota
+                const canEditDelete = note.user === currentUsername || userRole === 'admin';
+
                 noteDiv.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="text-xs text-gray-600 dark:text-gray-300 font-bold">${note.user}</p>
-                        <div class="text-right">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 block">${formattedDate}</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
-                        </div>
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs text-gray-600 dark:text-gray-300 font-bold">${note.user}</p>
+                    <div class="text-right">
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${formattedDate}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
                     </div>
-                    <p class="text-sm text-gray-800 dark:text-gray-200">${noteText}</p>
-                `;
+                </div>
+                <p class="text-sm text-gray-800 dark:text-gray-200 mb-2" id="note-text-${index}">${noteText}</p>
+                
+                ${canEditDelete ? `
+                <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button type="button" onclick="editNote(${index})" 
+                            class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 flex items-center">
+                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        
+                    </button>
+                    <button type="button" onclick="deleteNote(${index})" 
+                            class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 flex items-center">
+                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        
+                    </button>
+                </div>
+                ` : ''}
+                
+                <!-- Formulario de edición (oculto inicialmente) -->
+                <div id="note-edit-form-${index}" class="hidden mt-2">
+                    <textarea id="note-edit-text-${index}" rows="3" 
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 resize-none">${note.text}</textarea>
+                    <div class="flex justify-end space-x-2 mt-2">
+                        <button type="button" onclick="cancelEditNote(${index})" 
+                                class="px-3 py-1 text-xs bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500">
+                            Cancelar
+                        </button>
+                        <button type="button" onclick="saveEditedNote(${index})" 
+                                class="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            `;
                 notesContainer.appendChild(noteDiv);
             });
         } else {
@@ -362,6 +401,264 @@ document.addEventListener('DOMContentLoaded', () => {
 
         notesContainer.scrollTop = notesContainer.scrollHeight;
     };
+
+    /**
+     * Editar una nota existente
+     */
+    window.editNote = (index) => {
+        // Prevenir la propagación del evento
+        event.stopPropagation();
+        event.preventDefault();
+
+        // Ocultar el texto de la nota y mostrar el formulario de edición
+        document.getElementById(`note-text-${index}`).classList.add('hidden');
+        document.getElementById(`note-edit-form-${index}`).classList.remove('hidden');
+
+        // Ocultar botones de acción
+        const noteDiv = document.getElementById(`note-${index}`);
+        const actionButtons = noteDiv.querySelector('.flex.justify-end');
+        if (actionButtons) {
+            actionButtons.classList.add('hidden');
+        }
+    };
+
+    /**
+     * Cancelar la edición de una nota
+     */
+    window.cancelEditNote = (index) => {
+        // Prevenir la propagación del evento
+        event.stopPropagation();
+        event.preventDefault();
+
+        // Mostrar el texto de la nota y ocultar el formulario de edición
+        document.getElementById(`note-text-${index}`).classList.remove('hidden');
+        document.getElementById(`note-edit-form-${index}`).classList.add('hidden');
+
+        // Mostrar botones de acción
+        const noteDiv = document.getElementById(`note-${index}`);
+        const actionButtons = noteDiv.querySelector('.flex.justify-end');
+        if (actionButtons) {
+            actionButtons.classList.remove('hidden');
+        }
+    };
+
+    /**
+     * Guardar una nota editada
+     */
+    window.saveEditedNote = async (index) => {
+        // Prevenir la propagación del evento
+        event.stopPropagation();
+        event.preventDefault();
+
+        const editedText = document.getElementById(`note-edit-text-${index}`).value.trim();
+
+        if (!editedText) {
+            showMessage('La nota no puede estar vacía', 'error');
+            return;
+        }
+
+        try {
+            // Actualizar la nota en el array local
+            currentNotes[index].text = editedText;
+            currentNotes[index].date = new Date().toISOString();
+            currentNotes[index].edited = true;
+
+            // Re-renderizar las notas
+            renderNotes(currentNotes);
+
+            showMessage('Nota actualizada correctamente', 'success');
+
+        } catch (error) {
+            console.error('Error al guardar la nota editada:', error);
+            showMessage('Error al actualizar la nota', 'error');
+        }
+    };
+
+    /**
+     * Eliminar una nota
+     */
+    window.deleteNote = (index) => {
+        // Prevenir la propagación del evento
+        event.stopPropagation();
+        event.preventDefault();
+
+        // Mostrar modal de confirmación para eliminar
+        const modalHtml = `
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Eliminación</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas eliminar esta nota? Esta acción no se puede deshacer.</p>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="cancel-delete-note" 
+                            class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button type="button" id="confirm-delete-note" 
+                            class="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Agregar el modal al DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHtml;
+        document.body.appendChild(modalContainer);
+
+        // Configurar event listeners con prevención de propagación
+        document.getElementById('cancel-delete-note').addEventListener('click', (e) => {
+            e.stopPropagation();
+            modalContainer.remove();
+        });
+
+        document.getElementById('confirm-delete-note').addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // Eliminar la nota del array
+            currentNotes.splice(index, 1);
+
+            // Re-renderizar las notas
+            renderNotes(currentNotes);
+
+            // Remover el modal
+            modalContainer.remove();
+
+            showMessage('Nota eliminada correctamente', 'success');
+        });
+
+        // Cerrar modal al hacer clic fuera
+        modalContainer.querySelector('.fixed').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                modalContainer.remove();
+            }
+        });
+
+        // Prevenir que el clic dentro del modal cierre el modal padre
+        modalContainer.querySelector('.bg-white, .dark\\:bg-gray-800').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    };
+
+
+    /**
+     * Editar una nota existente
+     */
+    window.editNote = (index) => {
+        // Ocultar el texto de la nota y mostrar el formulario de edición
+        document.getElementById(`note-text-${index}`).classList.add('hidden');
+        document.getElementById(`note-edit-form-${index}`).classList.remove('hidden');
+
+        // Ocultar botones de acción
+        const noteDiv = document.getElementById(`note-${index}`);
+        const actionButtons = noteDiv.querySelector('.flex.justify-end');
+        if (actionButtons) {
+            actionButtons.classList.add('hidden');
+        }
+    };
+
+    /**
+     * Cancelar la edición de una nota
+     */
+    window.cancelEditNote = (index) => {
+        // Mostrar el texto de la nota y ocultar el formulario de edición
+        document.getElementById(`note-text-${index}`).classList.remove('hidden');
+        document.getElementById(`note-edit-form-${index}`).classList.add('hidden');
+
+        // Mostrar botones de acción
+        const noteDiv = document.getElementById(`note-${index}`);
+        const actionButtons = noteDiv.querySelector('.flex.justify-end');
+        if (actionButtons) {
+            actionButtons.classList.remove('hidden');
+        }
+    };
+
+    /**
+     * Guardar una nota editada
+     */
+    window.saveEditedNote = async (index) => {
+        const editedText = document.getElementById(`note-edit-text-${index}`).value.trim();
+
+        if (!editedText) {
+            showMessage('La nota no puede estar vacía', 'error');
+            return;
+        }
+
+        try {
+            // Actualizar la nota en el array local
+            currentNotes[index].text = editedText;
+            currentNotes[index].date = new Date().toISOString();
+            currentNotes[index].edited = true;
+
+            // Re-renderizar las notas
+            renderNotes(currentNotes);
+
+            showMessage('Nota actualizada correctamente', 'success');
+
+        } catch (error) {
+            console.error('Error al guardar la nota editada:', error);
+            showMessage('Error al actualizar la nota', 'error');
+        }
+    };
+
+    /**
+     * Eliminar una nota
+     */
+    window.deleteNote = (index) => {
+        // Mostrar modal de confirmación para eliminar
+        const modalHtml = `
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Eliminación</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas eliminar esta nota? Esta acción no se puede deshacer.</p>
+                
+                <div class="flex justify-end gap-3">
+                    <button id="cancel-delete-note" 
+                            class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button id="confirm-delete-note" 
+                            class="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Agregar el modal al DOM
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHtml;
+        document.body.appendChild(modalContainer);
+
+        // Configurar event listeners
+        document.getElementById('cancel-delete-note').addEventListener('click', () => {
+            modalContainer.remove();
+        });
+
+        document.getElementById('confirm-delete-note').addEventListener('click', () => {
+            // Eliminar la nota del array
+            currentNotes.splice(index, 1);
+
+            // Re-renderizar las notas
+            renderNotes(currentNotes);
+
+            // Remover el modal
+            modalContainer.remove();
+
+            showMessage('Nota eliminada correctamente', 'success');
+        });
+
+        // Cerrar modal al hacer clic fuera
+        modalContainer.querySelector('.fixed').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                modalContainer.remove();
+            }
+        });
+    };
+
 
     /**
      * Obtiene y muestra todos los productos desde el backend, con filtros y ordenamiento.
@@ -646,8 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
             productData.ready = false;
         }
 
-
-        // Manejar notas
+        // Manejar notas - ahora incluye las notas editadas/eliminadas
         const newNoteText = newNoteTextarea.value.trim();
         if (newNoteText) {
             const newNote = {
@@ -678,7 +974,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // ✅ PROCESAR MENCIONES DESPUÉS DE GUARDAR
                 const productName = formData.get('name');
-                const notesToProcess = newNoteText ? [...currentNotes, { text: newNoteText, user: currentUsername }] : currentNotes;
+                let notesToProcess = currentNotes;
+
+                // Si hay una nueva nota, agregarla al procesamiento
+                if (newNoteText) {
+                    notesToProcess = [...currentNotes, { text: newNoteText, user: currentUsername }];
+                }
 
                 if (notesToProcess.length > 0) {
                     const productId = editingProductId || data.product?.id;
@@ -1082,7 +1383,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Evento para agregar nota
-    addNoteBtn.addEventListener('click', () => {
+    addNoteBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevenir propagación
+        e.preventDefault(); // Prevenir comportamiento por defecto
+
         const newNoteText = newNoteTextarea.value.trim();
         if (newNoteText) {
             const newNote = {
@@ -1096,6 +1400,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideUserSuggestions();
         }
     });
+
 
     // Eventos para filtros y ordenamiento
     filterCategorySelect.addEventListener('change', fetchProducts);
@@ -1611,6 +1916,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.classList.add("hidden");
             }
         });
+        notesContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // También prevenir en el textarea de nueva nota
+        newNoteTextarea.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Y en el contenedor de sugerencias de usuarios
+        if (userSuggestions) {
+            userSuggestions.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     };
 
     const init = async () => {
