@@ -461,96 +461,97 @@ class NotificationSystem {
       this.markAsRead(notification.id, notification.redirectUrl);
     }
   }
-  extractMentionContext(text, username) {
-    if (!text || !username) return text;
-
-    const mentionPattern = new RegExp(`(@${username})`, 'gi');
-    const match = mentionPattern.exec(text);
-
-    if (!match) return text;
-
-    const mentionIndex = match.index;
-    const contextStart = Math.max(0, mentionIndex - 50); // 50 caracteres antes
-    const contextEnd = Math.min(text.length, mentionIndex + username.length + 50); // 50 caracteres después
-
-    let extractedText = text.substring(contextStart, contextEnd);
-
-    // Agregar "..." si hay más texto antes/después
-    if (contextStart > 0) extractedText = '...' + extractedText;
-    if (contextEnd < text.length) extractedText = extractedText + '...';
-
-    return extractedText;
-  }
+extractMentionContext(text, username) {
+  // ✅ DEVOLVER TEXTO COMPLETO SIN TRUNCAR
+  return text || '';
+}
   // Mostrar modal simplificado con la mención
-  showMentionModal(notification) {
-    console.log('🎪 Mostrando modal simplificado para:', notification);
+ showMentionModal(notification) {
+  console.log('🎪 Mostrando modal simplificado para:', notification);
 
-    const modal = document.getElementById('mention-modal');
-    const title = document.getElementById('mention-modal-title');
-    const content = document.getElementById('mention-modal-content');
-    const timestamp = document.getElementById('mention-timestamp');
-    const closeBtn = document.getElementById('mention-modal-close-btn');
+  const modal = document.getElementById('mention-modal');
+  const title = document.getElementById('mention-modal-title');
+  const content = document.getElementById('mention-modal-content');
+  const timestamp = document.getElementById('mention-timestamp');
 
-    if (!modal) {
-      console.error('❌ No se encontró el modal');
-      return;
-    }
-
-    // Guardar la notificación actual
-    this.currentMentionNotification = notification;
-
-    // Configurar contenido del modal
-    const senderName = notification.sender?.username || 'Usuario';
-    title.textContent = `Mención de ${senderName}`;
-
-    // Extraer solo el texto de la mención (sin el "te mencionó")
-    let mentionText = '';
-    if (notification.metadata?.originalText) {
-      // Usar el texto original de la metadata
-      mentionText = notification.metadata.originalText;
-    } else if (notification.message) {
-      // Extraer del mensaje: quitar "X te mencionó: " y las comillas
-      mentionText = notification.message
-        .replace(new RegExp(`^${senderName} te mencionó: "`), '')
-        .replace(/"$/, '')
-        .replace(/^Alguien te mencionó: "/, '')
-        .replace(/"$/, '');
-    } else {
-      mentionText = 'Texto no disponible';
-    }
-
-    // Formatear el texto con menciones resaltadas
-    content.innerHTML = this.formatMentionText(mentionText);
-
-    // Solo mostrar la fecha
-    const mentionDate = new Date(notification.metadata?.timestamp || notification.createdAt);
-    timestamp.textContent = `Mencionado el ${mentionDate.toLocaleDateString('es-ES')} a las ${mentionDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-
-    // Marcar como leída
-    this.markAsRead(notification.id);
-
-    // Mostrar modal
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    console.log('✅ Modal simplificado mostrado correctamente');
+  if (!modal) {
+    console.error('❌ No se encontró el modal');
+    return;
   }
 
-  // Formatear texto de mención para resaltar @menciones (versión mejorada)
-  formatMentionText(text) {
-    if (!text) return '<p class="text-gray-500 italic">Texto no disponible</p>';
+  this.currentMentionNotification = notification;
 
-    // Resaltar menciones @usuario con mejor estilo
-    const formattedText = text.replace(/@(\w+)/g, '<span class="bg-yellow-200 dark:bg-yellow-600 px-1 rounded font-semibold border border-yellow-300 dark:border-yellow-500">@$1</span>');
+  const senderName = notification.sender?.username || 'Usuario';
+  title.textContent = `Mención de ${senderName}`;
 
-    // Preservar saltos de línea y espacios
-    const withLineBreaks = formattedText
-      .replace(/\n/g, '<br>')
-      .replace(/  /g, ' &nbsp;');
-
-    return `<div class="whitespace-pre-wrap break-words">${withLineBreaks}</div>`;
+  // ✅ PRIORIDADES MEJORADAS para obtener texto completo
+  let mentionText = '';
+  
+  // Prioridad 1: metadata.originalText (texto completo)
+  if (notification.metadata?.originalText) {
+    mentionText = notification.metadata.originalText;
+    console.log('📝 Usando originalText completo:', mentionText.length, 'caracteres');
+  } 
+  // Prioridad 2: metadata.modalContent
+  else if (notification.metadata?.modalContent) {
+    mentionText = notification.metadata.modalContent;
+    console.log('📝 Usando modalContent:', mentionText.length, 'caracteres');
+  }
+  // Prioridad 3: metadata.highlightText
+  else if (notification.metadata?.highlightText) {
+    mentionText = notification.metadata.highlightText;
+    console.log('📝 Usando highlightText:', mentionText.length, 'caracteres');
+  }
+  // Prioridad 4: Extraer del mensaje (quitando el prefijo)
+  else if (notification.message) {
+    // Eliminar el prefijo "X te mencionó: " y las comillas
+    mentionText = notification.message
+      .replace(/^.* te mencionó: "/, '')  // Quitar prefijo
+      .replace(/"$/, '');                  // Quitar comillas finales
+    console.log('📝 Usando message procesado:', mentionText.length, 'caracteres');
+  } 
+  else {
+    mentionText = 'Texto no disponible';
+    console.warn('❌ No se encontró texto para mostrar');
   }
 
+  // ✅ Formatear el texto completo
+  content.innerHTML = this.formatMentionText(mentionText);
+
+  const mentionDate = new Date(notification.metadata?.timestamp || notification.createdAt);
+  timestamp.textContent = `Mencionado el ${mentionDate.toLocaleDateString('es-ES')} a las ${mentionDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+
+  this.markAsRead(notification.id);
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  console.log('✅ Modal mostrado con texto completo de', mentionText.length, 'caracteres');
+}
+
+formatMentionText(text) {
+  if (!text) return '<p class="text-gray-500 italic">Texto no disponible</p>';
+
+  // Resaltar menciones @usuario
+  const formattedText = text.replace(
+    /@(\w+)/g, 
+    '<span class="bg-yellow-200 dark:bg-yellow-600 px-1 rounded font-semibold border border-yellow-300 dark:border-yellow-500">@$1</span>'
+  );
+
+  // Preservar saltos de línea y espacios
+  const withLineBreaks = formattedText
+    .replace(/\n/g, '<br>')
+    .replace(/  /g, ' &nbsp;');
+
+  // ✅ MEJORADO: Scroll automático y mejor manejo de texto muy largo
+  return `
+    <div class="whitespace-pre-wrap break-words overflow-y-auto max-h-96 pr-2
+                bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700
+                text-sm leading-relaxed">
+      ${withLineBreaks}
+    </div>
+  `;
+}
   // Cerrar modal
   closeMentionModal() {
     const modal = document.getElementById('mention-modal');

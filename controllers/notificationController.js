@@ -20,7 +20,7 @@ function buildSpecificRedirectUrl(context) {
     [urlWithoutHash, existingHash] = baseUrl.split('#');
   }
   
-  // Agregar parámetros para redirección específica - MÁS CONSERVADOR
+  // Agregar parámetros para redirección específica
   const params = new URLSearchParams();
   params.append('_nt', Date.now());
   
@@ -42,10 +42,9 @@ function buildSpecificRedirectUrl(context) {
     hasQueryParams = true;
   }
   
-  // LIMITAR texto a mostrar (máximo 30 caracteres)
+  // ✅ ELIMINAR TRUNCAMIENTO - texto completo
   if (effectiveMetadata.highlightText) {
-    const shortText = effectiveMetadata.highlightText.substring(0, 30);
-    const encodedText = encodeURIComponent(shortText);
+    const encodedText = encodeURIComponent(effectiveMetadata.highlightText);
     params.append('ht', encodedText);
     hasQueryParams = true;
   }
@@ -67,13 +66,13 @@ function buildSpecificRedirectUrl(context) {
     finalUrl += '#' + existingHash;
   }
   
-  // ✅ LIMITAR longitud total de URL
-  if (finalUrl.length > 500) {
+  // ✅ AUMENTAR límite de URL si es necesario
+  if (finalUrl.length > 2000) {
     console.warn('⚠️ URL muy larga, truncando:', finalUrl.length);
-    finalUrl = finalUrl.substring(0, 500);
+    finalUrl = finalUrl.substring(0, 2000);
   }
   
-  console.log('🚀 URL FINAL (optimizada):', finalUrl.length, 'caracteres');
+  console.log('🚀 URL FINAL (sin truncar texto):', finalUrl.length, 'caracteres');
   return finalUrl;
 }
 
@@ -171,30 +170,26 @@ const processMentionsFromForm = async (req, res) => {
 
     // CREAR CONTEXTO MEJORADO con información específica para mostrar el texto
     const enhancedContext = {
-      senderName: parsedContext.senderName || senderName,
-      section: parsedContext.section || 'general',
-      redirectUrl: parsedContext.redirectUrl || '/',
-      metadata: {
-        ...parsedContext.metadata,
-        // AGREGAR targetElement AUTOMÁTICAMENTE si tenemos productId
-        targetElement: parsedContext.metadata?.targetElement || 
-                      (parsedContext.metadata?.productId ? `product-${parsedContext.metadata.productId}` : undefined),
-        // Asegurar que tenemos productId
-        productId: parsedContext.metadata?.productId,
-        productName: parsedContext.metadata?.productName,
-        productSKU: parsedContext.metadata?.productSKU,
-        // INFORMACIÓN ESPECÍFICA PARA MOSTRAR EL TEXTO
-        mentionText: text, // Texto completo donde ocurrió la mención
-        mentionType: 'note', // Tipo de mención (note, comment, etc.)
-        highlightText: text?.substring(0, 100), // Texto a resaltar
-        // Información adicional PARA EL MODAL
-        timestamp: new Date().toISOString(),
-        originalText: text?.substring(0, 500),
-        showInModal: true,
-        modalTitle: `Mención de ${senderName}`,
-        modalContent: text
-      }
-    };
+  senderName: parsedContext.senderName || senderName,
+  section: parsedContext.section || 'general',
+  redirectUrl: parsedContext.redirectUrl || '/',
+  metadata: {
+    ...parsedContext.metadata,
+    targetElement: parsedContext.metadata?.targetElement || 
+                  (parsedContext.metadata?.productId ? `product-${parsedContext.metadata.productId}` : undefined),
+    productId: parsedContext.metadata?.productId,
+    productName: parsedContext.metadata?.productName,
+    productSKU: parsedContext.metadata?.productSKU,
+    mentionText: text, // ✅ Texto completo
+    mentionType: 'note',
+    highlightText: text, // ✅ Texto completo (sin substring)
+    timestamp: new Date().toISOString(),
+    originalText: text, // ✅ Texto completo
+    showInModal: true,
+    modalTitle: `Mención de ${senderName}`,
+    modalContent: text // ✅ Texto completo
+  }
+};
 
     console.log('🔄 Contexto mejorado:', enhancedContext);
 
@@ -249,7 +244,11 @@ const getNotificationStats = async (req, res) => {
 
 const createNotification = async (notificationData) => {
   try {
-    console.log('🎯 Creating notification with data:', notificationData);
+    console.log('🎯 Creating notification with data:', {
+      message: notificationData.message,
+      messageLength: notificationData.message?.length,
+      metadata: notificationData.metadata
+    });
     
     const {
       recipientId,
@@ -259,6 +258,10 @@ const createNotification = async (notificationData) => {
       redirectUrl = null,
       metadata = null
     } = notificationData;
+
+    // Verificar longitud del mensaje ANTES de crear
+    console.log('📏 Message length before creation:', message?.length);
+    console.log('📝 Message preview:', message?.substring(0, 200) + '...');
 
     // Verificar que el receptor existe
     const recipient = await User.findByPk(recipientId);
@@ -272,21 +275,22 @@ const createNotification = async (notificationData) => {
       return null;
     }
 
-    // ✅ SOLUCIÓN TEMPORAL: Truncar URL si es muy larga
-    const truncatedRedirectUrl = redirectUrl && redirectUrl.length > 255 
-      ? redirectUrl.substring(0, 255)
-      : redirectUrl;
-
     const notification = await Notification.create({
       recipientId,
       senderId,
       type,
-      message,
-      redirectUrl: truncatedRedirectUrl, // Usar URL truncada
+      message, // ✅ Este es el mensaje que puede estar truncándose
+      redirectUrl,
       metadata
     });
 
-    console.log('✅ Notification created:', notification.id);
+    // Verificar mensaje DESPUÉS de crear
+    console.log('✅ Notification created:', {
+      id: notification.id,
+      messageLength: notification.message?.length,
+      messagePreview: notification.message?.substring(0, 200) + '...'
+    });
+
     return notification;
   } catch (error) {
     console.error('❌ Error creating notification:', error);
@@ -294,7 +298,6 @@ const createNotification = async (notificationData) => {
     throw error;
   }
 };
-
 const processMentions = async (text, senderId, context = {}) => {
   try {
     console.log('🎯 DEBUG processMentions - INICIO');
@@ -324,40 +327,35 @@ const processMentions = async (text, senderId, context = {}) => {
     console.log('👤 Usuarios encontrados en BD:', mentionedUsers.map(u => u.username));
 
     const toCreate = mentionedUsers.map((user) => {
-      // INCLUIR INFORMACIÓN COMPLETA PARA EL MODAL
-      const notificationData = {
-        recipientId: user.uuid,
-        senderId,
-        type: 'mention',
-        message: `${context.senderName || 'Alguien'} te mencionó: "${text.length > 100 ? text.substring(0, 100) + '...' : text}"`,
-        redirectUrl: buildSpecificRedirectUrl(context),
-        metadata: { 
-          originalText: text, 
-          context: context.section || 'general',
-          targetElement: context.metadata?.targetElement,
-          scrollTo: context.metadata?.scrollTo,
-          highlight: context.metadata?.highlight,
-          productId: context.metadata?.productId,
-          productName: context.metadata?.productName,
-          productSKU: context.metadata?.productSKU,
-          mentionType: context.metadata?.mentionType || 'note',
-          timestamp: context.metadata?.timestamp || new Date().toISOString(),
-          senderName: context.senderName,
-          // INFORMACIÓN ESPECÍFICA PARA EL MODAL
-          showInModal: true,
-          modalTitle: `Mención de ${context.senderName || 'usuario'}`,
-          modalContent: text,
-          ...(context.metadata || {})
-        }
-      };
-      
-      console.log('📨 Notificación a crear:', {
-        recipient: user.username,
-        metadata: notificationData.metadata
-      });
-      
-      return notificationData;
-    });
+  const notificationData = {
+    recipientId: user.uuid,
+    senderId,
+    type: 'mention',
+    // ✅ TEXTO COMPLETO - eliminar cualquier substring
+    message: `${context.senderName || 'Alguien'} te mencionó: "${text}"`,
+    redirectUrl: buildSpecificRedirectUrl(context),
+    metadata: { 
+      originalText: text, // ✅ Texto completo
+      context: context.section || 'general',
+      targetElement: context.metadata?.targetElement,
+      scrollTo: context.metadata?.scrollTo,
+      highlight: context.metadata?.highlight,
+      productId: context.metadata?.productId,
+      productName: context.metadata?.productName,
+      productSKU: context.metadata?.productSKU,
+      mentionType: context.metadata?.mentionType || 'note',
+      timestamp: context.metadata?.timestamp || new Date().toISOString(),
+      senderName: context.senderName,
+      showInModal: true,
+      modalTitle: `Mención de ${context.senderName || 'usuario'}`,
+      modalContent: text, // ✅ Texto completo
+      highlightText: text, // ✅ Texto completo para búsqueda
+      ...(context.metadata || {})
+    }
+  };
+  
+  return notificationData;
+});
 
     const notifications = [];
     for (const data of toCreate) {
