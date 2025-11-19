@@ -419,7 +419,7 @@ class NotificationSystem {
               </button>
             </div>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words">
+          <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words ">
     ${notification.message}
 </p>
 
