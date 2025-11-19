@@ -10,7 +10,7 @@ class NotificationSystem {
 
   async init() {
     console.log('🎯 NotificationSystem inicializando...');
-    
+
     // Debug: verificar que el modal existe
     const modal = document.getElementById('mention-modal');
     console.log('🔍 Modal encontrado:', !!modal);
@@ -106,8 +106,8 @@ class NotificationSystem {
     });
   }
 
-// Configurar eventos del modal simplificado
-setupModalEvents() {
+  // Configurar eventos del modal simplificado
+  setupModalEvents() {
     const modal = document.getElementById('mention-modal');
     const closeBtn = document.getElementById('mention-modal-close');
     const closeBtn2 = document.getElementById('mention-modal-close-btn');
@@ -116,27 +116,27 @@ setupModalEvents() {
 
     // Cerrar modal (ambos botones)
     [closeBtn, closeBtn2].forEach(btn => {
-        btn?.addEventListener('click', () => {
-            this.closeMentionModal();
-        });
+      btn?.addEventListener('click', () => {
+        this.closeMentionModal();
+      });
     });
 
     // Cerrar modal con Escape
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-            this.closeMentionModal();
-        }
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        this.closeMentionModal();
+      }
     });
 
     // Cerrar modal al hacer clic fuera
     modal?.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            this.closeMentionModal();
-        }
+      if (e.target === modal) {
+        this.closeMentionModal();
+      }
     });
 
     console.log('✅ Eventos del modal simplificado configurados');
-}
+  }
 
   // Cargar usuarios disponibles para etiquetado
   async loadAvailableUsers() {
@@ -154,7 +154,7 @@ setupModalEvents() {
   // Configurar sistema de menciones global
   setupMentionSystem() {
     const textElements = document.querySelectorAll('textarea, input[type="text"]');
-    
+
     textElements.forEach(element => {
       this.addMentionSupport(element);
     });
@@ -178,7 +178,7 @@ setupModalEvents() {
   // Agregar soporte de menciones a un elemento
   addMentionSupport(element) {
     if (element.dataset.mentionsEnabled) return;
-    
+
     element.dataset.mentionsEnabled = 'true';
 
     element.addEventListener('input', (e) => {
@@ -221,14 +221,14 @@ setupModalEvents() {
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      const next = activeSuggestion ? 
-        activeSuggestion.nextElementSibling || suggestions[0] : 
+      const next = activeSuggestion ?
+        activeSuggestion.nextElementSibling || suggestions[0] :
         suggestions[0];
       this.setActiveSuggestion(dropdown, next);
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
-      const prev = activeSuggestion ? 
-        activeSuggestion.previousElementSibling || suggestions[suggestions.length - 1] : 
+      const prev = activeSuggestion ?
+        activeSuggestion.previousElementSibling || suggestions[suggestions.length - 1] :
         suggestions[suggestions.length - 1];
       this.setActiveSuggestion(dropdown, prev);
     } else if (event.key === 'Enter' && activeSuggestion) {
@@ -254,7 +254,7 @@ setupModalEvents() {
     if (!dropdown) {
       dropdown = document.createElement('div');
       dropdown.className = 'mention-dropdown absolute z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto hidden';
-      
+
       element.parentElement.style.position = 'relative';
       element.parentElement.appendChild(dropdown);
     }
@@ -360,7 +360,7 @@ setupModalEvents() {
       const data = await response.json();
       const notificationList = document.getElementById('notification-list');
       const loadMoreBtn = document.getElementById('load-more-notifications');
-      
+
       if (page === 1) {
         notificationList.innerHTML = '';
       }
@@ -393,7 +393,7 @@ setupModalEvents() {
     const div = document.createElement('div');
     div.className = `notification-item p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200 ${!notification.isRead ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`;
     div.dataset.notificationId = notification.id;
-    
+
     // GUARDAR DATOS COMPLETOS PARA EL MODAL
     div.dataset.notificationData = JSON.stringify(notification);
 
@@ -419,9 +419,10 @@ setupModalEvents() {
               </button>
             </div>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-            ${notification.message}
-          </p>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words">
+    ${notification.message}
+</p>
+
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
             ${timeAgo}
           </p>
@@ -446,44 +447,44 @@ setupModalEvents() {
     return div;
   }
 
- // Manejar clic en notificación
-// Manejar clic en notificación - VERSIÓN SIMPLIFICADA
-handleNotificationClick(notification) {
-  console.log('🖱️ Clic en notificación:', notification);
-  
-  // ✅ SOLUCIÓN TEMPORAL: Mostrar modal para TODAS las menciones
-  if (notification.type === 'mention') {
-    console.log('🎯 Mostrando modal para mención');
-    this.showMentionModal(notification);
-  } else {
-    console.log('🔗 Redirección normal para notificación');
-    this.markAsRead(notification.id, notification.redirectUrl);
+  // Manejar clic en notificación
+  // Manejar clic en notificación - VERSIÓN SIMPLIFICADA
+  handleNotificationClick(notification) {
+    console.log('🖱️ Clic en notificación:', notification);
+
+    // ✅ SOLUCIÓN TEMPORAL: Mostrar modal para TODAS las menciones
+    if (notification.type === 'mention') {
+      console.log('🎯 Mostrando modal para mención');
+      this.showMentionModal(notification);
+    } else {
+      console.log('🔗 Redirección normal para notificación');
+      this.markAsRead(notification.id, notification.redirectUrl);
+    }
   }
-}
   extractMentionContext(text, username) {
     if (!text || !username) return text;
-    
+
     const mentionPattern = new RegExp(`(@${username})`, 'gi');
     const match = mentionPattern.exec(text);
-    
+
     if (!match) return text;
-    
+
     const mentionIndex = match.index;
     const contextStart = Math.max(0, mentionIndex - 50); // 50 caracteres antes
     const contextEnd = Math.min(text.length, mentionIndex + username.length + 50); // 50 caracteres después
-    
+
     let extractedText = text.substring(contextStart, contextEnd);
-    
+
     // Agregar "..." si hay más texto antes/después
     if (contextStart > 0) extractedText = '...' + extractedText;
     if (contextEnd < text.length) extractedText = extractedText + '...';
-    
+
     return extractedText;
-}
-// Mostrar modal simplificado con la mención
-showMentionModal(notification) {
+  }
+  // Mostrar modal simplificado con la mención
+  showMentionModal(notification) {
     console.log('🎪 Mostrando modal simplificado para:', notification);
-    
+
     const modal = document.getElementById('mention-modal');
     const title = document.getElementById('mention-modal-title');
     const content = document.getElementById('mention-modal-content');
@@ -491,8 +492,8 @@ showMentionModal(notification) {
     const closeBtn = document.getElementById('mention-modal-close-btn');
 
     if (!modal) {
-        console.error('❌ No se encontró el modal');
-        return;
+      console.error('❌ No se encontró el modal');
+      return;
     }
 
     // Guardar la notificación actual
@@ -501,23 +502,23 @@ showMentionModal(notification) {
     // Configurar contenido del modal
     const senderName = notification.sender?.username || 'Usuario';
     title.textContent = `Mención de ${senderName}`;
-    
+
     // Extraer solo el texto de la mención (sin el "te mencionó")
     let mentionText = '';
     if (notification.metadata?.originalText) {
-        // Usar el texto original de la metadata
-        mentionText = notification.metadata.originalText;
+      // Usar el texto original de la metadata
+      mentionText = notification.metadata.originalText;
     } else if (notification.message) {
-        // Extraer del mensaje: quitar "X te mencionó: " y las comillas
-        mentionText = notification.message
-            .replace(new RegExp(`^${senderName} te mencionó: "`), '')
-            .replace(/"$/, '')
-            .replace(/^Alguien te mencionó: "/, '')
-            .replace(/"$/, '');
+      // Extraer del mensaje: quitar "X te mencionó: " y las comillas
+      mentionText = notification.message
+        .replace(new RegExp(`^${senderName} te mencionó: "`), '')
+        .replace(/"$/, '')
+        .replace(/^Alguien te mencionó: "/, '')
+        .replace(/"$/, '');
     } else {
-        mentionText = 'Texto no disponible';
+      mentionText = 'Texto no disponible';
     }
-    
+
     // Formatear el texto con menciones resaltadas
     content.innerHTML = this.formatMentionText(mentionText);
 
@@ -531,48 +532,48 @@ showMentionModal(notification) {
     // Mostrar modal
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    
-    console.log('✅ Modal simplificado mostrado correctamente');
-}
 
-// Formatear texto de mención para resaltar @menciones (versión mejorada)
-formatMentionText(text) {
+    console.log('✅ Modal simplificado mostrado correctamente');
+  }
+
+  // Formatear texto de mención para resaltar @menciones (versión mejorada)
+  formatMentionText(text) {
     if (!text) return '<p class="text-gray-500 italic">Texto no disponible</p>';
-    
+
     // Resaltar menciones @usuario con mejor estilo
     const formattedText = text.replace(/@(\w+)/g, '<span class="bg-yellow-200 dark:bg-yellow-600 px-1 rounded font-semibold border border-yellow-300 dark:border-yellow-500">@$1</span>');
-    
+
     // Preservar saltos de línea y espacios
     const withLineBreaks = formattedText
-        .replace(/\n/g, '<br>')
-        .replace(/  /g, ' &nbsp;');
-    
+      .replace(/\n/g, '<br>')
+      .replace(/  /g, ' &nbsp;');
+
     return `<div class="whitespace-pre-wrap break-words">${withLineBreaks}</div>`;
-}
+  }
 
   // Cerrar modal
   closeMentionModal() {
     const modal = document.getElementById('mention-modal');
     if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-        this.currentMentionNotification = null;
-        console.log('✅ Modal cerrado');
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      this.currentMentionNotification = null;
+      console.log('✅ Modal cerrado');
     }
-}
+  }
 
   // Navegar al contexto de la mención
   navigateToMentionContext() {
     if (this.currentMentionNotification?.redirectUrl) {
       console.log('🧭 Navegando al contexto:', this.currentMentionNotification.redirectUrl);
-      
+
       // Cerrar modal y dropdown
       this.closeMentionModal();
       const dropdown = document.getElementById('notification-dropdown');
       if (dropdown) {
         dropdown.classList.add('hidden');
       }
-      
+
       // Navegar a la URL
       window.location.href = this.currentMentionNotification.redirectUrl;
     }
@@ -581,13 +582,13 @@ formatMentionText(text) {
   // Formatear texto de mención para resaltar @menciones
   formatMentionText(text) {
     if (!text) return '<p class="text-gray-500">Texto no disponible</p>';
-    
+
     // Resaltar menciones @usuario
     const formattedText = text.replace(/@(\w+)/g, '<span class="bg-yellow-100 dark:bg-yellow-800 px-1 rounded font-medium">@$1</span>');
-    
+
     // Preservar saltos de línea
     const withLineBreaks = formattedText.replace(/\n/g, '<br>');
-    
+
     return `<div class="text-gray-700 dark:text-gray-300 leading-relaxed">${withLineBreaks}</div>`;
   }
 
@@ -595,12 +596,12 @@ formatMentionText(text) {
   getContextDisplayName(context) {
     const contextMap = {
       'products': 'Productos',
-      'productos': 'Productos', 
+      'productos': 'Productos',
       'suppliers': 'Proveedores',
       'general': 'General',
       'formulario': 'Formulario'
     };
-    
+
     return contextMap[context] || context || 'General';
   }
 
@@ -613,7 +614,7 @@ formatMentionText(text) {
     if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)} min`;
     if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)} h`;
     if (diffInSeconds < 2592000) return `Hace ${Math.floor(diffInSeconds / 86400)} días`;
-    
+
     return date.toLocaleDateString();
   }
 
@@ -639,7 +640,7 @@ formatMentionText(text) {
 
         // Actualizar contador
         this.loadUnreadCount();
-        
+
         console.log('✅ Notificación marcada como leída:', notificationId);
       }
     } catch (error) {
@@ -689,7 +690,7 @@ formatMentionText(text) {
         if (notificationList.children.length === 0) {
           notificationList.innerHTML = '<div class="p-4 text-center text-gray-500 dark:text-gray-400">No tienes notificaciones</div>';
         }
-        
+
         console.log('🗑️ Notificación eliminada:', notificationId);
       }
     } catch (error) {
@@ -717,7 +718,7 @@ formatMentionText(text) {
   processMentionsInForm(formData, context = {}) {
     const mentionRegex = /@(\w+)/g;
     const mentions = [];
-    
+
     for (const [key, value] of formData.entries()) {
       if (typeof value === 'string') {
         let match;
