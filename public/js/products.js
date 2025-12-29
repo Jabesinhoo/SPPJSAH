@@ -851,6 +851,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100';
             case 'Descontinuado':
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+            case 'Reemplazado':
+                return 'bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-100'; 
             default:
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
         }
@@ -1454,19 +1456,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (action) {
             case 'change-category':
-                title.textContent = 'Cambiar Categoría';
-                modalContent = `
-  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
-  <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-    <option value="Faltantes">Faltantes</option>
-    <option value="Bajo Pedido">Bajo Pedido</option>
-    <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
-    <option value="Demasiadas Existencias">Demasiadas Existencias</option>
-    <option value="Descontinuado">Descontinuado</option>
-    ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
-  </select>
-`;
-                break;
+  title.textContent = 'Cambiar Categoría';
+  modalContent = `
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
+    <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+      <option value="Faltantes">Faltantes</option>
+      <option value="Bajo Pedido">Bajo Pedido</option>
+      <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+      <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+      <option value="Descontinuado">Descontinuado</option>
+      <option value="REEMPLAZADO">Reemplazado</option> <!-- ← Nueva opción -->
+      ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
+    </select>
+  `;
+  break;
 
             case 'change-ready':
                 title.textContent = 'Cambiar Estado "Listo"';

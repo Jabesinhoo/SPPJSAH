@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         pink: { light: '#EC4899', dark: '#F472B6' },
         cyan: { light: '#06B6D4', dark: '#22D3EE' },
         lime: { light: '#84CC16', dark: '#A3E635' },
-        gray: { light: '#6B7280', dark: '#9CA3AF' } // ← Nuevo color para Descontinuado
+        gray: { light: '#6B7280', dark: '#9CA3AF' }, // ← Nuevo color para Descontinuado
+        teal: { light: '#14B8A6', dark: '#2DD4BF' }, // ← Agregar color para REEMPLAZADO
+
     };
 
     // Determinar si estamos en modo oscuro
@@ -260,11 +262,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Agotados con el Proveedor': getColor('orange'),
             'Demasiadas Existencias': getColor('purple'),
             'Realizado': getColor('green'),
-            'Descontinuado': getColor('gray') // ← Color para la nueva categoría
+            'Descontinuado': getColor('gray'), // ← Color para la nueva categoría
+            'Reemplazado': getColor('teal'), // ← Agregar color para REEMPLAZADO
+
         };
 
         // Ordenar las categorías para consistencia en el gráfico
-        const categoryOrder = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado'];
+        const categoryOrder = ['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'Reemplazado'];
         const sortedStats = generalStats.sort((a, b) => {
             return categoryOrder.indexOf(a.categoria) - categoryOrder.indexOf(b.categoria);
         });

@@ -47,16 +47,16 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     categoria: {
-      type: DataTypes.ENUM('Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado'),
-      allowNull: false,
-      defaultValue: 'Faltantes',
-      validate: {
-        isIn: {
-          args: [['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado']],
-          msg: 'La categoría debe ser una de las opciones válidas'
-        }
-      }
-    },
+  type: DataTypes.ENUM('Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'Reemplazado'), // ← Agregado REEMPLAZADO
+  allowNull: false,
+  defaultValue: 'Faltantes',
+  validate: {
+    isIn: {
+      args: [['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'Reemplazado']], // ← Agregado REEMPLAZADO
+      msg: 'La categoría debe ser una de las opciones válidas'
+    }
+  }
+},
     fecha: {
       type: DataTypes.DATE,
       allowNull: false,

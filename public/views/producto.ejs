@@ -50,15 +50,16 @@
             <label for="filter-category" class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por
                 Categoría:</label>
             <select id="filter-category"
-                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                <option value="">Todas</option>
-                <option value="Faltantes">Faltantes</option>
-                <option value="Bajo Pedido">Bajo Pedido</option>
-                <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
-                <option value="Demasiadas Existencias">Demasiadas Existencias</option>
-                <option value="Realizado">Realizado</option>
-                  <option value="Descontinuado">Descontinuado</option> 
-            </select>
+  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+  <option value="">Todas</option>
+  <option value="Faltantes">Faltantes</option>
+  <option value="Bajo Pedido">Bajo Pedido</option>
+  <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+  <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+  <option value="Realizado">Realizado</option>
+  <option value="Descontinuado">Descontinuado</option>
+  <option value="REEMPLAZADO">Reemplazado</option> 
+</select>
         </div>
 
         <div class="flex-grow w-full sm:w-auto">
@@ -408,31 +409,25 @@
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
                                                 <% if (userRole==='admin' ) { %>
                                                     <select id="category" name="category"
-                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                                                        <option value="Faltantes">Faltantes</option>
-                                                        <option value="Bajo Pedido">Bajo Pedido</option>
-                                                        <option value="Agotados con el Proveedor">Agotados con el
-                                                            Proveedor
-                                                        </option>
-                                                        <option value="Demasiadas Existencias">Demasiadas Existencias
-                                                        </option>
-                                                          <option value="Descontinuado">Descontinuado</option> <!-- ← Nueva opción -->
-
-
-                                                        <option value="Realizado">Realizado</option>
-                                                    </select>
+  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+  <option value="Faltantes">Faltantes</option>
+  <option value="Bajo Pedido">Bajo Pedido</option>
+  <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+  <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+  <option value="Descontinuado">Descontinuado</option>
+  <option value="REEMPLAZADO">Reemplazado</option> <!-- ← Nueva opción -->
+  <option value="Realizado">Realizado</option>
+</select>
                                                     <% } else { %>
                                                         <select id="category" name="category"
-                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                                                            <option value="Faltantes">Faltantes</option>
-                                                            <option value="Bajo Pedido">Bajo Pedido</option>
-                                                            <option value="Agotados con el Proveedor">Agotados con el
-                                                                Proveedor
-                                                            </option>
-                                                            <option value="Demasiadas Existencias">Demasiadas
-                                                                Existencias
-                                                            </option>
-                                                        </select>
+  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+  <option value="Faltantes">Faltantes</option>
+  <option value="Bajo Pedido">Bajo Pedido</option>
+  <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+  <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+  <option value="Descontinuado">Descontinuado</option>
+  <option value="REEMPLAZADO">Reemplazado</option> <!-- ← Nueva opción -->
+</select>
                                                         <% } %>
                                             </div>
                                             <% if (userRole==='admin' ) { %>
