@@ -6,7 +6,7 @@ module.exports = {
       ALTER TABLE products 
       DROP CONSTRAINT "products_categoria_check",
       ADD CONSTRAINT "products_categoria_check" 
-      CHECK (categoria IN ('Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'REEMPLAZADO'))
+      CHECK (categoria IN ('Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'Reemplazado'))
     `);
     
     // O para SQLite/MySQL:
