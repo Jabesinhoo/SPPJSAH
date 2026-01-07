@@ -235,14 +235,14 @@ document.addEventListener('DOMContentLoaded', () => {
             notes.forEach((note, index) => {
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'p-3 my-2 rounded-md bg-gray-100 dark:bg-gray-600 border-l-4 border-indigo-500 relative group';
-                
+
                 // ✅ MEJORA: Agregar IDs únicos y data attributes para búsqueda
                 const noteUniqueId = productId ? `note-${productId}-${index}` : `note-${index}`;
                 noteDiv.id = noteUniqueId;
                 noteDiv.setAttribute('data-note', 'true');
                 noteDiv.setAttribute('data-product-id', productId || '');
                 noteDiv.setAttribute('data-note-index', index);
-                
+
                 // Formatear fecha y hora
                 const noteDate = new Date(note.date);
                 const formattedDate = noteDate.toLocaleDateString();
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ✅ MEJORA: Procesar menciones manteniendo el texto original
                 let noteText = note.text;
                 const mentionRegex = /@(\w+)/g;
-                const processedNoteText = noteText.replace(mentionRegex, 
+                const processedNoteText = noteText.replace(mentionRegex,
                     '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded font-medium mention-tag">@$1</span>'
                 );
 
@@ -328,18 +328,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ordenar notas por fecha (más reciente primero)
         const sortedNotes = [...notes].sort((a, b) => new Date(b.date) - new Date(a.date));
-        
+
         return sortedNotes.map((note, index) => {
             const noteId = `table-note-${productId}-${index}`;
             const date = new Date(note.date).toLocaleString('es-ES');
-            
+
             // ✅ MEJORA: Procesar menciones y agregar estructura identificable
             let noteText = note.text;
             const mentionRegex = /@(\w+)/g;
-            const processedNoteText = noteText.replace(mentionRegex, 
+            const processedNoteText = noteText.replace(mentionRegex,
                 '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded text-xs mention-tag">@$1</span>'
             );
-            
+
             return `
                 <div id="${noteId}" class="note-item mb-2 p-2 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700" 
                      data-note="true" data-product-id="${productId}" data-original-text="${escapeHtml(noteText)}">
@@ -400,27 +400,36 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Muestra un mensaje al usuario.
      */
-    const showMessage = (message, type) => {
-        let messageContainer = document.getElementById('message-container');
-        if (!messageContainer) {
-            messageContainer = document.createElement('div');
-            messageContainer.id = 'message-container';
-            messageContainer.className = 'fixed top-4 right-4 z-50';
-            document.body.appendChild(messageContainer);
-        }
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `p-4 rounded-md shadow-lg mb-2 ${type === 'success'
-            ? 'bg-green-100 text-green-800 border-green-200'
-            : 'bg-red-100 text-red-800 border-red-200'} border`;
-        messageDiv.textContent = message;
-
-        messageContainer.appendChild(messageDiv);
-
-        setTimeout(() => {
-            messageDiv.remove();
-        }, 5000);
-    };
+    // Asegúrate de tener esta función en products.js
+const showMessage = (message, type = 'info') => {
+    // Eliminar mensajes anteriores
+    const existingMessages = document.querySelectorAll('.global-message');
+    existingMessages.forEach(msg => msg.remove());
+    
+    // Crear nuevo mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `global-message fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-0 opacity-100 ${
+        type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+        type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+        'bg-blue-100 text-blue-800 border border-blue-200'
+    }`;
+    
+    messageDiv.innerHTML = `
+        <div class="flex items-center">
+            ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+            <span class="ml-2 font-medium">${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+        messageDiv.style.transform = 'translateX(100%)';
+        messageDiv.style.opacity = '0';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 5000);
+};
 
     /**
      * Actualiza la visualización de las estrellas de importancia.
@@ -852,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'Descontinuado':
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
             case 'Reemplazado':
-                return 'bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-100'; 
+                return 'bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-100';
             default:
                 return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
         }
@@ -1116,53 +1125,87 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // ✅ MEJORA: Crear modal con estructura identificable
+                // En products.js, modifica la función initExcelExport o el modal HTML
                 const modalHtml = `
-                    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-96 overflow-y-auto">
-                            <div class="p-6">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                        Notas del Producto: ${product.nombre}
-                                    </h3>
-                                    <button onclick="this.closest('.fixed').remove()" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <div class="space-y-3" id="modal-notes-container" data-product-id="${productId}">
-                                    ${notes.length > 0 ? notes.map((note, index) => {
-                                        const noteId = `modal-note-${productId}-${index}`;
-                                        const noteDate = new Date(note.date);
-                                        const formattedDate = noteDate.toLocaleDateString();
-                                        const formattedTime = noteDate.toLocaleTimeString();
-                                        
-                                        // Procesar menciones
-                                        let noteText = note.text;
-                                        const mentionRegex = /@(\w+)/g;
-                                        const processedNoteText = noteText.replace(mentionRegex, 
-                                            '<span class="bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1 rounded font-medium mention-tag">@$1</span>'
-                                        );
-                                        
-                                        return `
-                                            <div id="${noteId}" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-md note-item" 
-                                                 data-note="true" data-product-id="${productId}" data-original-text="${escapeHtml(noteText)}">
-                                                <div class="flex justify-between items-start mb-2">
-                                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">${note.user}</p>
-                                                    <div class="text-right">
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400 block">${formattedDate}</span>
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400">${formattedTime}</span>
-                                                    </div>
-                                                </div>
-                                                <p class="text-gray-800 dark:text-gray-200 note-content">${processedNoteText}</p>
-                                            </div>
-                                        `;
-                                    }).join('') : '<p class="text-gray-500 dark:text-gray-400 text-center">No hay notas para este producto.</p>'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+  <div id="export-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Exportar a Excel</h3>
+          <button id="close-export-modal" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+            ✕
+          </button>
+        </div>
+
+        <form id="export-form">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <input type="checkbox" name="applyCurrentFilters" checked class="mr-2">
+                Aplicar filtros actuales de la vista
+              </label>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Filtrar por categoría:
+              </label>
+              <select name="category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <option value="">Todas las categorías</option>
+                <option value="Faltantes">Faltantes</option>
+                <option value="Bajo Pedido">Bajo Pedido</option>
+                <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+                <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+                <option value="Realizado">Realizado</option>
+                <option value="Descontinuado">Descontinuado</option>
+                <option value="Reemplazado">Reemplazado</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <input type="checkbox" name="includeRealizados" checked class="mr-2">
+                Incluir productos "Realizados"
+              </label>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Columnas a incluir:
+              </h4>
+              
+              <div class="space-y-2">
+                <label class="flex items-center">
+                  <input type="checkbox" name="includePurchasePrice" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Precio de compra</span>
+                </label>
+                
+                <label class="flex items-center">
+                  <input type="checkbox" name="includeSupplier" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Proveedor</span>
+                </label>
+                
+                <label class="flex items-center">
+                  <input type="checkbox" name="includeNotes" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Notas</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <button type="button" id="cancel-export" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500">
+              Cancelar
+            </button>
+            <button type="button" id="generate-export" class="px-4 py-2 bg-emerald-600 text-white rounded-md shadow-sm hover:bg-emerald-700">
+              Generar Exportación
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+`;
 
                 document.body.insertAdjacentHTML('beforeend', modalHtml);
             }
@@ -1456,70 +1499,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (action) {
             case 'change-category':
-  title.textContent = 'Cambiar Categoría';
-  modalContent = `
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
-    <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-      <option value="Faltantes">Faltantes</option>
-      <option value="Bajo Pedido">Bajo Pedido</option>
-      <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
-      <option value="Demasiadas Existencias">Demasiadas Existencias</option>
-      <option value="Descontinuado">Descontinuado</option>
-      <option value="REEMPLAZADO">Reemplazado</option> <!-- ← Nueva opción -->
-      ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
-    </select>
-  `;
-  break;
+                title.textContent = 'Cambiar Categoría';
+                modalContent = `
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva categoría:</label>
+                    <select id="bulk-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <option value="Faltantes">Faltantes</option>
+                        <option value="Bajo Pedido">Bajo Pedido</option>
+                        <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+                        <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+                        <option value="Descontinuado">Descontinuado</option>
+                        <option value="Reemplazado">Reemplazado</option>
+                        ${userRole === 'admin' ? '<option value="Realizado">Realizado</option>' : ''}
+                    </select>
+                `;
+                break;
 
             case 'change-ready':
                 title.textContent = 'Cambiar Estado "Listo"';
                 modalContent = `
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo estado:</label>
-                <select id="bulk-ready" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                    <option value="true">Marcar como Listo</option>
-                    <option value="false">Marcar como No Listo</option>
-                </select>
-            `;
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo estado:</label>
+                    <select id="bulk-ready" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <option value="true">Marcar como Listo</option>
+                        <option value="false">Marcar como No Listo</option>
+                    </select>
+                `;
                 break;
 
             case 'change-quantity':
                 title.textContent = 'Cambiar Cantidad';
                 modalContent = `
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva cantidad:</label>
-                <input type="number" id="bulk-quantity" min="0" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-            `;
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva cantidad:</label>
+                    <input type="number" id="bulk-quantity" min="0" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                `;
                 break;
 
             case 'change-importance':
                 title.textContent = 'Cambiar Importancia';
                 modalContent = `
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva importancia (1-5):</label>
-                <input type="number" id="bulk-importance" min="1" max="5" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-            `;
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva importancia (1-5):</label>
+                    <input type="number" id="bulk-importance" min="1" max="5" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                `;
                 break;
 
             case 'change-supplier':
                 title.textContent = 'Cambiar Proveedor';
                 modalContent = `
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo proveedor:</label>
-                <input type="text" id="bulk-supplier" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-            `;
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nuevo proveedor:</label>
+                    <input type="text" id="bulk-supplier" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                `;
                 break;
 
             case 'change-brand':
                 title.textContent = 'Cambiar Marca';
                 modalContent = `
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva marca:</label>
-                <input type="text" id="bulk-brand" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-            `;
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nueva marca:</label>
+                    <input type="text" id="bulk-brand" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                `;
                 break;
 
             case 'delete':
                 title.textContent = 'Eliminar Productos';
                 modalContent = `
-                <p class="text-red-600 dark:text-red-400 font-medium">¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto(s)?</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Esta acción no se puede deshacer.</p>
-            `;
+                    <p class="text-red-600 dark:text-red-400 font-medium">¿Estás seguro de que deseas eliminar ${selectedProducts.size} producto(s)?</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Esta acción no se puede deshacer.</p>
+                `;
                 break;
         }
 
@@ -1877,7 +1920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.classList.add("hidden");
             }
         });
-        
+
         notesContainer.addEventListener('click', (e) => {
             e.stopPropagation();
         });
@@ -1895,11 +1938,152 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+// En products.js, reemplaza la función initExcelExport con esta versión simplificada:
+const initExcelExport = () => {
+    const exportModal = document.getElementById('export-modal');
+    const closeExportModal = document.getElementById('close-export-modal');
+    const cancelExportBtn = document.getElementById('cancel-export');
+    const generateExportBtn = document.getElementById('generate-export');
+    const exportForm = document.getElementById('export-form');
+
+    // Abrir modal
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'export-excel-btn' || e.target.closest('#export-excel-btn')) {
+            if (exportModal) {
+                exportModal.classList.remove('hidden');
+            }
+        }
+    });
+
+    // Cerrar modal
+    if (closeExportModal) {
+        closeExportModal.addEventListener('click', () => {
+            exportModal.classList.add('hidden');
+        });
+    }
+
+    if (cancelExportBtn) {
+        cancelExportBtn.addEventListener('click', () => {
+            exportModal.classList.add('hidden');
+        });
+    }
+
+    // Cerrar modal al hacer clic fuera
+    if (exportModal) {
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                exportModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // Generar exportación
+    if (generateExportBtn) {
+        generateExportBtn.addEventListener('click', async () => {
+            if (!exportForm) return;
+
+            const formData = new FormData(exportForm);
+            const params = new URLSearchParams();
+            
+            // Parámetros básicos
+            const category = formData.get('category');
+            if (category && category !== '') {
+                params.append('category', category);
+            }
+
+            // Campos opcionales - USANDO LOS NOMBRES CORRECTOS
+            if (formData.get('includeCategoria') === 'on') {
+                params.append('includeCategoria', 'true');
+            }
+            
+            if (formData.get('includeImportancia') === 'on') {
+                params.append('includeImportancia', 'true');
+            }
+            
+            if (formData.get('includeEstado') === 'on') {
+                params.append('includeEstado', 'true');
+            }
+            
+            if (formData.get('includeUsuario') === 'on') {
+                params.append('includeUsuario', 'true');
+            }
+            
+            if (formData.get('includeFecha') === 'on') {
+                params.append('includeFecha', 'true');
+            }
+            
+            if (formData.get('includeMarca') === 'on') {
+                params.append('includeMarca', 'true');
+            }
+            
+            if (userRole === 'admin' && formData.get('includePrecioCompra') === 'on') {
+                params.append('includePurchasePrice', 'true');
+            }
+            
+            if (userRole === 'admin' && formData.get('includeProveedor') === 'on') {
+                params.append('includeSupplier', 'true');
+            }
+            
+            if (formData.get('includeNotas') === 'on') {
+                params.append('includeNotes', 'true');
+            }
+
+            // Deshabilitar botón durante la generación
+            const originalText = generateExportBtn.innerHTML;
+            generateExportBtn.disabled = true;
+            generateExportBtn.innerHTML = `
+                <span class="flex items-center">
+                    <svg class="animate-spin h-4 w-4 mr-2 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generando...
+                </span>
+            `;
+
+            try {
+                // Mostrar mensaje de inicio
+                showMessage('Generando archivo Excel...', 'success');
+                
+                // Generar y descargar archivo
+                const url = `/api/excel/export?${params.toString()}`;
+                
+                // Usar window.open para la descarga
+                window.open(url, '_blank');
+                
+                // Cerrar modal
+                setTimeout(() => {
+                    if (exportModal) exportModal.classList.add('hidden');
+                    showMessage('✅ Archivo Excel generado correctamente', 'success');
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error al generar exportación:', error);
+                showMessage('❌ Error al generar la exportación', 'error');
+            } finally {
+                // Restaurar estado del botón
+                setTimeout(() => {
+                    generateExportBtn.disabled = false;
+                    generateExportBtn.innerHTML = originalText;
+                }, 2000);
+            }
+        });
+    }
+
+    // Manejar la tecla ESC para cerrar modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportModal && !exportModal.classList.contains('hidden')) {
+            exportModal.classList.add('hidden');
+        }
+    });
+};
+
     const init = async () => {
         setupSKUautocomplete();
         fetchProducts();
         updateStarDisplay(1);
         await loadAvailableUsers();
+        initExcelExport(); // ← Agrega esta línea
         initHistory(); // ✅ Agregamos inicialización del historial
     };
 

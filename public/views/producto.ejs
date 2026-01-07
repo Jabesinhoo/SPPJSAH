@@ -87,30 +87,40 @@
     </div>
 
     <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de Productos</h2>
-        <% if (userRole && userRole==='admin' ) { %>
-            <div class="flex gap-2">
-                <button id="view-history"
-                    class="px-4 py-2 bg-purple-600 text-white rounded-md shadow hover:bg-purple-700 transition-colors duration-200 flex items-center">
-                    <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Ver Historial de cambios
-                </button>
-                <a href="/products/stats"
-                    class="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 transition-colors duration-200 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20V10"></path>
-                        <path d="M18 20V4"></path>
-                        <path d="M6 20v-4"></path>
-                    </svg>
-                    Ver Estadísticas
-                </a>
-            </div>
-            <% } %>
-    </div>
+    <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Lista de Productos</h2>
+    <% if (userRole && userRole==='admin' ) { %>
+        <div class="flex gap-2">
+            <!-- Botón de Exportación a Excel -->
+            <button id="export-excel-btn"
+                class="px-4 py-2 bg-emerald-600 text-white rounded-md shadow hover:bg-emerald-700 transition-colors duration-200 flex items-center">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Exportar a Excel
+            </button>
+            
+            <button id="view-history"
+                class="px-4 py-2 bg-purple-600 text-white rounded-md shadow hover:bg-purple-700 transition-colors duration-200 flex items-center">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Ver Historial de cambios
+            </button>
+            <a href="/products/stats"
+                class="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 transition-colors duration-200 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20V10"></path>
+                    <path d="M18 20V4"></path>
+                    <path d="M6 20v-4"></path>
+                </svg>
+                Ver Estadísticas
+            </a>
+        </div>
+    <% } %>
+</div>
 
     <% if (userRole && userRole==='admin' ) { %>
         <div
@@ -268,6 +278,7 @@
                                     Acciones</th>
                             </tr>
                         </thead>
+                        
                         <tbody id="products-table-body-user"
                             class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <!-- Las filas se generarán dinámicamente con JavaScript -->
@@ -326,6 +337,125 @@
                                         Acciones</th>
                                 </tr>
                             </thead>
+
+<div id="export-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <svg class="h-5 w-5 inline-block mr-2 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Exportar a Excel
+                </h3>
+                <button id="close-export-modal" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="export-form" class="space-y-4">
+                <!-- Filtro por categoría -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Filtrar por categoría:
+                    </label>
+                    <select name="category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <option value="">Todas las categorías</option>
+                        <option value="Faltantes">Faltantes</option>
+                        <option value="Bajo Pedido">Bajo Pedido</option>
+                        <option value="Agotados con el Proveedor">Agotados con el Proveedor</option>
+                        <option value="Demasiadas Existencias">Demasiadas Existencias</option>
+                        <option value="Realizado">Realizado</option>
+                        <option value="Descontinuado">Descontinuado</option>
+                        <option value="Reemplazado">Reemplazado</option>
+                    </select>
+                </div>
+
+                <!-- Selección de campos -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Campos a incluir:
+                    </label>
+                    <div class="space-y-2">
+                        <!-- Campos siempre incluidos -->
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            Campos básicos (siempre incluidos):
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded text-xs text-gray-600 dark:text-gray-300">
+                            SKU, Nombre, Cantidad
+                        </div>
+
+                        <!-- Campos opcionales -->
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 mt-3">
+                            Campos opcionales:
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeCategoria" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Categoría</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeImportancia" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Importancia</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeEstado" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Estado (Listo)</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeUsuario" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Usuario</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeFecha" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Fecha Creación</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeMarca" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Marca</span>
+                            </label>
+                            
+                            <% if (userRole === 'admin') { %>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includePrecioCompra" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Precio Compra</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeProveedor" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Proveedor</span>
+                            </label>
+                            <% } %>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" name="includeNotas" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Notas</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" id="cancel-export" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:bg-gray-400 dark:hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button type="button" id="generate-export" class="px-4 py-2 bg-emerald-600 text-white rounded-md shadow-sm hover:bg-emerald-700">
+                        Exportar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                             <tbody id="products-table-body-admin"
                                 class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <!-- Las filas se generarán dinámicamente con JavaScript -->

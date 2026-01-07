@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const excelController = require('../controllers/excelController');
 const { createProductValidation, updateProductValidation } = require('../middleware/productValidation');
 const { validationResult } = require('express-validator');
+const excelExportRoutes = require('./excelExportRoutes');
 
 // Middleware global: todas las rutas requieren autenticación
 router.use(authMiddleware.requireAuth);
@@ -82,6 +83,7 @@ router.get('/users', productController.getAllUsers);
 // ==============================
 //   RUTAS DE EXCEL
 // ==============================
+router.use('/excel', excelExportRoutes);
 router.get('/excel/search/:sku', excelController.searchSKU);
 router.get('/excel/search', excelController.searchSKUs);
 router.get('/excel/skus', excelController.getAllSKUs);
