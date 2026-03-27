@@ -221,7 +221,7 @@ exports.updateSupplierAPI = async (req, res) => {
             categoria: req.body.categoria,
             nombre: req.body.nombre,
             celular: req.body.celular,
-            correo: req.body.correo,   // ✅ nuevo campo
+            correo: sanitizeCorreo(req.body.correo), // 🔥 FIX
             tipoAsesor: req.body.tipoAsesor,
             nombreEmpresa: req.body.nombreEmpresa,
             nota: req.body.nota,
@@ -229,17 +229,17 @@ exports.updateSupplierAPI = async (req, res) => {
             imagen: imagenPath
         });
 
-
         res.json({
             success: true,
             message: 'Proveedor actualizado exitosamente',
             data: supplier
         });
     } catch (error) {
-        logger.error('Error al actualizar proveedor API:', error);
+        logger.error('❌ ERROR UPDATE:', error);
+
         res.status(500).json({
             success: false,
-            error: 'Error al actualizar el proveedor'
+            error: error.message // 👈 ahora verás el error real
         });
     }
 };

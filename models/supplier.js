@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true, 
+      unique: true,
       validate: {
         notEmpty: true
       }
@@ -38,20 +38,24 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    correo: { 
+    correo: {
       type: DataTypes.STRING,
-      allowNull: true, // ✅ opcional
+      allowNull: true,
       validate: {
         isEmail: {
-          msg: 'Debe ser un correo electrónico válido',
-          args: {
-            allow_empty: true // 👈 ESTA ES LA CLAVE - permitir vacío
+          msg: 'Debe ser un correo electrónico válido'
+        },
+        isNullOrEmail(value) {
+          if (value === null || value === '') return;
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(value)) {
+            throw new Error('Debe ser un correo electrónico válido');
           }
         }
       }
     },
     tipoAsesor: {
-      type: DataTypes.ENUM('Representante de Fabrica', 'Mayorista', 'Asesor general Mayorista', 'Subdistribuidores','Minorista', 'Distribuidor', 'Especialista de Marca' ),
+      type: DataTypes.ENUM('Representante de Fabrica', 'Mayorista', 'Asesor general Mayorista', 'Subdistribuidores', 'Minorista', 'Distribuidor', 'Especialista de Marca'),
       allowNull: false,
       defaultValue: 'Asesor general Mayorista',
       validate: {
