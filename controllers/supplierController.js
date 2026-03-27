@@ -8,7 +8,10 @@ const logger = require('../utils/logger');
 
 const ITEMS_PER_PAGE = 10;
 
-// ================== VISTAS HTML ==================
+function sanitizeCorreo(correo) {
+    return correo && correo.trim() !== '' ? correo.trim() : null;
+}
+
 exports.getAllSuppliers = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
