@@ -1,94 +1,92 @@
-const { DataTypes } = require('sequelize');
-
+// models/notification.js
 module.exports = (sequelize, DataTypes) => {
   const Notification = sequelize.define('Notification', {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
-      field: 'uuid'
-    },
-    recipientId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      field: 'user_id',
-      references: {
-        model: 'users',
-        key: 'uuid'
-      }
-    },
-    senderId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      field: 'sender_id',
-      references: {
-        model: 'users',
-        key: 'uuid'
-      }
-    },
-    type: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: 'mention',
-      validate: {
-        isIn: [['mention', 'system', 'product', 'supplier', 'general']]
-      }
-    },
-    message: {
-      type: DataTypes.TEXT, // ✅ Ya está bien como TEXT
       allowNull: false
     },
+
+    recipientId: {
+      type: DataTypes.UUID,
+      allowNull: false
+    },
+
+    senderId: {
+      type: DataTypes.UUID,
+      allowNull: true
+    },
+
+    type: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: 'mention'
+    },
+
+    title: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: 'Notificación'
+    },
+
+    message: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+
+    redirectUrl: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+
+    link: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {}
+    },
+
     isRead: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: false,
-      field: 'is_read'
-    },
-    redirectUrl: {
-      type: DataTypes.TEXT, // ✅ CAMBIAR de STRING a TEXT
-      allowNull: true,
-      field: 'link'
-    },
-    sourceType: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'source_type'
-    },
-    sourceId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      field: 'source_id'
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      field: 'created_at'
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      field: 'updated_at'
+      defaultValue: false
     }
   }, {
     tableName: 'notifications',
     timestamps: true,
-    underscored: true,
     indexes: [
-      { fields: ['user_id'], name: 'notifications_user_id' },
-      { fields: ['sender_id'], name: 'notifications_sender_id' },
-      { fields: ['is_read'], name: 'notifications_is_read' },
-      { fields: ['created_at'], name: 'notifications_created_at' },
-      { fields: ['type'], name: 'notifications_type' }
+      {
+        name: 'notifications_recipientId_idx',
+        fields: ['recipientId']
+      },
+      {
+        name: 'notifications_senderId_idx',
+        fields: ['senderId']
+      },
+      {
+        name: 'notifications_isRead_idx',
+        fields: ['isRead']
+      },
+      {
+        name: 'notifications_createdAt_idx',
+        fields: ['createdAt']
+      }
     ]
   });
 
   Notification.associate = (models) => {
     Notification.belongsTo(models.User, {
       foreignKey: 'recipientId',
-      targetKey: 'uuid',
       as: 'recipient'
     });
+
     Notification.belongsTo(models.User, {
       foreignKey: 'senderId',
-      targetKey: 'uuid',
       as: 'sender'
     });
   };

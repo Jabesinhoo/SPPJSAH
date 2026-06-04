@@ -1,53 +1,60 @@
-// models/ProductHistory.js
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const ProductHistory = sequelize.define('ProductHistory', {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
+      primaryKey: true
     },
+
     productId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: false
     },
+
     action: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false,
+      validate: {
+        isIn: {
+          args: [['CREATE', 'UPDATE', 'DELETE', 'BULK_UPDATE', 'REVERT']],
+          msg: 'La acción del historial no es válida'
+        }
+      }
     },
+
     oldData: {
       type: DataTypes.JSONB,
-      allowNull: true,
+      allowNull: true
     },
+
     newData: {
       type: DataTypes.JSONB,
-      allowNull: true,
+      allowNull: true
     },
+
     changedFields: {
       type: DataTypes.JSONB,
-      allowNull: true,
+      allowNull: true
     },
+
     userName: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: true
     },
+
     bulkOperationId: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: true
     }
   }, {
     tableName: 'product_histories',
-    timestamps: true,
-    underscored: true,
+    timestamps: true
   });
 
-  // Relaciones
-  ProductHistory.associate = (models) => {
+  ProductHistory.associate = function (models) {
     ProductHistory.belongsTo(models.Product, {
       foreignKey: 'productId',
-      as: 'product',
-      onDelete: 'CASCADE',
+      as: 'product'
     });
   };
 

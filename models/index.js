@@ -20,14 +20,19 @@ const Supplier = require('./supplier')(sequelize, DataTypes);
 const Product = require('./product')(sequelize, DataTypes);
 const ProductHistory = require('./ProductHistory')(sequelize, DataTypes);
 const Notification = require('./notification')(sequelize, DataTypes);
+
 const SpreadsheetModels = require('./spreadsheet')(sequelize, DataTypes);
 const { Spreadsheet, SpreadsheetColumn, SpreadsheetRow, SpreadsheetCell } = SpreadsheetModels;
 
-// 🆕 Nuevos modelos
+// 🆕 Modelos existentes agregados
 const Transporte = require('./transporte')(sequelize, DataTypes);
 const Outsource = require('./outsource')(sequelize, DataTypes);
 
-// 🧠 Registrar asociaciones (solo si las hay)
+// 🆕 Modelos WooCommerce / Stock 0
+const StockZeroEvent = require('./stockZeroEvent')(sequelize, DataTypes);
+const WooStockSnapshot = require('./wooStockSnapshot')(sequelize, DataTypes);
+
+// 🧠 Registrar asociaciones automáticamente si existen
 Object.values(sequelize.models)
   .filter(model => typeof model.associate === 'function')
   .forEach(model => model.associate(sequelize.models));
@@ -36,16 +41,22 @@ Object.values(sequelize.models)
 module.exports = {
   sequelize,
   Sequelize,
+
   User,
   Role,
   Supplier,
   Product,
   ProductHistory,
   Notification,
+
   Spreadsheet,
   SpreadsheetColumn,
   SpreadsheetRow,
   SpreadsheetCell,
-  Transporte,   // 👈 Añadido
-  Outsource,    // 👈 Añadido
+
+  Transporte,
+  Outsource,
+
+  StockZeroEvent,
+  WooStockSnapshot,
 };

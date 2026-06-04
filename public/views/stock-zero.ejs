@@ -1,0 +1,80 @@
+<script>
+  const defaultStockZeroDate = '<%= typeof defaultDate !== "undefined" ? defaultDate : "" %>';
+</script>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full p-4 sm:p-6 md:p-8 relative transition-colors duration-500">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+        Productos agotados por día
+      </h1>
+
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        Selecciona una fecha
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div>
+      <label for="stock-zero-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Fecha
+      </label>
+
+      <input
+        type="date"
+        id="stock-zero-date"
+        class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+      >
+    </div>
+
+    <div class="md:col-span-2">
+      <label for="stock-zero-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Buscar
+      </label>
+
+      <input
+        type="text"
+        id="stock-zero-search"
+        placeholder="Buscar por SKU o nombre..."
+        class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+      >
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+      <p class="text-sm text-gray-500 dark:text-gray-300">
+        Total encontrados
+      </p>
+
+      <p id="stock-zero-total" class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        0
+      </p>
+    </div>
+
+    <div class="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
+      <p class="text-sm text-red-600 dark:text-red-300">
+        Estado
+      </p>
+
+      <p class="text-2xl font-bold text-red-700 dark:text-red-200">
+        Agotados
+      </p>
+    </div>
+  </div>
+
+  <div
+    id="stock-zero-loading"
+    class="text-center py-10 text-gray-500 dark:text-gray-400"
+  >
+    Cargando productos...
+  </div>
+
+  <div
+    id="stock-zero-cards"
+    class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
+  ></div>
+</div>
+
+<script src="/js/stock-zero.js"></script>

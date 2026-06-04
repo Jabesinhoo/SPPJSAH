@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <% 
-      // defaults seguros para evitar ReferenceError
       const _title     = typeof title !== 'undefined' ? title : '';
       const _csrfToken = typeof csrfToken !== 'undefined' ? csrfToken : '';
       const _username  = typeof username !== 'undefined' ? username : null;
@@ -17,13 +16,13 @@
     <meta name="csrf-token" content="<%= _csrfToken %>">
     <title>SPPJSAH | <%= _title %></title>
     <link rel="icon" href="/img/logo.png" type="image/png" />
-    
+
     <script>
-        // Hacer disponible información del usuario para el sistema de notificaciones
         window.currentUsername = '<%= _username || "" %>';
         window.currentUserId = '<%= _userId || "" %>';
         window.currentUserRole = '<%= _userRole || "" %>';
     </script>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -32,48 +31,53 @@
 
 <body style="font-family: Verdana, Geneva, Tahoma, sans-serif;"
     class="bg-gray-100 dark:bg-slate-950 transition-colors duration-500">
-    
-<div id="global-mention-container" class="hidden fixed z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto min-w-[200px]"></div>
-    
-<!-- Overlay para cerrar el sidebar en móviles -->
-<div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-<!-- Barra superior simplificada con solo la campana de notificaciones -->
-<div class="fixed top-4 right-4 z-40 flex items-center space-x-4">
-    <div id="notification-bell">
-        <!-- Aquí se inyectará el componente de notificaciones -->
+    <div id="global-mention-container"
+        class="hidden fixed z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto min-w-[200px]">
     </div>
-    
-    <% if (_username) { %>
-        <div class="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full shadow-md py-1 px-3">
-            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                <%= _username.charAt(0).toUpperCase() %>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden md:block">
-                <%= _username %>
-            </span>
+
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <div class="fixed top-4 right-4 z-40 flex items-center space-x-4">
+        <div id="notification-bell">
+            <!-- Aquí se inyectará el componente de notificaciones -->
         </div>
-    <% } %>
-</div>
+
+        <% if (_username) { %>
+            <div class="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full shadow-md py-1 px-3">
+                <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    <%= _username.charAt(0).toUpperCase() %>
+                </div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden md:block">
+                    <%= _username %>
+                </span>
+            </div>
+        <% } %>
+    </div>
 
     <div class="min-h-screen flex flex-col">
         <div class="flex-1 flex flex-col md:flex-row">
             <aside id="sidebar"
                 class="fixed inset-y-0 left-0 z-40 w-64 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out bg-gray-200 dark:bg-gray-900 shadow-lg md:shadow-none flex flex-col py-6 px-4 md:sticky md:top-0 md:h-screen md:w-64 overflow-y-auto">
 
-                <button id="menu-close" class="md:hidden absolute top-4 right-4 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button id="menu-close"
+                    class="md:hidden absolute top-4 right-4 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
                 <button id="theme-toggle" type="button"
                     class="absolute top-4 right-12 p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <svg id="sun-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg id="sun-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                    <svg id="moon-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg id="moon-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
@@ -95,7 +99,8 @@
                             <span>Inicio</span>
                         </a>
 
-                        <a href="/products" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                        <a href="/products"
+                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
                             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -103,57 +108,70 @@
                             <span>Productos</span>
                         </a>
 
+                        <a href="/stock-zero"
+                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 13V7a2 2 0 00-2-2h-4l-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2h6" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l2 2 4-4" />
+                            </svg>
+                            <span>Agotados del día</span>
+                        </a>
+
                         <div class="relative">
-  <!-- Botón principal -->
-  <button id="dropdownButton" 
-    class="flex items-center w-full p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
-    <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 7h5l2 2h11v10H3z" />
-      <path d="M3 7V5h5l2 2h11v2" />
-    </svg>
-    <span>Directorio</span>
-    &nbsp;
-    <span>Telefónico</span>
-    <svg class="w-4 h-4 ml-auto transition-transform duration-200" id="arrowIcon"
-         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  </button>
+                            <button id="dropdownButton"
+                                class="flex items-center w-full p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                                <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 7h5l2 2h11v10H3z" />
+                                    <path d="M3 7V5h5l2 2h11v2" />
+                                </svg>
+                                <span>Directorio</span>
+                                &nbsp;
+                                <span>Telefónico</span>
+                                <svg class="w-4 h-4 ml-auto transition-transform duration-200" id="arrowIcon"
+                                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M6 9l6 6 6-6" />
+                                </svg>
+                            </button>
 
-  <!-- Dropdown -->
-  <div id="dropdownMenu" 
-    class="hidden absolute left-0 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-1 w-48 border border-gray-200 dark:border-gray-700 z-10">
-    
-    <a href="/suppliers" 
-       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-t-lg">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M3 12l2-2 4 4 8-8 4 4" />
-      </svg>
-      Proveedores
-    </a>
+                            <div id="dropdownMenu"
+                                class="hidden absolute left-0 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-1 w-48 border border-gray-200 dark:border-gray-700 z-10">
 
-    <a href="/transport" 
-       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M3 13h2l1-2h13l3 3v5h-3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-      Transporte
-    </a>
+                                <a href="/suppliers"
+                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-t-lg">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path d="M3 12l2-2 4 4 8-8 4 4" />
+                                    </svg>
+                                    Proveedores
+                                </a>
 
-    <a href="/outsource" 
-       class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-b-lg">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M20 6H9l-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z" />
-      </svg>
-      Outsource
-    </a>
-  </div>
-</div>
+                                <a href="/transport"
+                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path d="M3 13h2l1-2h13l3 3v5h-3" />
+                                        <circle cx="7" cy="18" r="2" />
+                                        <circle cx="17" cy="18" r="2" />
+                                    </svg>
+                                    Transporte
+                                </a>
 
-                        <a href="/settings" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                                <a href="/outsource"
+                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-b-lg">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path d="M20 6H9l-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z" />
+                                    </svg>
+                                    Outsource
+                                </a>
+                            </div>
+                        </div>
+
+                        <a href="/settings"
+                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
                             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.84 2.37 2.37a1.724 1.724 0 00.177 2.895c1.543.94 1.543 3.314 0 4.254a1.724 1.724 0 00-.177 2.897c.94 1.543-.84 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.84-2.37-2.37a1.724 1.724 0 00-.177-2.895c-1.543-.94-1.543-3.314 0-4.254a1.724 1.724 0 00.177-2.897c-.94-1.543.84-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
@@ -162,18 +180,21 @@
                             </svg>
                             <span>Ajustes</span>
                         </a>
-                        
-                        <a href="/spreadsheets" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
-                           <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+
+                        <a href="/spreadsheets"
+                            class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9m-6-9v9" />
-                           </svg>
-                           <span>Hojas Dinámicas</span>
+                            </svg>
+                            <span>Hojas Dinámicas</span>
                         </a>
 
-                        <% if (_userRole && _userRole==='admin') { %>
-                            <a href="/roles" class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
-                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <% if (_userRole && _userRole === 'admin') { %>
+                            <a href="/roles"
+                                class="flex items-center p-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 mb-2">
+                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M17 20h2a2 2 0 002-2V7a2 2 0 00-2-2h-2M17 20v-2a2 2 0 00-2-2H9a2 2 0 00-2 2v2M17 20h-8M7 10a2 2 0 11-4 0 2 2 0 014 0zM17 10a2 2 0 11-4 0 2 2 0 014 0zM12 20a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
@@ -189,10 +210,12 @@
                 </div>
             </aside>
 
-            <!-- Botón para abrir el menú en móviles -->
-            <button id="menu-toggle" class="md:hidden fixed top-4 left-4 z-30 p-2 rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            <button id="menu-toggle"
+                class="md:hidden fixed top-4 left-4 z-30 p-2 rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
             </button>
 
@@ -200,62 +223,81 @@
                 <%- body %>
             </main>
         </div>
-        
-        <!-- Modal de advertencia -->
-        <div id="warningModal" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden z-50 flex items-center justify-center p-4">
+
+        <div id="warningModal"
+            class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden z-50 flex items-center justify-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md notification-container">
                 <h2 class="text-xl font-bold text-red-600 mb-4">Acción no permitida</h2>
                 <p id="warningMessage" class="text-gray-700 dark:text-gray-300 mb-6"></p>
-                <button id="closeModal" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto">
+                <button id="closeModal"
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto">
                     Cerrar
                 </button>
             </div>
         </div>
 
-<div id="mention-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] hidden overflow-y-auto py-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 my-auto">
-        <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
-            <h3 id="mention-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">
-                Mención
-            </h3>
-            <button id="mention-modal-close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-        
-        <div class="p-6">
-            <!-- Contenido del texto completo con scroll -->
-            <div id="mention-modal-content" 
-                 class="text-gray-700 dark:text-gray-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2 mb-4
-                        scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 
-                        scrollbar-track-gray-200 dark:scrollbar-track-gray-800">
-                <!-- Contenido de la mención -->
+        <div id="mention-modal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] hidden overflow-y-auto py-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 my-auto">
+                <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                    <h3 id="mention-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">
+                        Mención
+                    </h3>
+                    <button id="mention-modal-close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <div id="mention-modal-content"
+                        class="text-gray-700 dark:text-gray-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-800">
+                    </div>
+
+                    <div class="pt-3 border-t dark:border-gray-700">
+                        <p id="mention-timestamp" class="text-xs text-gray-500 dark:text-gray-400 text-right"></p>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t dark:border-gray-700 flex justify-end">
+                    <button id="mention-modal-close-btn"
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+                        Cerrar
+                    </button>
+                </div>
             </div>
-            
-            <!-- Timestamp -->
-            <div class="pt-3 border-t dark:border-gray-700">
-                <p id="mention-timestamp" class="text-xs text-gray-500 dark:text-gray-400 text-right"></p>
-            </div>
-        </div>
-        
-        <!-- Botón para cerrar (opcional) -->
-        <div class="p-4 border-t dark:border-gray-700 flex justify-end">
-            <button id="mention-modal-close-btn" 
-                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
-                Cerrar
-            </button>
         </div>
     </div>
-</div>
 
-        <footer class="mt-auto bg-gray-200 dark:bg-gray-900 text-center py-4 dark:text-gray-400 text-gray-700">
-            <p>Software hecho por Jabesinho &copy; <span id="current-year"></span></p>
-        </footer>
-    </div>
+    <script src="/js/base.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/global-mentions.js"></script>
+    <script src="/js/mention-processor.js"></script>
 
-<script src="/js/base.js" defer></script>
-<script src="/js/notifications.js" defer></script>
-<script src="/js/global-mentions.js" defer></script>
-<script src="/js/mention-processor.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropdownButton = document.getElementById('dropdownButton');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const arrowIcon = document.getElementById('arrowIcon');
+
+            if (dropdownButton && dropdownMenu) {
+                dropdownButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                    arrowIcon?.classList.toggle('rotate-180');
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                        dropdownMenu.classList.add('hidden');
+                        arrowIcon?.classList.remove('rotate-180');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

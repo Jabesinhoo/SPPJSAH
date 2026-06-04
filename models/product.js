@@ -1,11 +1,13 @@
-// models/product.js - Modelo actualizado con asociaciones de historial
+const { Op } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   const Product = sequelize.define('Product', {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
+      primaryKey: true
     },
+
     SKU: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -19,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -32,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     cantidad: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -46,27 +50,47 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     categoria: {
-  type: DataTypes.ENUM('Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'Reemplazado'), // ← Agregado REEMPLAZADO
-  allowNull: false,
-  defaultValue: 'Faltantes',
-  validate: {
-    isIn: {
-      args: [['Faltantes', 'Bajo Pedido', 'Agotados con el Proveedor', 'Demasiadas Existencias', 'Realizado', 'Descontinuado', 'Reemplazado']], // ← Agregado REEMPLAZADO
-      msg: 'La categoría debe ser una de las opciones válidas'
-    }
-  }
-},
+      type: DataTypes.ENUM(
+        'Faltantes',
+        'Bajo Pedido',
+        'Agotados con el Proveedor',
+        'Demasiadas Existencias',
+        'Realizado',
+        'Descontinuado',
+        'Reemplazado'
+      ),
+      allowNull: false,
+      defaultValue: 'Faltantes',
+      validate: {
+        isIn: {
+          args: [[
+            'Faltantes',
+            'Bajo Pedido',
+            'Agotados con el Proveedor',
+            'Demasiadas Existencias',
+            'Realizado',
+            'Descontinuado',
+            'Reemplazado'
+          ]],
+          msg: 'La categoría debe ser una de las opciones válidas'
+        }
+      }
+    },
+
     fecha: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
+
     hora: {
       type: DataTypes.STRING,
       allowNull: true,
-      defaultValue: () => new Date().toLocaleTimeString()
+      defaultValue: () => new Date().toTimeString().slice(0, 8)
     },
+
     usuario: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -76,6 +100,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     precio_compra: {
       type: DataTypes.BIGINT,
       allowNull: false,
@@ -88,8 +113,9 @@ module.exports = (sequelize, DataTypes) => {
         isDecimal: {
           msg: 'El precio de compra debe ser un número válido'
         }
-      },
+      }
     },
+
     importancia: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -108,6 +134,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     proveedor: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -119,11 +146,13 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     listo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
     },
+
     nota: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -131,18 +160,19 @@ module.exports = (sequelize, DataTypes) => {
         isValidJSON(value) {
           if (value !== null && value !== undefined && value !== '') {
             try {
-              // Si es un string que parece JSON, validarlo
               if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
                 JSON.parse(value);
               }
             } catch (error) {
-              // Si no es JSON válido, permitirlo como texto simple
-              // No lanzar error para mantener compatibilidad
+              return true;
             }
           }
+
+          return true;
         }
       }
     },
+
     brand: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -153,50 +183,56 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'La marca no puede exceder 255 caracteres'
         }
       }
-    },
+    }
   }, {
     tableName: 'products',
     timestamps: true,
+
     hooks: {
-      beforeCreate: (product, options) => {
-        // Asegurar que la hora se establezca
+      beforeCreate: (product) => {
         if (!product.hora) {
-          product.hora = new Date().toLocaleTimeString();
+          product.hora = new Date().toTimeString().slice(0, 8);
         }
 
-        // Limpiar espacios en blanco
         if (product.SKU) {
           product.SKU = product.SKU.trim();
         }
+
         if (product.nombre) {
           product.nombre = product.nombre.trim();
         }
+
         if (product.proveedor) {
           product.proveedor = product.proveedor.trim();
         }
+
         if (product.brand) {
           product.brand = product.brand.trim();
         }
       },
-      beforeUpdate: (product, options) => {
-        // Limpiar espacios en blanco al actualizar
+
+      beforeUpdate: (product) => {
         if (product.SKU) {
           product.SKU = product.SKU.trim();
         }
+
         if (product.nombre) {
           product.nombre = product.nombre.trim();
         }
+
         if (product.proveedor) {
           product.proveedor = product.proveedor.trim();
         }
+
         if (product.brand) {
           product.brand = product.brand.trim();
         }
       },
-      afterCreate: async (product, options) => {
-        // Registrar creación automáticamente en el historial
+
+      afterCreate: async (product) => {
         try {
           const HistoryService = require('../services/historyService');
+
           await HistoryService.recordChange(
             product.id,
             'CREATE',
@@ -208,30 +244,29 @@ module.exports = (sequelize, DataTypes) => {
           console.error('Error al registrar creación en historial:', error);
         }
       },
+
       afterUpdate: async (product, options) => {
-        // Registrar actualización automáticamente en el historial
         try {
           const HistoryService = require('../services/historyService');
-          
-          // Obtener datos anteriores si están disponibles
           const previousData = product._previousDataValues || {};
-          
+
           await HistoryService.recordChange(
             product.id,
             'UPDATE',
             previousData,
             product.toJSON(),
             { username: product.usuario },
-            options.bulkOperationId // Para operaciones en lote
+            options.bulkOperationId
           );
         } catch (error) {
           console.error('Error al registrar actualización en historial:', error);
         }
       },
-      afterDestroy: async (product, options) => {
-        // Registrar eliminación automáticamente en el historial
+
+      afterDestroy: async (product) => {
         try {
           const HistoryService = require('../services/historyService');
+
           await HistoryService.recordChange(
             product.id,
             'DELETE',
@@ -244,39 +279,33 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+
     indexes: [
       { fields: ['categoria'] },
       { fields: ['usuario'] },
       { fields: ['importancia'] },
       { fields: ['createdAt'] },
-      { fields: ['SKU'] }, // Nuevo índice para búsquedas por SKU
-      { fields: ['brand'] } // Nuevo índice para búsquedas por marca
+      { fields: ['SKU'] },
+      { fields: ['brand'] }
     ]
   });
 
-  // Método de instancia para verificar si el producto puede ser editado por un usuario
   Product.prototype.canBeEditedBy = function (userRole, username) {
-    // Los admins pueden editar cualquier producto
     if (userRole === 'admin') {
       return true;
     }
 
-    // Los usuarios normales no pueden editar productos "Realizados"
     if (this.categoria === 'Realizado') {
       return false;
     }
 
-    // Los usuarios normales pueden editar productos que crearon
     return this.usuario === username;
   };
 
-  // Método de instancia para verificar si el producto puede ser eliminado por un usuario
-  Product.prototype.canBeDeletedBy = function (userRole, username) {
-    // Solo los admins pueden eliminar productos
+  Product.prototype.canBeDeletedBy = function (userRole) {
     return userRole === 'admin';
   };
 
-  // Método de instancia para obtener información resumida del producto
   Product.prototype.getSummary = function () {
     return {
       id: this.id,
@@ -292,7 +321,6 @@ module.exports = (sequelize, DataTypes) => {
     };
   };
 
-  // Método de instancia para obtener el historial del producto
   Product.prototype.getHistory = async function (limit = 10) {
     try {
       const HistoryService = require('../services/historyService');
@@ -303,14 +331,13 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
 
-  // Método de instancia para revertir a una versión anterior
   Product.prototype.revertToVersion = async function (historyId, username) {
     try {
       const HistoryService = require('../services/historyService');
-      const ProductHistory = require('./ProductHistory');
-      
+      const { ProductHistory } = require('../models');
+
       const historyRecord = await ProductHistory.findByPk(historyId);
-      
+
       if (!historyRecord || historyRecord.productId !== this.id) {
         throw new Error('Registro de historial no encontrado o no corresponde a este producto');
       }
@@ -319,15 +346,15 @@ module.exports = (sequelize, DataTypes) => {
         throw new Error('No se puede revertir este tipo de cambio');
       }
 
-      // Actualizar el producto con los datos antiguos
+      const currentData = this.toJSON();
+
       await this.update(historyRecord.oldData);
 
-      // Registrar la reversión en el historial
       await HistoryService.recordChange(
         this.id,
         'REVERT',
-        this.toJSON(), // Estado actual antes de la reversión
-        historyRecord.oldData, // Estado al que se revierte
+        currentData,
+        historyRecord.oldData,
         { username },
         `revert-${historyId}`
       );
@@ -339,7 +366,6 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
 
-  // Método estático para obtener estadísticas por categoría
   Product.getStatsByCategory = async function () {
     try {
       const stats = await this.findAll({
@@ -355,35 +381,31 @@ module.exports = (sequelize, DataTypes) => {
         raw: true
       });
 
-      console.log("📊 Stats generales:", stats);
-
       return stats.map(stat => ({
         categoria: stat.categoria,
         count: Number(stat.count) || 0,
-        avgImportance: stat.avgImportance ? Number(stat.avgImportance).toFixed(2) : "0.00",
+        avgImportance: stat.avgImportance ? Number(stat.avgImportance).toFixed(2) : '0.00',
         totalQuantity: Number(stat.totalQuantity) || 0,
-        avgPrice: stat.avgPrice ? Number(stat.avgPrice).toFixed(2) : "0.00",
-        totalValue: stat.totalValue ? Number(stat.totalValue).toFixed(2) : "0.00"
+        avgPrice: stat.avgPrice ? Number(stat.avgPrice).toFixed(2) : '0.00',
+        totalValue: stat.totalValue ? Number(stat.totalValue).toFixed(2) : '0.00'
       }));
     } catch (error) {
       throw new Error('Error al obtener estadísticas: ' + error.message);
     }
   };
 
-  // Método estático para buscar productos por texto
   Product.search = async function (searchTerm, userRole = 'user') {
     const whereClause = {
-      [sequelize.Op.or]: [
-        { SKU: { [sequelize.Op.iLike]: `%${searchTerm}%` } },
-        { nombre: { [sequelize.Op.iLike]: `%${searchTerm}%` } },
-        { proveedor: { [sequelize.Op.iLike]: `%${searchTerm}%` } },
-        { brand: { [sequelize.Op.iLike]: `%${searchTerm}%` } } // Nueva búsqueda por marca
+      [Op.or]: [
+        { SKU: { [Op.iLike]: `%${searchTerm}%` } },
+        { nombre: { [Op.iLike]: `%${searchTerm}%` } },
+        { proveedor: { [Op.iLike]: `%${searchTerm}%` } },
+        { brand: { [Op.iLike]: `%${searchTerm}%` } }
       ]
     };
 
-    // Si no es admin, excluir productos "Realizados"
     if (userRole !== 'admin') {
-      whereClause.categoria = { [sequelize.Op.ne]: 'Realizado' };
+      whereClause.categoria = { [Op.ne]: 'Realizado' };
     }
 
     return await this.findAll({
@@ -393,7 +415,6 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  // Método estático para obtener los últimos cambios
   Product.getRecentChanges = async function (limit = 10) {
     try {
       const HistoryService = require('../services/historyService');
@@ -404,8 +425,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
 
-  // Definir asociaciones (se llamará desde el archivo de asociaciones principal)
-  Product.associate = function(models) {
+  Product.associate = function (models) {
     Product.hasMany(models.ProductHistory, {
       foreignKey: 'productId',
       as: 'history',

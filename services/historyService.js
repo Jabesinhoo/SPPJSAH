@@ -1,209 +1,198 @@
-// services/historyService.js
 const { ProductHistory } = require('../models');
 const logger = require('../utils/logger');
 
 class HistoryService {
-    static async recordChange(productId, action, oldData, newData, user, bulkOperationId = null) {
-        try {
-            // Validación adicional para evitar errores
-            if (!productId) {
-                logger.error('❌ Error: productId es requerido para registrar historial');
-                return;
-            }
+  static async recordChange(productId, action, oldData, newData, user, bulkOperationId = null) {
+    try {
+      if (!productId) {
+        logger.error('Error: productId es requerido para registrar historial');
+        return null;
+      }
 
-            const changedFields = this.getChangedFields(oldData, newData);
+      const changedFields = this.getChangedFields(oldData, newData);
 
-            await ProductHistory.create({
-                productId,
-                action,
-                oldData: oldData || null, // Asegurar que sea null si es undefined
-                newData: newData || null, // Asegurar que sea null si es undefined
-                changedFields,
-                userName: user?.username || user?.name || 'Sistema',
-                bulkOperationId
-            });
+      const history = await ProductHistory.create({
+        productId,
+        action,
+        oldData: oldData || null,
+        newData: newData || null,
+        changedFields,
+        userName: user?.username || user?.name || user || 'Sistema',
+        bulkOperationId
+      });
 
-            logger.info(`✅ Historial registrado: ${action} para producto ${productId}`);
-        } catch (error) {
-            logger.error('❌ Error al registrar historial:', error);
-            // No relanzar el error para no interrumpir la operación principal
-        }
+      return history;
+    } catch (error) {
+      logger.error('Error al registrar historial:', error);
+      return null;
     }
-    // services/historyService.js
-    static getChangedFields(oldData, newData) {
-        const changed = {};
+  }
 
-        // Caso 1: Creación de producto (oldData es null/undefined)
-        if (!oldData && newData) {
-            for (const key in newData) {
-                // Excluir campos del sistema
-                if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
-                    changed[key] = {
-                        old: null,
-                        new: newData[key]
-                    };
-                }
-            }
-            return changed;
-        }
+  static getChangedFields(oldData, newData) {
+    const changed = {};
 
-        // Caso 2: Eliminación de producto (newData es null/undefined)
-        if (oldData && !newData) {
-            for (const key in oldData) {
-                if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
-                    changed[key] = {
-                        old: oldData[key],
-                        new: null
-                    };
-                }
-            }
-            return changed;
-        }
+    if (!oldData && newData) {
+      for (const key of Object.keys(newData || {})) {
+        if (['id', 'createdAt', 'updatedAt'].includes(key)) continue;
 
-        // Caso 3: Actualización normal (ambos existen)
-        if (oldData && newData) {
-            const allKeys = new Set([...Object.keys(oldData || {}), ...Object.keys(newData || {})]);
+        changed[key] = {
+          old: null,
+          new: newData[key]
+        };
+      }
 
-            for (const key of allKeys) {
-                // Excluir campos del sistema
-                if (key === 'id' || key === 'createdAt' || key === 'updatedAt') continue;
-
-                const oldValue = oldData[key];
-                const newValue = newData[key];
-
-                // Comparar valores de forma segura
-                const oldValStr = JSON.stringify(oldValue);
-                const newValStr = JSON.stringify(newValue);
-
-                if (oldValStr !== newValStr) {
-                    changed[key] = {
-                        old: oldValue,
-                        new: newValue
-                    };
-                }
-            }
-        }
-
-        return changed;
+      return changed;
     }
 
-    static async getProductHistory(productId, limit = 10) {
-        return await ProductHistory.findAll({
-            where: { productId },
-            order: [['createdAt', 'DESC']],
-            limit
-        });
+    if (oldData && !newData) {
+      for (const key of Object.keys(oldData || {})) {
+        if (['id', 'createdAt', 'updatedAt'].includes(key)) continue;
+
+        changed[key] = {
+          old: oldData[key],
+          new: null
+        };
+      }
+
+      return changed;
     }
-    // services/historyService.js
-    static async revertChange(historyId, username) {
-        try {
-            const { Product } = require('../models');
 
-            const record = await ProductHistory.findByPk(historyId);
+    if (oldData && newData) {
+      const allKeys = new Set([
+        ...Object.keys(oldData || {}),
+        ...Object.keys(newData || {})
+      ]);
 
-            if (!record) {
-                throw new Error('Registro de historial no encontrado.');
-            }
+      for (const key of allKeys) {
+        if (['id', 'createdAt', 'updatedAt'].includes(key)) continue;
 
-            if (!record.oldData) {
-                throw new Error('Este cambio no puede revertirse (no hay datos anteriores).');
-            }
+        const oldValue = oldData[key];
+        const newValue = newData[key];
 
-            // Buscar el producto original
-            const product = await Product.findByPk(record.productId);
-            if (!product) {
-                throw new Error('El producto original ya no existe.');
-            }
-
-            const beforeRevert = product.toJSON();
-
-            // Actualizar el producto con los datos anteriores
-            await product.update(record.oldData);
-
-            // Registrar reversión en historial
-            await ProductHistory.create({
-                productId: product.id,
-                action: 'REVERT',
-                oldData: beforeRevert,
-                newData: record.oldData,
-                changedFields: this.getChangedFields(beforeRevert, record.oldData),
-                userName: username || 'Sistema',
-                bulkOperationId: `revert-${historyId}`,
-            });
-
-            return { success: true, product };
-        } catch (error) {
-            console.error('❌ Error al revertir cambio:', error);
-            return { success: false, error: error.message };
+        if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+          changed[key] = {
+            old: oldValue,
+            new: newValue
+          };
         }
+      }
     }
 
-    static async getLastChanges(limit = 20) {
-        try {
-            const { Product, User } = require('../models');
+    return changed;
+  }
 
-            const rawHistory = await ProductHistory.findAll({
-                include: [
-                    { model: Product, as: 'product', attributes: ['id', 'SKU', 'nombre'] },
-                    { model: User, as: 'user', attributes: ['id', 'username'] }
-                ],
-                order: [['createdAt', 'DESC']],
-                limit
-            });
-
-            const grouped = {};
-            for (const record of rawHistory) {
-                const key = record.bulkOperationId || record.id;
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        id: key,
-                        action: record.action,
-                        userName: record.userName || record.user?.username || 'Sistema',
-                        createdAt: record.createdAt,
-                        changedFields: record.changedFields || {},
-                        isBulk: !!record.bulkOperationId,
-                        products: []
-                    };
-                }
-
-                if (record.product) {
-                    grouped[key].products.push({
-                        id: record.product.id,
-                        SKU: record.product.SKU,
-                        nombre: record.product.nombre
-                    });
-                }
-            }
-
-            const groupedArray = Object.values(grouped).sort(
-                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-            );
-
-            return groupedArray;
-        } catch (error) {
-            console.error('❌ Error en getLastChanges:', error);
-            return [];
+  static async getProductHistory(productId, limit = 10) {
+    return await ProductHistory.findAll({
+      where: { productId },
+      include: [
+        {
+          association: 'product',
+          attributes: ['id', 'SKU', 'nombre'],
+          required: false
         }
-    }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit
+    });
+  }
 
-    // ELIMINA esta versión duplicada:
-    static async getLastChanges(limit = 3) {
-        const { Product } = require('../models');
-        return await ProductHistory.findAll({
-            order: [['createdAt', 'DESC']],
-            limit,
-            include: [
-                {
-                    model: Product,
-                    as: 'product',
-                    attributes: ['id', 'SKU', 'nombre']
-                }
-            ]
-        });
-    }
+  static async getLastChanges(limit = 20) {
+    try {
+      const rawHistory = await ProductHistory.findAll({
+        include: [
+          {
+            association: 'product',
+            attributes: ['id', 'SKU', 'nombre'],
+            required: false
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit
+      });
 
-    // MANTÉN solo esta versión más completa:
-    
+      const grouped = {};
+
+      for (const record of rawHistory) {
+        const plain = record.get({ plain: true });
+        const key = plain.bulkOperationId || plain.id;
+
+        if (!grouped[key]) {
+          grouped[key] = {
+            id: key,
+            action: plain.action,
+            userName: plain.userName || 'Sistema',
+            createdAt: plain.createdAt,
+            changedFields: plain.changedFields || {},
+            isBulk: Boolean(plain.bulkOperationId),
+            products: []
+          };
+        }
+
+        if (plain.product) {
+          grouped[key].products.push({
+            id: plain.product.id,
+            SKU: plain.product.SKU,
+            nombre: plain.product.nombre
+          });
+        }
+      }
+
+      return Object.values(grouped).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    } catch (error) {
+      logger.error('Error en getLastChanges:', error);
+      throw error;
+    }
+  }
+
+  static async revertChange(historyId, username) {
+    try {
+      const { Product } = require('../models');
+
+      const record = await ProductHistory.findByPk(historyId);
+
+      if (!record) {
+        throw new Error('Registro de historial no encontrado.');
+      }
+
+      if (!record.oldData) {
+        throw new Error('Este cambio no puede revertirse porque no hay datos anteriores.');
+      }
+
+      const product = await Product.findByPk(record.productId);
+
+      if (!product) {
+        throw new Error('El producto original ya no existe.');
+      }
+
+      const beforeRevert = product.toJSON();
+
+      await product.update(record.oldData);
+
+      await ProductHistory.create({
+        productId: product.id,
+        action: 'REVERT',
+        oldData: beforeRevert,
+        newData: record.oldData,
+        changedFields: this.getChangedFields(beforeRevert, record.oldData),
+        userName: username || 'Sistema',
+        bulkOperationId: `revert-${historyId}`
+      });
+
+      return {
+        success: true,
+        product
+      };
+    } catch (error) {
+      logger.error('Error al revertir cambio:', error);
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 }
 
-module.exports = HistoryService; // 👈 ESTA LÍNEA ES LA CLAVE
+module.exports = HistoryService;
