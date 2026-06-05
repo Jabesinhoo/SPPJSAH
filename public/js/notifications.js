@@ -9,13 +9,10 @@ class NotificationSystem {
   }
 
   async init() {
-    console.log('🎯 NotificationSystem inicializando...');
 
     // Debug: verificar que el modal existe
     const modal = document.getElementById('mention-modal');
-    console.log('🔍 Modal encontrado:', !!modal);
     if (modal) {
-      console.log('✅ Modal disponible para usar');
     } else {
       console.error('❌ Modal NO encontrado en el DOM');
     }
@@ -112,7 +109,6 @@ class NotificationSystem {
     const closeBtn = document.getElementById('mention-modal-close');
     const closeBtn2 = document.getElementById('mention-modal-close-btn');
 
-    console.log('🔧 Configurando eventos del modal simplificado...');
 
     // Cerrar modal (ambos botones)
     [closeBtn, closeBtn2].forEach(btn => {
@@ -135,7 +131,6 @@ class NotificationSystem {
       }
     });
 
-    console.log('✅ Eventos del modal simplificado configurados');
   }
 
   // Cargar usuarios disponibles para etiquetado
@@ -450,14 +445,11 @@ class NotificationSystem {
   // Manejar clic en notificación
   // Manejar clic en notificación - VERSIÓN SIMPLIFICADA
   handleNotificationClick(notification) {
-    console.log('🖱️ Clic en notificación:', notification);
 
     // ✅ SOLUCIÓN TEMPORAL: Mostrar modal para TODAS las menciones
     if (notification.type === 'mention') {
-      console.log('🎯 Mostrando modal para mención');
       this.showMentionModal(notification);
     } else {
-      console.log('🔗 Redirección normal para notificación');
       this.markAsRead(notification.id, notification.redirectUrl);
     }
   }
@@ -467,7 +459,6 @@ extractMentionContext(text, username) {
 }
   // Mostrar modal simplificado con la mención
  showMentionModal(notification) {
-  console.log('🎪 Mostrando modal simplificado para:', notification);
 
   const modal = document.getElementById('mention-modal');
   const title = document.getElementById('mention-modal-title');
@@ -490,17 +481,14 @@ extractMentionContext(text, username) {
   // Prioridad 1: metadata.originalText (texto completo)
   if (notification.metadata?.originalText) {
     mentionText = notification.metadata.originalText;
-    console.log('📝 Usando originalText completo:', mentionText.length, 'caracteres');
   } 
   // Prioridad 2: metadata.modalContent
   else if (notification.metadata?.modalContent) {
     mentionText = notification.metadata.modalContent;
-    console.log('📝 Usando modalContent:', mentionText.length, 'caracteres');
   }
   // Prioridad 3: metadata.highlightText
   else if (notification.metadata?.highlightText) {
     mentionText = notification.metadata.highlightText;
-    console.log('📝 Usando highlightText:', mentionText.length, 'caracteres');
   }
   // Prioridad 4: Extraer del mensaje (quitando el prefijo)
   else if (notification.message) {
@@ -508,11 +496,10 @@ extractMentionContext(text, username) {
     mentionText = notification.message
       .replace(/^.* te mencionó: "/, '')  // Quitar prefijo
       .replace(/"$/, '');                  // Quitar comillas finales
-    console.log('📝 Usando message procesado:', mentionText.length, 'caracteres');
   } 
   else {
     mentionText = 'Texto no disponible';
-    console.warn('❌ No se encontró texto para mostrar');
+    console.warn(' No se encontró texto para mostrar');
   }
 
   // ✅ Formatear el texto completo
@@ -526,7 +513,6 @@ extractMentionContext(text, username) {
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  console.log('✅ Modal mostrado con texto completo de', mentionText.length, 'caracteres');
 }
 
 formatMentionText(text) {
@@ -559,14 +545,12 @@ formatMentionText(text) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
       this.currentMentionNotification = null;
-      console.log('✅ Modal cerrado');
     }
   }
 
   // Navegar al contexto de la mención
   navigateToMentionContext() {
     if (this.currentMentionNotification?.redirectUrl) {
-      console.log('🧭 Navegando al contexto:', this.currentMentionNotification.redirectUrl);
 
       // Cerrar modal y dropdown
       this.closeMentionModal();
@@ -642,7 +626,6 @@ formatMentionText(text) {
         // Actualizar contador
         this.loadUnreadCount();
 
-        console.log('✅ Notificación marcada como leída:', notificationId);
       }
     } catch (error) {
       console.error('Error al marcar como leída:', error);
@@ -663,7 +646,6 @@ formatMentionText(text) {
       if (response.ok) {
         this.loadNotifications();
         this.loadUnreadCount();
-        console.log('✅ Todas las notificaciones marcadas como leídas');
       }
     } catch (error) {
       console.error('Error al marcar todas como leídas:', error);
@@ -692,7 +674,6 @@ formatMentionText(text) {
           notificationList.innerHTML = '<div class="p-4 text-center text-gray-500 dark:text-gray-400">No tienes notificaciones</div>';
         }
 
-        console.log('🗑️ Notificación eliminada:', notificationId);
       }
     } catch (error) {
       console.error('Error al eliminar notificación:', error);
@@ -740,7 +721,6 @@ formatMentionText(text) {
 
 // Inicializar sistema de notificaciones cuando se carga la página
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 DOM cargado, iniciando NotificationSystem...');
   window.notificationSystem = new NotificationSystem();
 });
 

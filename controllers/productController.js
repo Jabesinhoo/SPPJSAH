@@ -252,7 +252,6 @@ exports.updateProduct = async (req, res) => {
     const userRole = req.session.userRole;
     const username = req.session.username;
 
-    console.log('🔧 Update Product Request:', { id, body: req.body, userRole });
 
     // 🧩 Mapeo automático: quantity → cantidad
     if (req.body.quantity !== undefined && req.body.cantidad === undefined) {
@@ -262,7 +261,6 @@ exports.updateProduct = async (req, res) => {
     // Buscar el producto
     const productToUpdate = await Product.findByPk(id);
     if (!productToUpdate) {
-      console.log('❌ Producto no encontrado:', id);
       return res.status(404).json({ error: 'Producto no encontrado.' });
     }
 
@@ -390,11 +388,9 @@ exports.updateProduct = async (req, res) => {
 
     // Sin datos
     if (Object.keys(dataToUpdate).length === 0) {
-      console.log('⚠️ No hay datos para actualizar');
       return res.status(400).json({ error: 'No se proporcionaron datos para actualizar.' });
     }
 
-    console.log('📝 Datos a actualizar:', dataToUpdate);
 
     // 🧠 Actualizar usando save() (ejecuta hooks y no falla si no hay cambios)
     Object.assign(productToUpdate, dataToUpdate);
@@ -424,7 +420,6 @@ exports.updateProduct = async (req, res) => {
     }
 
     logger.info(`✅ Producto actualizado: ${updatedProduct.nombre} (ID: ${id}) por usuario: ${username}`);
-    console.log('✅ Producto actualizado exitosamente');
 
     return res.status(200).json({
       message: 'Producto actualizado con éxito.',

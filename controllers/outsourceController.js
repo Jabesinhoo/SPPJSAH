@@ -123,16 +123,10 @@ createOutsource: async (req, res) => {
     const { nombre_tecnico, telefono, cc, sku, tipo_servicio } = req.body;
 
     // DEBUG: Mostrar datos recibidos
-    console.log('=== BACKEND: DATOS RECIBIDOS ===');
-    console.log('SKU recibido:', sku, 'Tipo:', typeof sku);
-    console.log('Nombre:', nombre_tecnico);
-    console.log('Teléfono:', telefono);
-    console.log('Cédula:', cc);
-    console.log('Servicios:', tipo_servicio);
+   
 
     // Convertir SKU a número
     const skuNumber = parseInt(sku);
-    console.log('SKU convertido a número:', skuNumber);
     
     // Validar que el SKU no exista
     const existingSku = await Outsource.findOne({ 
@@ -140,7 +134,6 @@ createOutsource: async (req, res) => {
     });
     
     if (existingSku) {
-      console.log('SKU ya existe en la base de datos');
       await transaction.rollback();
       return res.status(400).json({
         success: false,
@@ -148,7 +141,6 @@ createOutsource: async (req, res) => {
       });
     }
 
-    console.log('Creando nuevo técnico en la base de datos...');
     
     const newOutsource = await Outsource.create({
       nombre_tecnico: nombre_tecnico.trim(),
@@ -162,7 +154,6 @@ createOutsource: async (req, res) => {
 
     const createdOutsource = await Outsource.findByPk(newOutsource.id);
     
-    console.log('Técnico creado exitosamente:', createdOutsource.toJSON());
 
     res.status(201).json({
       success: true,
@@ -175,7 +166,6 @@ createOutsource: async (req, res) => {
     
     if (error.name === 'SequelizeUniqueConstraintError') {
       const field = error.errors[0]?.path;
-      console.log('Error de constraint único en campo:', field);
       if (field === 'cc') {
         return res.status(400).json({
           success: false,
@@ -191,7 +181,6 @@ createOutsource: async (req, res) => {
     }
     
     if (error.name === 'SequelizeValidationError') {
-      console.log('Error de validación:', error.errors);
       return res.status(400).json({
         success: false,
         error: error.errors[0]?.message || 'Error de validación'

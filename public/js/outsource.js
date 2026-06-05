@@ -326,12 +326,7 @@ class OutsourceManager {
       const serviciosValue = serviciosInput.value;
 
       // DEBUG: Mostrar valores en consola
-      console.log('=== DEBUG: VALORES DEL FORMULARIO ===');
-      console.log('SKU:', skuValue, 'Tipo:', typeof skuValue);
-      console.log('Nombre:', nombreValue);
-      console.log('Teléfono:', telefonoValue);
-      console.log('Cédula:', ccValue);
-      console.log('Servicios (string):', serviciosValue);
+      
 
       // Validar SKU
       if (!skuValue) {
@@ -355,7 +350,6 @@ class OutsourceManager {
         .map(servicio => servicio.trim())
         .filter(servicio => servicio.length > 0);
 
-      console.log('Servicios (array):', serviciosArray);
 
       // Validar que haya al menos un servicio
       if (serviciosArray.length === 0) {
@@ -373,10 +367,7 @@ class OutsourceManager {
         tipo_servicio: serviciosArray
       };
 
-      console.log('=== DATOS QUE SE ENVIARÁN AL SERVIDOR ===');
-      console.log('FormData completo:', formData);
-      console.log('SKU en formData:', formData.sku, 'Tipo:', typeof formData.sku);
-
+     
       // Validar campos obligatorios
       if (!formData.nombre_tecnico || !formData.telefono || !formData.cc) {
         this.showAlert('Todos los campos son obligatorios', 'error');
@@ -389,7 +380,6 @@ class OutsourceManager {
       const url = outsourceId ? `/api/outsources/${outsourceId}` : '/api/outsources';
       const method = outsourceId ? 'PUT' : 'POST';
 
-      console.log('URL:', url, 'Método:', method);
 
       const response = await fetch(url, {
         method,
@@ -400,10 +390,8 @@ class OutsourceManager {
         body: JSON.stringify(formData)
       });
 
-      console.log('Respuesta del servidor - Status:', response.status);
 
       const result = await response.json();
-      console.log('Respuesta del servidor - Data:', result);
 
       if (result.success) {
         this.showAlert(
@@ -427,7 +415,6 @@ class OutsourceManager {
 
   async editOutsource(id) {
     try {
-      console.log('Editando técnico ID:', id);
       const response = await fetch(`/api/outsources/${id}`);
       
       if (!response.ok) {
@@ -435,7 +422,6 @@ class OutsourceManager {
       }
       
       const result = await response.json();
-      console.log('Datos del técnico para editar:', result);
 
       if (result.success) {
         this.openModal(result.data);
@@ -467,7 +453,6 @@ class OutsourceManager {
     if (!this.pendingDeleteId) return;
 
     try {
-      console.log('Eliminando técnico ID:', this.pendingDeleteId);
       const response = await fetch(`/api/outsources/${this.pendingDeleteId}`, {
         method: 'DELETE',
         headers: {
@@ -476,7 +461,6 @@ class OutsourceManager {
       });
 
       const result = await response.json();
-      console.log('Respuesta de eliminación:', result);
 
       if (result.success) {
         this.showAlert('Técnico eliminado exitosamente', 'success');

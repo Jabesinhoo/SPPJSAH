@@ -29,7 +29,6 @@ function closeCreateModal() {
 
 // Funciones para el modal de Editar - CORREGIDAS
 function openEditModal(placa, nombreConductor, telefono, tipoVehiculo) {
-  console.log('📝 Abriendo modal editar para placa:', placa);
   
   document.getElementById('originalPlaca').value = placa;
   document.getElementById('editPlaca').value = placa;
@@ -51,7 +50,6 @@ function closeEditModal() {
 
 // Funciones para el modal de Eliminar
 function openDeleteModal(placa) {
-  console.log('🗑️ Abriendo modal eliminar para placa:', placa);
   
   document.getElementById('deletePlaca').value = placa;
   document.getElementById('deletePlacaText').textContent = placa;
@@ -250,7 +248,6 @@ function resetFilters() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Inicializando página de transportes');
   
   // Cargar tipos de vehículo primero
   loadTiposVehiculo().then(() => {
@@ -281,7 +278,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const forms = document.querySelectorAll('form');
   forms.forEach(form => {
     form.addEventListener('submit', function(e) {
-      console.log('📤 Enviando formulario:', form.id || form.action);
       
       // Dar tiempo a que se procese el formulario
       setTimeout(() => {
@@ -292,5 +288,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  console.log('✅ Página inicializada correctamente');
 });

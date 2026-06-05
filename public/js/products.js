@@ -90,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             if (result.success) {
-                console.log('✅ Menciones procesadas correctamente');
             } else {
                 console.error('❌ Error al procesar menciones:', result.error);
             }
@@ -1726,7 +1725,6 @@ const showMessage = (message, type = 'info') => {
     // =========================
 
     const initHistory = () => {
-        console.log("🧠 Inicializando historial...");
 
         const viewHistoryBtn = document.getElementById("view-history");
         const historyModal = document.getElementById("history-modal");
@@ -1741,7 +1739,6 @@ const showMessage = (message, type = 'info') => {
         // ✅ Abrir modal al hacer clic en "Ver Historial"
         viewHistoryBtn.addEventListener("click", async (e) => {
             e.preventDefault();
-            console.log("🟢 Abriendo modal de historial...");
             historyModal.classList.remove("hidden");
 
             // Loader
@@ -1758,7 +1755,6 @@ const showMessage = (message, type = 'info') => {
                 if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
 
                 const data = await res.json();
-                console.log("📊 Historial recibido:", data);
 
                 if (!data || data.length === 0) {
                     historyContent.innerHTML = `
@@ -1859,7 +1855,6 @@ const showMessage = (message, type = 'info') => {
             }
         });
 
-        console.log("✅ Módulo de historial inicializado correctamente");
     };
 
     // 🟣 Función global para revertir cambios

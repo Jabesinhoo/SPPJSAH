@@ -5,7 +5,6 @@ const { transportValidation } = require('../middleware/validationTransport');
 
 // Middleware de debug para todas las rutas
 router.use((req, res, next) => {
-  console.log(`🚀 ${req.method} ${req.originalUrl}`);
   next();
 });
 

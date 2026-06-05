@@ -4,11 +4,9 @@ const { Op } = require('sequelize');
 // =============== VISTA EJS =================
 exports.renderTransportView = async (req, res) => {
   try {
-    console.log('🔍 GET /transport - Renderizando vista');
     const transportes = await Transporte.findAll({
       order: [['createdAt', 'DESC']]
     });
-    console.log(`📋 Encontrados ${transportes.length} transportes`);
     
     res.render('transport', { 
       transportes,
@@ -24,26 +22,22 @@ exports.renderTransportView = async (req, res) => {
 
 exports.createTransport = async (req, res) => {
   try {
-    console.log('➕ POST /transport - PRODUCCIÓN - Body:', req.body);
     
     const { placa, nombre_conductor, telefono, tipo_vehiculo } = req.body;
     
     // Debug adicional para producción
     if (!req.body) {
-      console.log('❌ PRODUCCIÓN - No se recibió body');
       req.flash('error', 'No se recibieron datos del formulario');
       return res.redirect('/transport');
     }
     
     if (!placa || !nombre_conductor || !telefono || !tipo_vehiculo) {
-      console.log('❌ PRODUCCIÓN - Campos faltantes:', { placa, nombre_conductor, telefono, tipo_vehiculo });
       req.flash('error', 'Todos los campos son obligatorios');
       return res.redirect('/transport');
     }
     
     // Verificar CSRF token en producción
     if (!req.body._csrf) {
-      console.log('❌ PRODUCCIÓN - CSRF token faltante');
       req.flash('error', 'Error de seguridad. Intente recargar la página.');
       return res.redirect('/transport');
     }
@@ -55,7 +49,6 @@ exports.createTransport = async (req, res) => {
     }
     
     await Transporte.create({ placa, nombre_conductor, telefono, tipo_vehiculo });
-    console.log('✅ PRODUCCIÓN - Transporte creado exitosamente');
     
     req.flash('success', 'Transporte creado correctamente');
     res.redirect('/transport');
@@ -70,14 +63,12 @@ exports.createTransport = async (req, res) => {
 
 exports.updateTransport = async (req, res) => {
   try {
-    console.log('✏️ UPDATE - Params:', req.params, 'Body:', req.body);
     const { placa: placaOriginalFromUrl } = req.params;
     const { originalPlaca, placa: nuevaPlaca, nombre_conductor, telefono, tipo_vehiculo } = req.body;
     
     // Usar originalPlaca del body, que es más confiable
     const placaOriginal = originalPlaca || placaOriginalFromUrl;
     
-    console.log('📝 Placa original:', placaOriginal, '- Nueva placa:', nuevaPlaca);
     
     // Validar que todos los campos estén presentes
     if (!nuevaPlaca || !nombre_conductor || !telefono || !tipo_vehiculo) {
@@ -107,7 +98,6 @@ exports.updateTransport = async (req, res) => {
       { where: { placa: placaOriginal } } // Buscar por la placa ORIGINAL
     );
     
-    console.log('✏️ UPDATE - Resultado:', result);
     
     if (result[0] === 0) {
       req.flash('error', 'No se encontró el transporte para actualizar');
@@ -125,11 +115,9 @@ exports.updateTransport = async (req, res) => {
 
 exports.deleteTransport = async (req, res) => {
   try {
-    console.log('🗑️ DELETE - Params:', req.params);
     const { placa } = req.params;
     
     const result = await Transporte.destroy({ where: { placa } });
-    console.log('🗑️ DELETE - Resultado:', result);
     
     if (result === 0) {
       req.flash('error', 'No se encontró el transporte para eliminar');

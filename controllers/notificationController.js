@@ -72,7 +72,6 @@ function buildSpecificRedirectUrl(context) {
     finalUrl = finalUrl.substring(0, 2000);
   }
   
-  console.log('🚀 URL FINAL (sin truncar texto):', finalUrl.length, 'caracteres');
   return finalUrl;
 }
 
@@ -133,7 +132,7 @@ const processMentionsFromForm = async (req, res) => {
 
     const { text, context = {}, mentions = [] } = req.body;
 
-    console.log('🔍 DEBUG processMentionsFromForm - DATOS RECIBIDOS:', {
+    console.log('', {
       textLength: text?.length,
       context: context,
       mentions: mentions,
@@ -144,7 +143,6 @@ const processMentionsFromForm = async (req, res) => {
     let processedMentions = Array.isArray(mentions) ? [...mentions] : [];
 
     if (processedMentions.length === 0) {
-      console.log('❌ No hay menciones para procesar');
       return res.json({ 
         success: true, 
         notificationsCreated: 0,
@@ -161,9 +159,8 @@ const processMentionsFromForm = async (req, res) => {
     if (typeof context === 'string') {
       try {
         parsedContext = JSON.parse(context);
-        console.log('📦 Contexto parseado desde string:', parsedContext);
       } catch (error) {
-        console.warn('⚠️  No se pudo parsear el contexto:', error);
+        console.warn('No se pudo parsear el contexto:', error);
         parsedContext = {};
       }
     }
@@ -191,7 +188,6 @@ const processMentionsFromForm = async (req, res) => {
   }
 };
 
-    console.log('🔄 Contexto mejorado:', enhancedContext);
 
     // Procesar menciones
     const notifications = await processMentions(
@@ -244,7 +240,7 @@ const getNotificationStats = async (req, res) => {
 
 const createNotification = async (notificationData) => {
   try {
-    console.log('🎯 Creating notification with data:', {
+    console.log('', {
       message: notificationData.message,
       messageLength: notificationData.message?.length,
       metadata: notificationData.metadata
@@ -260,18 +256,15 @@ const createNotification = async (notificationData) => {
     } = notificationData;
 
     // Verificar longitud del mensaje ANTES de crear
-    console.log('📏 Message length before creation:', message?.length);
-    console.log('📝 Message preview:', message?.substring(0, 200) + '...');
+   
 
     // Verificar que el receptor existe
     const recipient = await User.findByPk(recipientId);
-    console.log('👤 Recipient found:', recipient ? recipient.username : 'NOT FOUND');
     
     if (!recipient) throw new Error('Usuario destinatario no encontrado');
 
     // No crear notificación si es para el mismo usuario
     if (recipientId === senderId) {
-      console.log('⏩ Skipping - same user');
       return null;
     }
 
@@ -285,7 +278,7 @@ const createNotification = async (notificationData) => {
     });
 
     // Verificar mensaje DESPUÉS de crear
-    console.log('✅ Notification created:', {
+    console.log('', {
       id: notification.id,
       messageLength: notification.message?.length,
       messagePreview: notification.message?.substring(0, 200) + '...'
@@ -300,21 +293,15 @@ const createNotification = async (notificationData) => {
 };
 const processMentions = async (text, senderId, context = {}) => {
   try {
-    console.log('🎯 DEBUG processMentions - INICIO');
-    console.log('📝 Texto:', text?.substring(0, 100));
-    console.log('👤 Sender ID:', senderId);
-    console.log('📋 Contexto completo:', JSON.stringify(context, null, 2));
-    console.log('📦 Metadata:', context.metadata);
+
 
     const mentionRegex = /@(\w+)/g;
     const mentions = [];
     let match;
     while ((match = mentionRegex.exec(text)) !== null) mentions.push(match[1]);
 
-    console.log('👥 Menciones encontradas:', mentions);
 
     if (mentions.length === 0) {
-      console.log('❌ No hay menciones, saliendo');
       return [];
     }
 
@@ -324,7 +311,6 @@ const processMentions = async (text, senderId, context = {}) => {
       attributes: ['uuid', 'username']
     });
 
-    console.log('👤 Usuarios encontrados en BD:', mentionedUsers.map(u => u.username));
 
     const toCreate = mentionedUsers.map((user) => {
   const notificationData = {
@@ -363,7 +349,6 @@ const processMentions = async (text, senderId, context = {}) => {
       if (n) notifications.push(n);
     }
 
-    console.log('✅ Notificaciones creadas:', notifications.length);
     return notifications;
   } catch (error) {
     console.error('❌ Error en processMentions:', error);
@@ -375,14 +360,12 @@ const processMentions = async (text, senderId, context = {}) => {
 const getUserNotifications = async (req, res) => {
   try {
     const userId = currentUserId(req);
-    console.log('🔍 User ID:', userId);
     
     if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
     
-    console.log('📋 Fetching notifications for user:', userId);
 
     const { count, rows } = await Notification.findAndCountAll({
       where: { recipientId: userId },
@@ -396,7 +379,6 @@ const getUserNotifications = async (req, res) => {
       offset: (page - 1) * limit
     });
 
-    console.log('📨 Notifications found:', count);
     
     const totalPages = Math.max(Math.ceil(count / limit), 1);
 
@@ -416,7 +398,7 @@ const getUserNotifications = async (req, res) => {
       metadata: n.metadata || {} // ✅ ASEGURAR que siempre es un objeto, no null
     }));
 
-    console.log('📝 Notifications with metadata:', notifications.map(n => ({
+    console.log('', notifications.map(n => ({
       id: n.id,
       hasMetadata: !!n.metadata,
       metadata: n.metadata

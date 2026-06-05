@@ -261,7 +261,6 @@ async function fetchSuppliers(query = '', category = '', city = '') {
                 mobileContainer.innerHTML = '';
                 
                 if (result.data.length === 0) {
-                    console.log('Sin resultados, mostrando mensaje vacío');
                     const emptyDiv = document.createElement('div');
                     emptyDiv.className = 'p-4';
                     emptyDiv.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400">No se encontraron asesores de marca.</p>`;
@@ -373,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             
             const dataset = editBtn.dataset;
-            console.log('Edit button clicked:', dataset);
             
             openEditModal(
                 dataset.id, 
@@ -395,7 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             
             const dataset = deleteBtn.dataset;
-            console.log('Delete button clicked:', dataset);
             openDeleteModal(dataset.id, dataset.nombre);
         }
     });
@@ -459,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const category = categoryFilter ? categoryFilter.value : '';
                 const city = cityFilter ? cityFilter.value : '';
                 
-                console.log('Aplicando filtros desde búsqueda:', { query, category, city });
                 fetchSuppliers(query, category, city);
             }, 300);
         });
@@ -472,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const category = categoryFilter ? categoryFilter.value : '';
                 const city = cityFilter ? cityFilter.value : '';
                 
-                console.log('Aplicando filtros desde change:', { query, category, city });
                 fetchSuppliers(query, category, city);
             }, 100);
         });
@@ -499,7 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const category = categoryFilter ? categoryFilter.value : '';
             const city = cityFilter.value;
             
-            console.log('Aplicando filtros desde ciudad:', { query, category, city });
             fetchSuppliers(query, category, city);
         });
     } else {

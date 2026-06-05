@@ -359,7 +359,7 @@ class GlobalMentionSystem {
 
   // Método público para procesar menciones en un texto específico
   async processMentions(text, context = {}) {
-  console.log('🔄 Frontend - processMentions llamado con:', {
+  console.log('', {
     text: text?.substring(0, 100),
     context: context,
     currentUrl: window.location.href
@@ -373,7 +373,6 @@ class GlobalMentionSystem {
     mentions.push(match[1]);
   }
 
-  console.log('📝 Menciones extraídas en frontend:', mentions);
 
     if (mentions.length === 0) {
       return { success: true, notificationsCreated: 0 };
@@ -509,12 +508,11 @@ window.globalMentionSystem = new GlobalMentionSystem();
 
 // En global-mentions.js - mejorar la función de búsqueda en notas
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('📍 Iniciando detección de parámetros de URL...');
   
   const urlParams = new URLSearchParams(window.location.search);
   const hash = window.location.hash;
   
-  console.log('🔍 Parámetros detectados:', {
+  console.log('', {
     queryParams: Object.fromEntries(urlParams.entries()),
     hash: hash,
     fullUrl: window.location.href
@@ -522,7 +520,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Función mejorada para buscar en notas dinámicas
   const searchInDynamicNotes = (searchText, productId) => {
-    console.log('📝 Buscando en notas dinámicas del producto:', productId, 'Texto:', searchText);
     
     // Buscar el producto específico
     const productElement = document.getElementById(`product-${productId}`);
@@ -536,16 +533,13 @@ document.addEventListener('DOMContentLoaded', () => {
       '[class*="note"], [class*="Note"], [data-note], .notes-container, [id*="note"]'
     );
     
-    console.log('🔍 Contenedores potenciales de notas:', possibleNoteContainers.length);
     
     let found = false;
     
     possibleNoteContainers.forEach((container, index) => {
-      console.log(`📋 Revisando contenedor ${index + 1}:`, container);
       
       // Buscar texto en todo el contenedor
       if (container.textContent && container.textContent.includes(searchText)) {
-        console.log('✅ Texto encontrado en contenedor:', container);
         
         // Resaltar el contenedor completo
         container.classList.add(
@@ -572,9 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Si no se encontró en contenedores específicos, buscar en todo el producto
     if (!found) {
-      console.log('🔍 Buscando en todo el producto...');
       if (productElement.textContent && productElement.textContent.includes(searchText)) {
-        console.log('✅ Texto encontrado en el producto completo');
         
         productElement.classList.add(
           'bg-yellow-100', 'dark:bg-yellow-800', 
@@ -624,7 +616,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         textNode.parentNode.replaceChild(span, textNode);
         
-        console.log('🔦 Texto específico resaltado:', textNode.textContent);
       }
     });
   };
@@ -637,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const highlightText = urlParams.get('highlightText') ? decodeURIComponent(urlParams.get('highlightText')) : null;
     const mentionText = urlParams.get('mentionText') ? decodeURIComponent(urlParams.get('mentionText')) : null;
     
-    console.log('🎯 Parámetros de mención:', {
+    console.log('', {
       productId,
       targetElement,
       mentionType,
@@ -650,13 +641,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // ESTRATEGIA 1: Si tenemos texto específico para buscar
       if (highlightText || mentionText) {
         const searchText = highlightText || mentionText;
-        console.log('🔍 Buscando texto específico:', searchText);
         
         // Buscar en el producto específico si tenemos productId
         if (productId) {
           const foundInNotes = searchInDynamicNotes(searchText, productId);
           if (foundInNotes) {
-            console.log('✅ Texto encontrado en notas del producto');
             return;
           }
         }
@@ -666,7 +655,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const foundInPage = searchInDynamicNotes(searchText, 'products-table-body-admin') || 
                              searchInDynamicNotes(searchText, 'products-table-body-user');
           if (foundInPage) {
-            console.log('✅ Texto encontrado en la página');
           } else {
             console.warn('❌ Texto no encontrado en la página');
           }
@@ -677,7 +665,6 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (targetElement) {
         const element = document.getElementById(targetElement);
         if (element) {
-          console.log('🎯 Haciendo scroll al elemento target:', targetElement);
           setTimeout(() => {
             element.scrollIntoView({ 
               behavior: 'smooth', 
@@ -699,7 +686,6 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (productId) {
         const productElement = document.getElementById(`product-${productId}`);
         if (productElement) {
-          console.log('📦 Haciendo scroll al producto:', productId);
           setTimeout(() => {
             productElement.scrollIntoView({ 
               behavior: 'smooth', 
@@ -711,7 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      console.log('ℹ️  No se encontraron elementos específicos para resaltar');
     }, 1000); // Delay inicial para contenido dinámico
   };
   
