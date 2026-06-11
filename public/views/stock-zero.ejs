@@ -15,69 +15,72 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div>
-      <label for="stock-zero-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Fecha
-      </label>
+  <div class="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label for="stock-zero-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Fecha
+        </label>
 
-      <input
-        type="date"
-        id="stock-zero-date"
-        class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-      >
-    </div>
+        <input
+          type="date"
+          id="stock-zero-date"
+          class="mt-1 block w-full h-11 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+        >
+      </div>
 
-    <div class="md:col-span-2">
-      <label for="stock-zero-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Buscar
-      </label>
+      <div class="md:col-span-2">
+        <label for="stock-zero-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Buscar
+        </label>
 
-      <input
-        type="text"
-        id="stock-zero-search"
-        placeholder="Buscar por SKU o nombre..."
-        class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-      >
-    </div>
+        <input
+          type="text"
+          id="stock-zero-search"
+          placeholder="Buscar por SKU o nombre..."
+          class="mt-1 block w-full h-11 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+        >
+      </div>
 
-    <div>
-      <label for="stock-zero-limit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Por página
-      </label>
+      <div>
+        <label for="stock-zero-limit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Por página
+        </label>
 
-      <select
-        id="stock-zero-limit"
-        class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-      >
-        <option value="6">6</option>
-        <option value="12" selected>12</option>
-        <option value="24">24</option>
-        <option value="48">48</option>
-      </select>
+        <select
+          id="stock-zero-limit"
+          class="mt-1 block w-full h-11 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+        >
+          <option value="6">6</option>
+          <option value="12" selected>12</option>
+          <option value="24">24</option>
+          <option value="48">48</option>
+        </select>
+      </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl p-5 border border-gray-200 dark:border-gray-600">
       <p class="text-sm text-gray-500 dark:text-gray-300">
         Total encontrados
       </p>
 
-      <p id="stock-zero-total" class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+      <p id="stock-zero-total" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">
         0
       </p>
     </div>
 
-    <div class="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
+    <div class="bg-red-50 dark:bg-red-900/30 rounded-2xl p-5 border border-red-200 dark:border-red-800">
       <p class="text-sm text-red-600 dark:text-red-300">
         Estado
       </p>
 
-      <p class="text-2xl font-bold text-red-700 dark:text-red-200">
+      <p class="text-3xl font-bold text-red-700 dark:text-red-200 mt-1">
         Agotados
       </p>
     </div>
+  </div>
 
   <div
     id="stock-zero-loading"
@@ -88,16 +91,16 @@
 
   <div
     id="stock-zero-cards"
-    class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5"
   ></div>
 
   <div
     id="stock-zero-pagination"
-    class="hidden mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+    class="hidden mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-5"
   >
     <div id="stock-zero-pagination-info" class="text-sm text-gray-600 dark:text-gray-300"></div>
 
-    <div class="flex items-center justify-center gap-2">
+    <div class="flex items-center justify-center gap-2 flex-wrap">
       <button
         type="button"
         id="stock-zero-prev"
@@ -106,7 +109,7 @@
         Anterior
       </button>
 
-      <div id="stock-zero-pages" class="flex items-center gap-1"></div>
+      <div id="stock-zero-pages" class="flex items-center gap-1 flex-wrap"></div>
 
       <button
         type="button"
