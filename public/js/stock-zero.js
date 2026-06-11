@@ -1,14 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
   const dateInput = document.getElementById('stock-zero-date');
   const searchInput = document.getElementById('stock-zero-search');
+  const limitInput = document.getElementById('stock-zero-limit');
   const cardsContainer = document.getElementById('stock-zero-cards');
   const loadingEl = document.getElementById('stock-zero-loading');
   const totalEl = document.getElementById('stock-zero-total');
+
+  const paginationContainer = document.getElementById('stock-zero-pagination');
+  const paginationInfo = document.getElementById('stock-zero-pagination-info');
+  const paginationPages = document.getElementById('stock-zero-pages');
+  const prevButton = document.getElementById('stock-zero-prev');
+  const nextButton = document.getElementById('stock-zero-next');
 
   let searchTimeout = null;
   let currentProducts = new Map();
   let pendingProduct = null;
   let pendingButton = null;
+  let currentPage = 1;
+  let currentPagination = null;
 
   dateInput.value = defaultStockZeroDate || new Date().toISOString().slice(0, 10);
 
@@ -248,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderCards(products) {
     loadingEl.classList.add('hidden');
-    totalEl.textContent = products.length;
 
     currentProducts = new Map();
 
@@ -332,6 +340,73 @@ document.addEventListener('DOMContentLoaded', () => {
     bindPurchaseButtons();
   }
 
+  function getPageNumbers(page, totalPages) {
+    const pages = [];
+    const maxVisible = 5;
+
+    let start = Math.max(page - 2, 1);
+    let end = Math.min(start + maxVisible - 1, totalPages);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(end - maxVisible + 1, 1);
+    }
+
+    for (let number = start; number <= end; number += 1) {
+      pages.push(number);
+    }
+
+    return pages;
+  }
+
+  function renderPagination(pagination) {
+    currentPagination = pagination;
+
+    if (!pagination || pagination.totalItems <= 0) {
+      paginationContainer.classList.add('hidden');
+      totalEl.textContent = '0';
+      return;
+    }
+
+    totalEl.textContent = pagination.totalItems;
+
+    const startItem = ((pagination.page - 1) * pagination.limit) + 1;
+    const endItem = Math.min(pagination.page * pagination.limit, pagination.totalItems);
+
+    paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${pagination.totalItems} productos`;
+
+    prevButton.disabled = !pagination.hasPrevPage;
+    nextButton.disabled = !pagination.hasNextPage;
+
+    const pages = getPageNumbers(pagination.page, pagination.totalPages);
+
+    paginationPages.innerHTML = pages.map(pageNumber => {
+      const isActive = pageNumber === pagination.page;
+
+      return `
+        <button
+          type="button"
+          data-page="${pageNumber}"
+          class="stock-zero-page-btn px-3 py-2 text-sm rounded-lg transition ${
+            isActive
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600'
+          }"
+        >
+          ${pageNumber}
+        </button>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.stock-zero-page-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const page = Number(button.dataset.page);
+        goToPage(page);
+      });
+    });
+
+    paginationContainer.classList.remove('hidden');
+  }
+
   function bindPurchaseButtons() {
     const buttons = document.querySelectorAll('.purchase-toggle-btn');
 
@@ -354,6 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams();
 
     params.set('date', dateInput.value);
+    params.set('page', String(currentPage));
+    params.set('limit', String(limitInput.value || 12));
 
     if (searchInput.value.trim()) {
       params.set('search', searchInput.value.trim());
@@ -372,14 +449,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       renderCards(result.data);
+      renderPagination(result.pagination);
     } catch (error) {
       loadingEl.classList.add('hidden');
+      paginationContainer.classList.add('hidden');
+
       cardsContainer.innerHTML = `
         <div class="col-span-full bg-red-50 dark:bg-red-900/30 rounded-lg p-8 text-center text-red-600 dark:text-red-200">
           ${escapeHtml(error.message)}
         </div>
       `;
     }
+  }
+
+  function goToPage(page) {
+    if (!currentPagination) {
+      currentPage = page;
+      loadProducts();
+      return;
+    }
+
+    const safePage = Math.min(Math.max(page, 1), currentPagination.totalPages);
+
+    if (safePage === currentPage) {
+      return;
+    }
+
+    currentPage = safePage;
+    loadProducts();
   }
 
   async function markPurchased(product, button) {
@@ -442,11 +539,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  dateInput.addEventListener('change', loadProducts);
+  dateInput.addEventListener('change', () => {
+    currentPage = 1;
+    loadProducts();
+  });
+
+  limitInput.addEventListener('change', () => {
+    currentPage = 1;
+    loadProducts();
+  });
 
   searchInput.addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(loadProducts, 400);
+
+    searchTimeout = setTimeout(() => {
+      currentPage = 1;
+      loadProducts();
+    }, 400);
+  });
+
+  prevButton.addEventListener('click', () => {
+    if (currentPagination && currentPagination.hasPrevPage) {
+      goToPage(currentPagination.page - 1);
+    }
+  });
+
+  nextButton.addEventListener('click', () => {
+    if (currentPagination && currentPagination.hasNextPage) {
+      goToPage(currentPagination.page + 1);
+    }
   });
 
   loadProducts();
