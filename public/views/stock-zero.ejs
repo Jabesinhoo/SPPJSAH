@@ -10,12 +10,12 @@
       </h1>
 
       <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-        Selecciona una fecha
+        Selecciona una fecha para ver los productos de TecnoNacho que quedaron agotados ese día.
       </p>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div>
       <label for="stock-zero-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
         Fecha
@@ -40,6 +40,22 @@
         class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
       >
     </div>
+
+    <div>
+      <label for="stock-zero-limit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Por página
+      </label>
+
+      <select
+        id="stock-zero-limit"
+        class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+      >
+        <option value="6">6</option>
+        <option value="12" selected>12</option>
+        <option value="24">24</option>
+        <option value="48">48</option>
+      </select>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -62,6 +78,22 @@
         Agotados
       </p>
     </div>
+
+    <div class="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
+      <p class="text-sm text-green-600 dark:text-green-300">
+        Acción disponible
+      </p>
+
+      <p class="text-2xl font-bold text-green-700 dark:text-green-200">
+        Comprado
+      </p>
+    </div>
+  </div>
+
+  <div class="mb-6 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+    <p class="text-sm text-blue-800 dark:text-blue-200">
+      Los productos se consultan directamente desde WooCommerce según la fecha seleccionada. El botón “Marcar comprado” guarda el estado y crea el producto en el módulo Productos.
+    </p>
   </div>
 
   <div
@@ -75,6 +107,33 @@
     id="stock-zero-cards"
     class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
   ></div>
+
+  <div
+    id="stock-zero-pagination"
+    class="hidden mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+  >
+    <div id="stock-zero-pagination-info" class="text-sm text-gray-600 dark:text-gray-300"></div>
+
+    <div class="flex items-center justify-center gap-2">
+      <button
+        type="button"
+        id="stock-zero-prev"
+        class="px-3 py-2 text-sm rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+      >
+        Anterior
+      </button>
+
+      <div id="stock-zero-pages" class="flex items-center gap-1"></div>
+
+      <button
+        type="button"
+        id="stock-zero-next"
+        class="px-3 py-2 text-sm rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+      >
+        Siguiente
+      </button>
+    </div>
+  </div>
 </div>
 
 <script src="/js/stock-zero.js"></script>
