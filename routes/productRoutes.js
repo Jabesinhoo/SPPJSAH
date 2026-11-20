@@ -4,6 +4,7 @@ const router = express.Router();
 const productController = require('../controllers/productController');
 const authMiddleware = require('../middleware/authMiddleware');
 const excelController = require('../controllers/excelController');
+const worldOfficeController = require('../controllers/worldOfficeController');
 const { createProductValidation, updateProductValidation } = require('../middleware/productValidation');
 const { validationResult } = require('express-validator');
 const excelExportRoutes = require('./excelExportRoutes');
@@ -87,5 +88,6 @@ router.use('/excel', excelExportRoutes);
 router.get('/excel/search/:sku', excelController.searchSKU);
 router.get('/excel/search', excelController.searchSKUs);
 router.get('/excel/skus', excelController.getAllSKUs);
+router.get('/catalog/search', worldOfficeController.searchSKUs);
 
 module.exports = router;
