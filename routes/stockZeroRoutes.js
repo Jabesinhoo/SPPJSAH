@@ -2,14 +2,16 @@ const express = require('express');
 const router = express.Router();
 
 const stockZeroController = require('../controllers/stockZeroController');
-const { requireAuth } = require('../middleware/authMiddleware');
+const { requireAuth, authorize } = require('../middleware/authMiddleware');
 
 router.use(requireAuth);
 
-router.get('/stock-zero', stockZeroController.renderStockZeroPage);
+const requireAdmin = authorize('admin');
 
-router.get('/api/stock-zero', stockZeroController.listStockZeroEvents);
+router.get('/stock-zero', requireAdmin, stockZeroController.renderStockZeroPage);
 
-router.patch('/api/stock-zero/:wooProductId/purchased', stockZeroController.markProductPurchased);
+router.get('/api/stock-zero', requireAdmin, stockZeroController.listStockZeroEvents);
+
+router.patch('/api/stock-zero/:wooProductId/purchased', requireAdmin, stockZeroController.markProductPurchased);
 
 module.exports = router;
