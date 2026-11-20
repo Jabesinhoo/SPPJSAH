@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             if (result.success) {
+                console.log('✅ Menciones procesadas correctamente');
             } else {
                 console.error('❌ Error al procesar menciones:', result.error);
             }
@@ -1219,136 +1220,94 @@ const showMessage = (message, type = 'info') => {
         return text.substring(0, maxLength) + '...';
     };
 
-    // Configuración de autocompletado para SKU
     const setupSKUautocomplete = () => {
         const skuInput = document.getElementById('sku');
-        let searchTimeout;
-        let suggestionsContainer = null;
+        const nameInput = document.getElementById('name');
+        const container = document.createElement('div');
+        container.className = 'absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
+        skuInput.parentElement.style.position = 'relative';
+        skuInput.parentElement.appendChild(container);
 
-        // Crear contenedor de sugerencias
-        const createSuggestionsContainer = () => {
-            if (suggestionsContainer) return suggestionsContainer;
+        let timer;
+        let request;
 
-            suggestionsContainer = document.createElement('div');
-            suggestionsContainer.id = 'sku-suggestions';
-            suggestionsContainer.className = 'absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
-            skuInput.parentElement.style.position = 'relative';
-            skuInput.parentElement.appendChild(suggestionsContainer);
-            return suggestionsContainer;
+        const dismiss = () => {
+            clearTimeout(timer);
+            request?.abort();
+            container.replaceChildren();
+            container.classList.add('hidden');
         };
 
-        const showSuggestions = (products) => {
-            const container = createSuggestionsContainer();
-            container.innerHTML = '';
-
-            if (products.length === 0) {
-                container.classList.add('hidden');
-                return;
-            }
-
-            products.forEach(product => {
-                const suggestion = document.createElement('div');
-                suggestion.className = 'px-3 py-2 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800 text-sm';
-                suggestion.innerHTML = `
-                    <div class="font-mono text-xs">${product.sku}</div>
-                    <div class="text-gray-700 dark:text-gray-300 truncate">${product.name}</div>
-                `;
-
-                suggestion.addEventListener('click', () => {
-                    skuInput.value = product.sku;
-                    document.getElementById('name').value = product.name;
-                    container.classList.add('hidden');
-                });
-
-                container.appendChild(suggestion);
-            });
-
+        const showStatus = (message) => {
+            const status = document.createElement('p');
+            status.className = 'px-3 py-2 text-sm text-gray-700 dark:text-gray-300';
+            status.setAttribute('role', 'status');
+            status.textContent = message;
+            container.replaceChildren(status);
             container.classList.remove('hidden');
         };
 
-        const hideSuggestions = () => {
-            if (suggestionsContainer) {
-                suggestionsContainer.classList.add('hidden');
-            }
-        };
+        skuInput.addEventListener('input', () => {
+            dismiss();
+            const sku = skuInput.value.trim();
+            if (!sku || editingProductId !== null) return;
 
-        skuInput.addEventListener('input', async (e) => {
-            const sku = e.target.value.trim();
-
-            clearTimeout(searchTimeout);
-
-            if (sku.length < 2) {
-                hideSuggestions();
-                return;
-            }
-
-            searchTimeout = setTimeout(async () => {
+            timer = setTimeout(async () => {
+                const lookup = new AbortController();
+                request = lookup;
                 try {
-                    const res = await fetch(`/api/excel/search?search=${encodeURIComponent(sku)}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.success) {
-                            showSuggestions(data.products);
-                        }
+                    const response = await fetch(`/api/catalog/search?search=${encodeURIComponent(sku)}`, {
+                        signal: lookup.signal
+                    });
+                    if (!response.ok) throw new Error('Catálogo no disponible');
+                    const { products } = await response.json();
+                    if (lookup.signal.aborted || skuInput.value.trim() !== sku ||
+                        editingProductId !== null || modal.classList.contains('hidden')) return;
+
+                    if (!products.length) {
+                        showStatus('Sin coincidencias en World Office');
+                        return;
                     }
-                } catch (error) {
-                    hideSuggestions();
+
+                    for (const product of products) {
+                        const option = document.createElement('button');
+                        option.type = 'button';
+                        option.className = 'block w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-800';
+                        const code = document.createElement('span');
+                        code.className = 'block font-mono text-xs';
+                        code.textContent = product.sku;
+                        const description = document.createElement('span');
+                        description.className = 'block break-words';
+                        description.textContent = product.name;
+                        option.append(code, description);
+                        option.addEventListener('click', () => {
+                            skuInput.value = product.sku;
+                            nameInput.value = product.name;
+                            dismiss();
+                            nameInput.focus();
+                        });
+                        container.appendChild(option);
+                    }
+                    container.classList.remove('hidden');
+                } catch {
+                    if (!lookup.signal.aborted && skuInput.value.trim() === sku &&
+                        editingProductId === null && !modal.classList.contains('hidden')) {
+                        showStatus('No se pudo consultar World Office. Intenta de nuevo.');
+                    }
                 }
             }, 300);
         });
 
-        // Ocultar sugerencias al hacer clic fuera
-        document.addEventListener('click', (e) => {
-            if (!skuInput.contains(e.target) && (!suggestionsContainer || !suggestionsContainer.contains(e.target))) {
-                hideSuggestions();
+        skuInput.parentElement.addEventListener('focusout', (event) => {
+            if (!skuInput.parentElement.contains(event.relatedTarget)) dismiss();
+        });
+        skuInput.parentElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !container.classList.contains('hidden')) {
+                skuInput.focus();
+                dismiss();
             }
         });
-
-        // Manejar teclas en el input
-        skuInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                hideSuggestions();
-            }
-        });
-
-        // Buscar producto exacto al perder foco
-        skuInput.addEventListener('blur', () => {
-            const sku = skuInput.value.trim();
-            if (sku) {
-                buscarProductoPorSKU();
-            }
-            // Pequeño delay para permitir el click en sugerencias
-            setTimeout(hideSuggestions, 200);
-        });
-    };
-
-    // Función mejorada para buscar producto por SKU
-    window.buscarProductoPorSKU = async () => {
-        const sku = document.getElementById('sku').value.trim();
-
-        if (!sku) {
-            showMessage('Ingresa un SKU para buscar', 'error');
-            return;
-        }
-
-        try {
-            const res = await fetch(`/api/excel/search/${encodeURIComponent(sku)}`);
-            if (!res.ok) {
-                return;
-            }
-
-            const data = await res.json();
-
-            if (data.success) {
-                document.getElementById('name').value = data.product.name;
-                showMessage(`Producto encontrado: ${data.product.name}`, 'success');
-            } else {
-                showMessage('No se encontró producto con ese SKU en el Excel', 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showMessage('Error al buscar el producto', 'error');
-        }
+        form.addEventListener('reset', dismiss);
     };
 
     // Event Listeners
@@ -1725,6 +1684,7 @@ const showMessage = (message, type = 'info') => {
     // =========================
 
     const initHistory = () => {
+        console.log("🧠 Inicializando historial...");
 
         const viewHistoryBtn = document.getElementById("view-history");
         const historyModal = document.getElementById("history-modal");
@@ -1739,6 +1699,7 @@ const showMessage = (message, type = 'info') => {
         // ✅ Abrir modal al hacer clic en "Ver Historial"
         viewHistoryBtn.addEventListener("click", async (e) => {
             e.preventDefault();
+            console.log("🟢 Abriendo modal de historial...");
             historyModal.classList.remove("hidden");
 
             // Loader
@@ -1755,6 +1716,7 @@ const showMessage = (message, type = 'info') => {
                 if (!res.ok) throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
 
                 const data = await res.json();
+                console.log("📊 Historial recibido:", data);
 
                 if (!data || data.length === 0) {
                     historyContent.innerHTML = `
@@ -1855,6 +1817,7 @@ const showMessage = (message, type = 'info') => {
             }
         });
 
+        console.log("✅ Módulo de historial inicializado correctamente");
     };
 
     // 🟣 Función global para revertir cambios
