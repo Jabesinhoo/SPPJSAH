@@ -572,3 +572,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadProducts();
 });
+ 
